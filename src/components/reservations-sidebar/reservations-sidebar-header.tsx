@@ -8,12 +8,13 @@ import { Button } from "@/components/ui/button";
 import { ReservationsDatePicker } from "./reservations-date-picker";
 import {
   ReservationsStatusFilter,
-  type ReservationStatusId,
+  type ReservationStatusFilterValue,
 } from "./reservations-status-filter";
 
 export function ReservationsSidebarHeader() {
   const [date, setDate] = useState(() => new Date());
-  const [activeStatus, setActiveStatus] = useState<ReservationStatusId>("all");
+  const [activeStatus, setActiveStatus] =
+    useState<ReservationStatusFilterValue>("ALL");
 
   return (
     <div className="flex flex-col gap-3 border-b border-slate-200 p-4">

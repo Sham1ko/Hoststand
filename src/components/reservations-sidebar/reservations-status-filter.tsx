@@ -1,17 +1,24 @@
 "use client";
 
-const reservationStatuses = [
-  { id: "all", label: "Все", count: 4 },
-  { id: "waiting", label: "Ожидают", count: 1 },
-  { id: "confirmed", label: "Подтверждены", count: 3 },
-  { id: "completed", label: "Завершены", count: 0 },
-] as const;
+import type { ReservationStatus } from "@/features/reservations/model/types";
 
-export type ReservationStatusId = (typeof reservationStatuses)[number]["id"];
+const reservationStatuses = [
+  { id: "ALL", label: "Все", count: 4 },
+  { id: "PENDING", label: "Ожидают", count: 1 },
+  { id: "CONFIRMED", label: "Подтверждены", count: 3 },
+  { id: "CANCELLED", label: "Отменены", count: 0 },
+  { id: "COMPLETED", label: "Завершены", count: 0 },
+] as const satisfies ReadonlyArray<{
+  id: ReservationStatus | "ALL";
+  label: string;
+  count: number;
+}>;
+
+export type ReservationStatusFilterValue = ReservationStatus | "ALL";
 
 type ReservationsStatusFilterProps = {
-  value: ReservationStatusId;
-  onValueChange: (status: ReservationStatusId) => void;
+  value: ReservationStatusFilterValue;
+  onValueChange: (status: ReservationStatusFilterValue) => void;
 };
 
 export function ReservationsStatusFilter({
