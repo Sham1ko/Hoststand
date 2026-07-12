@@ -8,22 +8,25 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-
-type ReservationStatus = "confirmed" | "waiting" | "completed";
+import type { ReservationStatus } from "@/features/reservations/model/types";
 
 const statusStyles: Record<
   ReservationStatus,
   { label: string; className: string }
 > = {
-  confirmed: {
-    label: "Подтверждена",
-    className: "bg-emerald-50 text-emerald-700",
-  },
-  waiting: {
+  PENDING: {
     label: "Ожидает",
     className: "bg-amber-50 text-amber-700",
   },
-  completed: {
+  CONFIRMED: {
+    label: "Подтверждена",
+    className: "bg-emerald-50 text-emerald-700",
+  },
+  CANCELLED: {
+    label: "Отменена",
+    className: "bg-rose-50 text-rose-600",
+  },
+  COMPLETED: {
     label: "Завершена",
     className: "bg-slate-100 text-slate-600",
   },
