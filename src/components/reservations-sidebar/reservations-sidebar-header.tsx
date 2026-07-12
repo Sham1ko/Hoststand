@@ -12,11 +12,11 @@ import {
 } from "./reservations-status-filter";
 
 export function ReservationsSidebarHeader() {
-  const [date, setDate] = useState(() => new Date(2026, 6, 12));
+  const [date, setDate] = useState(() => new Date());
   const [activeStatus, setActiveStatus] = useState<ReservationStatusId>("all");
 
   return (
-    <div className="border-b border-slate-200 p-4">
+    <div className="flex flex-col gap-3 border-b border-slate-200 p-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold tracking-tight text-slate-950">
           Брони
@@ -28,16 +28,12 @@ export function ReservationsSidebarHeader() {
         </Button>
       </div>
 
-      <div className="mt-4">
-        <ReservationsDatePicker date={date} onDateChange={setDate} />
-      </div>
+      <ReservationsDatePicker date={date} onDateChange={setDate} />
 
-      <div className="mt-3">
-        <ReservationsStatusFilter
-          value={activeStatus}
-          onValueChange={setActiveStatus}
-        />
-      </div>
+      <ReservationsStatusFilter
+        value={activeStatus}
+        onValueChange={setActiveStatus}
+      />
     </div>
   );
 }

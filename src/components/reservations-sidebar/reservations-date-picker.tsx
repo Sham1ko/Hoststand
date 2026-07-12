@@ -1,8 +1,13 @@
 "use client";
 
-import { addDays, format } from "date-fns";
+import { addDays, format, isSameDay, startOfToday } from "date-fns";
 import { ru } from "date-fns/locale";
-import { CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  CalendarDays,
+  CalendarIcon,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -23,6 +28,8 @@ export function ReservationsDatePicker({
   onDateChange,
 }: ReservationsDatePickerProps) {
   const [open, setOpen] = useState(false);
+  const today = startOfToday();
+  const isTodaySelected = isSameDay(date, today);
 
   const selectDate = (nextDate: Date | undefined) => {
     if (!nextDate) return;
@@ -35,8 +42,9 @@ export function ReservationsDatePicker({
     <div className="flex items-center gap-2">
       <Button
         type="button"
-        variant="ghost"
+        variant="outline"
         size="icon"
+        className="size-9"
         aria-label="Предыдущий день"
         onClick={() => onDateChange(addDays(date, -1))}
       >
@@ -68,13 +76,27 @@ export function ReservationsDatePicker({
 
       <Button
         type="button"
-        variant="ghost"
+        variant="outline"
         size="icon"
+        className="size-9"
         aria-label="Следующий день"
         onClick={() => onDateChange(addDays(date, 1))}
       >
         <ChevronRight aria-hidden="true" />
       </Button>
+
+      {!isTodaySelected && (
+        <Button
+          type="button"
+          variant="outline"
+          size="default"
+          className="h-9 px-2.5"
+          onClick={() => onDateChange(today)}
+        >
+          <CalendarDays aria-hidden="true" data-icon="inline-start" />
+          Сегодня
+        </Button>
+      )}
     </div>
   );
 }
