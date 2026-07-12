@@ -1,28 +1,30 @@
 "use client";
 
+import type { ReservationStatusCounts } from "@/features/reservations/model/selectors";
 import type { ReservationStatus } from "@/features/reservations/model/types";
 
 const reservationStatuses = [
-  { id: "ALL", label: "Все", count: 4 },
-  { id: "PENDING", label: "Ожидают", count: 1 },
-  { id: "CONFIRMED", label: "Подтверждены", count: 3 },
-  { id: "CANCELLED", label: "Отменены", count: 0 },
-  { id: "COMPLETED", label: "Завершены", count: 0 },
+  { id: "ALL", label: "Все" },
+  { id: "PENDING", label: "Ожидают" },
+  { id: "CONFIRMED", label: "Подтверждены" },
+  { id: "CANCELLED", label: "Отменены" },
+  { id: "COMPLETED", label: "Завершены" },
 ] as const satisfies ReadonlyArray<{
   id: ReservationStatus | "ALL";
   label: string;
-  count: number;
 }>;
 
 export type ReservationStatusFilterValue = ReservationStatus | "ALL";
 
 type ReservationsStatusFilterProps = {
   value: ReservationStatusFilterValue;
+  counts: ReservationStatusCounts;
   onValueChange: (status: ReservationStatusFilterValue) => void;
 };
 
 export function ReservationsStatusFilter({
   value,
+  counts,
   onValueChange,
 }: ReservationsStatusFilterProps) {
   return (
@@ -45,7 +47,7 @@ export function ReservationsStatusFilter({
                 : "bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800"
             }`}
           >
-            {status.label} {status.count}
+            {status.label} {counts[status.id]}
           </button>
         );
       })}

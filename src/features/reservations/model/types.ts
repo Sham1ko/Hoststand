@@ -16,3 +16,15 @@ export interface Reservation {
   status: ReservationStatus;
   createdAt: string;
 }
+
+export interface ReservationTableReference {
+  id: string;
+  number: number;
+  capacity: number;
+  floorId: string;
+}
+
+export interface ReservationFloorReference {
+  id: string;
+  name: string;
+}

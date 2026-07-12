@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { formatGuestsCount } from "@/features/reservations/model/selectors";
 import type { ReservationStatus } from "@/features/reservations/model/types";
 
 const statusStyles: Record<
@@ -37,9 +38,9 @@ export type ReservationCardProps = {
   dateLabel: string;
   guestName: string;
   status: ReservationStatus;
-  table: number;
-  floor: number;
-  guests: number;
+  tableNumber: number;
+  floorName: string;
+  guestsCount: number;
   phone: string;
   note?: string;
 };
@@ -49,9 +50,9 @@ export function ReservationCard({
   dateLabel,
   guestName,
   status,
-  table,
-  floor,
-  guests,
+  tableNumber,
+  floorName,
+  guestsCount,
   phone,
   note,
 }: ReservationCardProps) {
@@ -81,11 +82,11 @@ export function ReservationCard({
 
       <div className="mt-2 flex items-center gap-3 text-xs text-slate-500">
         <span className="rounded-md bg-slate-100 px-2 py-1 font-medium text-slate-700">
-          Стол №{table} · {floor} этаж
+          Стол №{tableNumber} · {floorName}
         </span>
         <span className="flex items-center gap-1">
           <Users aria-hidden="true" className="size-3.5" />
-          {guests} гостей
+          {formatGuestsCount(guestsCount)}
         </span>
       </div>
 

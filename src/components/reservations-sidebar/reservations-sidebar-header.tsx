@@ -4,6 +4,7 @@ import { CalendarPlus } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import type { ReservationStatusCounts } from "@/features/reservations/model/selectors";
 
 import { ReservationsDatePicker } from "./reservations-date-picker";
 import {
@@ -11,7 +12,13 @@ import {
   type ReservationStatusFilterValue,
 } from "./reservations-status-filter";
 
-export function ReservationsSidebarHeader() {
+type ReservationsSidebarHeaderProps = {
+  statusCounts: ReservationStatusCounts;
+};
+
+export function ReservationsSidebarHeader({
+  statusCounts,
+}: ReservationsSidebarHeaderProps) {
   const [date, setDate] = useState(() => new Date());
   const [activeStatus, setActiveStatus] =
     useState<ReservationStatusFilterValue>("ALL");
@@ -33,6 +40,7 @@ export function ReservationsSidebarHeader() {
 
       <ReservationsStatusFilter
         value={activeStatus}
+        counts={statusCounts}
         onValueChange={setActiveStatus}
       />
     </div>
