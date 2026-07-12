@@ -21,7 +21,7 @@ export function BookingsStatusFilter({
   return (
     <div
       aria-label="Фильтр по статусу"
-      className="flex gap-1.5 overflow-x-auto pb-1"
+      className="flex gap-1.5 overflow-x-auto pb-1 thin-scroll"
     >
       {bookingStatuses.map((status) => {
         const isActive = value === status.id;
@@ -32,11 +32,10 @@ export function BookingsStatusFilter({
             type="button"
             aria-pressed={isActive}
             onClick={() => onValueChange(status.id)}
-            className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
-              isActive
+            className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${isActive
                 ? "bg-slate-950 text-white"
                 : "bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800"
-            }`}
+              }`}
           >
             {status.label} {status.count}
           </button>
