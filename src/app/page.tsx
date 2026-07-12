@@ -1,5 +1,5 @@
-import { BookingsSidebar } from "@/components/bookings-sidebar";
 import { Header } from "@/components/header";
+import { ReservationsSidebar } from "@/components/reservations-sidebar";
 
 export default function Home() {
   return (
@@ -12,7 +12,7 @@ export default function Home() {
           className="min-w-0 flex-1 bg-slate-100"
         />
 
-        <BookingsSidebar />
+        <ReservationsSidebar />
       </main>
     </div>
   );

@@ -1,29 +1,29 @@
 "use client";
 
-const bookingStatuses = [
+const reservationStatuses = [
   { id: "all", label: "Все", count: 4 },
   { id: "waiting", label: "Ожидают", count: 1 },
   { id: "confirmed", label: "Подтверждены", count: 3 },
   { id: "completed", label: "Завершены", count: 0 },
 ] as const;
 
-export type BookingStatusId = (typeof bookingStatuses)[number]["id"];
+export type ReservationStatusId = (typeof reservationStatuses)[number]["id"];
 
-type BookingsStatusFilterProps = {
-  value: BookingStatusId;
-  onValueChange: (status: BookingStatusId) => void;
+type ReservationsStatusFilterProps = {
+  value: ReservationStatusId;
+  onValueChange: (status: ReservationStatusId) => void;
 };
 
-export function BookingsStatusFilter({
+export function ReservationsStatusFilter({
   value,
   onValueChange,
-}: BookingsStatusFilterProps) {
+}: ReservationsStatusFilterProps) {
   return (
     <div
       aria-label="Фильтр по статусу"
-      className="flex gap-1.5 overflow-x-auto pb-1 thin-scroll"
+      className="thin-scroll flex gap-1.5 overflow-x-auto pb-1"
     >
-      {bookingStatuses.map((status) => {
+      {reservationStatuses.map((status) => {
         const isActive = value === status.id;
 
         return (
@@ -32,10 +32,11 @@ export function BookingsStatusFilter({
             type="button"
             aria-pressed={isActive}
             onClick={() => onValueChange(status.id)}
-            className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${isActive
+            className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
+              isActive
                 ? "bg-slate-950 text-white"
                 : "bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800"
-              }`}
+            }`}
           >
             {status.label} {status.count}
           </button>

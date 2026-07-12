@@ -3,16 +3,17 @@
 import { CalendarPlus } from "lucide-react";
 import { useState } from "react";
 
-import { BookingsDatePicker } from "@/components/bookings-date-picker";
-import {
-  BookingsStatusFilter,
-  type BookingStatusId,
-} from "@/components/bookings-status-filter";
 import { Button } from "@/components/ui/button";
 
-export function BookingsSidebarHeader() {
+import { ReservationsDatePicker } from "./reservations-date-picker";
+import {
+  ReservationsStatusFilter,
+  type ReservationStatusId,
+} from "./reservations-status-filter";
+
+export function ReservationsSidebarHeader() {
   const [date, setDate] = useState(() => new Date(2026, 6, 12));
-  const [activeStatus, setActiveStatus] = useState<BookingStatusId>("all");
+  const [activeStatus, setActiveStatus] = useState<ReservationStatusId>("all");
 
   return (
     <div className="border-b border-slate-200 p-4">
@@ -28,11 +29,11 @@ export function BookingsSidebarHeader() {
       </div>
 
       <div className="mt-4">
-        <BookingsDatePicker date={date} onDateChange={setDate} />
+        <ReservationsDatePicker date={date} onDateChange={setDate} />
       </div>
 
       <div className="mt-3">
-        <BookingsStatusFilter
+        <ReservationsStatusFilter
           value={activeStatus}
           onValueChange={setActiveStatus}
         />

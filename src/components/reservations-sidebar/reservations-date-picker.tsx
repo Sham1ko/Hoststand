@@ -13,15 +13,15 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
-type BookingsDatePickerProps = {
+type ReservationsDatePickerProps = {
   date: Date;
   onDateChange: (date: Date) => void;
 };
 
-export function BookingsDatePicker({
+export function ReservationsDatePicker({
   date,
   onDateChange,
-}: BookingsDatePickerProps) {
+}: ReservationsDatePickerProps) {
   const [open, setOpen] = useState(false);
 
   const selectDate = (nextDate: Date | undefined) => {
