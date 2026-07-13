@@ -11,11 +11,13 @@ import {
 } from "react";
 import { startOfToday } from "date-fns";
 
+import { createRestaurantSeed } from "@/features/restaurant-state/data/seed";
 import type { CreateReservationInput } from "@/features/reservations/model/schemas";
 import type { ReservationAction } from "@/features/reservations/model/types";
 import type { TableZone } from "@/features/floor-plan/model/types";
 
 import {
+  createHttpRestaurantRepository,
   createLocalStorageRestaurantRepository,
   type RestaurantRepository,
 } from "../api/restaurant-repository";
@@ -68,6 +70,14 @@ type RestaurantContextValue = {
 
 const RestaurantContext = createContext<RestaurantContextValue | null>(null);
 
+function createRestaurantRepository() {
+  if (process.env.NEXT_PUBLIC_RESTAURANT_REPOSITORY === "http") {
+    return createHttpRestaurantRepository();
+  }
+
+  return createLocalStorageRestaurantRepository(window.localStorage);
+}
+
 function RestaurantLoadingState() {
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-slate-100" aria-busy="true">
@@ -88,24 +98,46 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
   const repositoryRef = useRef<RestaurantRepository | null>(null);
 
   useEffect(() => {
-    const repository = createLocalStorageRestaurantRepository(window.localStorage);
+    const repository = createRestaurantRepository();
     let isMounted = true;
 
     repositoryRef.current = repository;
 
-    void repository.loadRestaurant().then((nextState) => {
-      if (isMounted) setState(nextState);
-    });
+    void repository
+      .loadRestaurant()
+      .then((nextState) => {
+        if (isMounted) setState(nextState);
+      })
+      .catch(() => {
+        if (isMounted) setState(createRestaurantSeed());
+      });
 
     return () => {
       isMounted = false;
     };
   }, []);
 
-  const saveState = useCallback(async (nextState: RestaurantState) => {
-    setState(nextState);
-    await repositoryRef.current?.saveRestaurant(nextState);
-  }, []);
+  const saveState = useCallback(
+    async (nextState: RestaurantState) => {
+      const previousState = state;
+      const repository = repositoryRef.current;
+
+      if (!previousState || !repository) return false;
+
+      setState(nextState);
+
+      try {
+        await repository.saveRestaurant(nextState);
+        return true;
+      } catch {
+        setState((currentState) =>
+          currentState === nextState ? previousState : currentState,
+        );
+        return false;
+      }
+    },
+    [state],
+  );
 
   const setActiveFloorId = useCallback(
     async (floorId: string) => {
@@ -131,8 +163,7 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
 
       if (!result) return false;
 
-      await saveState(result.state);
-      return true;
+      return saveState(result.state);
     },
     [saveState, state],
   );
@@ -149,8 +180,7 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
 
       if (!nextState) return false;
 
-      await saveState(nextState);
-      return true;
+      return saveState(nextState);
     },
     [saveState, state],
   );
@@ -163,8 +193,7 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
 
       if (!nextState) return false;
 
-      await saveState(nextState);
-      return true;
+      return saveState(nextState);
     },
     [saveState, state],
   );
@@ -180,7 +209,7 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
 
       if (!nextState) return null;
 
-      await saveState(nextState);
+      if (!(await saveState(nextState))) return null;
       return nextState.tables.at(-1) ?? null;
     },
     [saveState, state],
@@ -194,8 +223,7 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
 
       if (!nextState) return false;
 
-      await saveState(nextState);
-      return true;
+      return saveState(nextState);
     },
     [saveState, state],
   );
@@ -208,8 +236,7 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
 
       if (!nextState) return false;
 
-      await saveState(nextState);
-      return true;
+      return saveState(nextState);
     },
     [saveState, state],
   );
@@ -225,7 +252,7 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
 
       if (!nextState) return null;
 
-      await saveState(nextState);
+      if (!(await saveState(nextState))) return null;
       return nextState.zones.at(-1) ?? null;
     },
     [saveState, state],
@@ -239,8 +266,7 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
 
       if (!nextState) return false;
 
-      await saveState(nextState);
-      return true;
+      return saveState(nextState);
     },
     [saveState, state],
   );
@@ -253,8 +279,7 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
 
       if (!nextState) return false;
 
-      await saveState(nextState);
-      return true;
+      return saveState(nextState);
     },
     [saveState, state],
   );
@@ -274,9 +299,13 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
   );
 
   const resetDemo = useCallback(async () => {
-    const nextState = await repositoryRef.current?.resetDemo();
+    try {
+      const nextState = await repositoryRef.current?.resetDemo();
 
-    if (nextState) setState(nextState);
+      if (nextState) setState(nextState);
+    } catch {
+      // Preserve the current plan when the active repository is unavailable.
+    }
   }, []);
 
   if (!state) return <RestaurantLoadingState />;

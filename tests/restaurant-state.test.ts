@@ -1,5 +1,6 @@
 import {
   RESTAURANT_STORAGE_KEY,
+  createHttpRestaurantRepository,
   createLocalStorageRestaurantRepository,
 } from "@/features/restaurant-state/api/restaurant-repository";
 import { createRestaurantSeed } from "@/features/restaurant-state/data/seed";
@@ -14,6 +15,11 @@ import {
   updateRestaurantTable,
   updateRestaurantZone,
 } from "@/features/restaurant-state/model/actions";
+import {
+  GET as GET_RESTAURANT,
+  PUT as PUT_RESTAURANT,
+} from "@/app/api/restaurant/route";
+import { POST as RESET_RESTAURANT } from "@/app/api/restaurant/reset/route";
 
 class MemoryStorage implements Storage {
   private readonly values = new Map<string, string>();
@@ -92,6 +98,58 @@ test("initializes and repairs invalid persisted restaurant state", async () => {
   const migrated = await repository.loadRestaurant();
 
   expect(migrated.activeFloorId).toBe("floor-1");
+});
+
+test("uses the HTTP repository contract for load, save, and reset", async () => {
+  let remoteState = createRestaurantSeed();
+  const fetcher: typeof fetch = async (input, init) => {
+    const url = String(input);
+
+    if (url === "/api/restaurant" && init?.method === "PUT") {
+      remoteState = JSON.parse(String(init.body)) as typeof remoteState;
+    }
+
+    if (url === "/api/restaurant/reset") {
+      remoteState = createRestaurantSeed();
+    }
+
+    return Response.json({ data: remoteState });
+  };
+  const repository = createHttpRestaurantRepository(fetcher);
+  const changed = { ...remoteState, activeFloorId: "floor-2" };
+
+  expect(await repository.loadRestaurant()).toEqual(remoteState);
+
+  await repository.saveRestaurant(changed);
+  expect(remoteState).toEqual(changed);
+
+  const reset = await repository.resetDemo();
+  expect(reset.activeFloorId).toBe("floor-1");
+});
+
+test("validates and resets the restaurant API mock", async () => {
+  const initial = (await GET_RESTAURANT().json()) as { data: ReturnType<typeof createRestaurantSeed> };
+  const changed = { ...initial.data, activeFloorId: "floor-2" };
+  const saved = await PUT_RESTAURANT(
+    new Request("http://localhost/api/restaurant", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(changed),
+    }),
+  );
+
+  expect(saved.status).toBe(200);
+  expect((await GET_RESTAURANT().json()).data.activeFloorId).toBe("floor-2");
+
+  const invalid = await PUT_RESTAURANT(
+    new Request("http://localhost/api/restaurant", {
+      method: "PUT",
+      body: JSON.stringify({}),
+    }),
+  );
+
+  expect(invalid.status).toBe(400);
+  expect((await RESET_RESTAURANT().json()).data.activeFloorId).toBe("floor-1");
 });
 
 test("persists state changes and resets every collection to the demo seed", async () => {

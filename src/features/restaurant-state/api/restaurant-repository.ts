@@ -1,5 +1,6 @@
 import { createRestaurantSeed } from "../data/seed";
 import type { RestaurantState } from "../model/types";
+import { isRestaurantState } from "../model/validation";
 
 export const RESTAURANT_STORAGE_KEY = "qolay:restaurant:v1";
 
@@ -15,26 +16,6 @@ type StoredRestaurantState = {
   version: number;
   data: RestaurantState;
 };
-
-function isRestaurantState(value: unknown): value is RestaurantState {
-  if (!value || typeof value !== "object") return false;
-
-  const state = value as Partial<RestaurantState>;
-
-  return (
-    Array.isArray(state.floors) &&
-    Array.isArray(state.zones) &&
-    Array.isArray(state.tables) &&
-    Array.isArray(state.reservations) &&
-    typeof state.activeFloorId === "string" &&
-    state.floors.some(
-      (floor) =>
-        floor.id === state.activeFloorId &&
-        typeof floor.isActive === "boolean" &&
-        floor.isActive,
-    )
-  );
-}
 
 function readStoredRestaurantState(value: string | null) {
   if (!value) return null;
@@ -95,6 +76,60 @@ export function createLocalStorageRestaurantRepository(
       const seed = createRestaurantSeed();
       await saveRestaurant(seed);
       return seed;
+    },
+  };
+}
+
+type Fetcher = typeof fetch;
+
+type RestaurantResponse = {
+  data: RestaurantState;
+};
+
+function isRestaurantResponse(value: unknown): value is RestaurantResponse {
+  return (
+    Boolean(value) &&
+    typeof value === "object" &&
+    isRestaurantState((value as Partial<RestaurantResponse>).data)
+  );
+}
+
+async function readRestaurantResponse(response: Response) {
+  if (!response.ok) {
+    throw new Error(`Restaurant request failed with status ${response.status}`);
+  }
+
+  const body = (await response.json().catch(() => null)) as unknown;
+
+  if (!isRestaurantResponse(body)) {
+    throw new Error("Restaurant response has an invalid shape");
+  }
+
+  return body.data;
+}
+
+export function createHttpRestaurantRepository(
+  fetcher: Fetcher = fetch,
+): RestaurantRepository {
+  return {
+    async loadRestaurant() {
+      return readRestaurantResponse(
+        await fetcher("/api/restaurant", { cache: "no-store" }),
+      );
+    },
+    async saveRestaurant(state: RestaurantState) {
+      await readRestaurantResponse(
+        await fetcher("/api/restaurant", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(state),
+        }),
+      );
+    },
+    async resetDemo() {
+      return readRestaurantResponse(
+        await fetcher("/api/restaurant/reset", { method: "POST" }),
+      );
     },
   };
 }

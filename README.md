@@ -17,10 +17,16 @@ npm run dev
 зоны, столы, брони и активный этаж в `localStorage` по версионированному ключу
 `qolay:restaurant:v1`. Кнопка «Сбросить демо» восстанавливает полный сид.
 
-Текущие `/api/*` и server store сохранены как mock backend и не используются
-интерфейсом. Для подключения настоящего бэкенда нужно добавить
-`HttpRestaurantRepository`, реализующий контракт `RestaurantRepository`;
-компоненты и provider при этом не меняются.
+По умолчанию provider использует `localStorage`. Mock HTTP API уже реализует
+тот же контракт: `GET`/`PUT /api/restaurant` и `POST /api/restaurant/reset`.
+Чтобы включить HTTP adapter, задай переменную окружения:
+
+```bash
+NEXT_PUBLIC_RESTAURANT_REPOSITORY=http
+```
+
+`HttpRestaurantRepository` не зависит от компонентов, поэтому реальный backend
+должен сохранить эти ответы и контракт `RestaurantRepository`.
 
 ## Следующие шаги
 
