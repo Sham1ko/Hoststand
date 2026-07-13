@@ -113,11 +113,11 @@ export function FloorMapCanvas({
       <defs>
         <pattern
           id="floor-map-grid"
-          width="20"
-          height="20"
+          width="40"
+          height="40"
           patternUnits="userSpaceOnUse"
         >
-          <circle cx="1.5" cy="1.5" r="1.5" className="fill-slate-200" />
+          <circle cx="20" cy="20" r="1.5" className="fill-slate-200" />
         </pattern>
       </defs>
 
@@ -126,8 +126,20 @@ export function FloorMapCanvas({
       <g
         transform={`translate(${camera.offsetX} ${camera.offsetY}) scale(${camera.scale})`}
       >
-        <rect width="1600" height="1000" className="fill-white" />
-        <rect width="1600" height="1000" fill="url(#floor-map-grid)" />
+        <rect
+          width="1600"
+          height="1000"
+          rx="32"
+          className="fill-white"
+        />
+        <rect
+          width="1600"
+          height="1000"
+          rx="32"
+          fill="url(#floor-map-grid)"
+          className="stroke-slate-200"
+          strokeWidth="1.5"
+        />
 
         <g aria-label="Зоны">
           {zones.map((zone) => (
