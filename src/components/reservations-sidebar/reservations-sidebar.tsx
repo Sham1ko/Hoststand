@@ -1,6 +1,5 @@
 "use client";
 
-import { startOfToday } from "date-fns";
 import { useState } from "react";
 
 import {
@@ -15,11 +14,21 @@ import { ReservationsSidebarHeader } from "./reservations-sidebar-header";
 import type { ReservationStatusFilterValue } from "./reservations-status-filter";
 
 export function ReservationsSidebar() {
-  const [date, setDate] = useState(startOfToday);
   const [activeStatus, setActiveStatus] =
     useState<ReservationStatusFilterValue>("ALL");
-  const { state, applyReservationAction } = useRestaurant();
-  const reservations = filterReservationsByDate(state.reservations, date);
+  const {
+    state,
+    reservationDate,
+    setReservationDate,
+    focusedReservationTableId,
+    setFocusedReservationTableId,
+    setActiveFloorId,
+    applyReservationAction,
+  } = useRestaurant();
+  const reservations = filterReservationsByDate(
+    state.reservations,
+    reservationDate,
+  );
   const statusCounts = getReservationStatusCounts(reservations);
 
   const visibleReservations = filterReservationsByStatus(
@@ -33,16 +42,26 @@ export function ReservationsSidebar() {
       className="flex min-h-0 w-96 shrink-0 flex-col overflow-hidden border-l border-slate-200 bg-white"
     >
       <ReservationsSidebarHeader
-        date={date}
+        date={reservationDate}
         activeStatus={activeStatus}
         statusCounts={statusCounts}
-        onDateChange={setDate}
+        onDateChange={setReservationDate}
         onStatusChange={setActiveStatus}
       />
       <ReservationsList
         reservations={visibleReservations}
         tables={state.tables}
         floors={state.floors}
+        selectedTableId={focusedReservationTableId}
+        onTableSelect={(tableId) => {
+          setFocusedReservationTableId(tableId);
+
+          const table = state.tables.find((item) => item.id === tableId);
+
+          if (table && table.floorId !== state.activeFloorId) {
+            void setActiveFloorId(table.floorId);
+          }
+        }}
         onAction={(reservationId, action) => {
           void applyReservationAction(reservationId, action);
         }}

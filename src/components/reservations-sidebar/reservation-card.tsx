@@ -47,6 +47,8 @@ export type ReservationCardProps = {
   guestsCount: number;
   phone: string;
   note?: string;
+  isSelected: boolean;
+  onSelect: () => void;
   onAction: (reservationId: string, action: ReservationAction) => void;
 };
 
@@ -61,6 +63,8 @@ export function ReservationCard({
   guestsCount,
   phone,
   note,
+  isSelected,
+  onSelect,
   onAction,
 }: ReservationCardProps) {
   const statusStyle = statusStyles[status];
@@ -70,7 +74,14 @@ export function ReservationCard({
   const canEdit = canCancel;
 
   return (
-    <article className="rounded-lg border border-slate-200 bg-white p-3">
+    <article
+      className={`cursor-pointer rounded-lg border bg-white p-3 transition-colors ${
+        isSelected
+          ? "border-primary ring-2 ring-primary/15"
+          : "border-slate-200 hover:border-slate-300"
+      }`}
+      onClick={onSelect}
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-sm font-semibold text-slate-950">

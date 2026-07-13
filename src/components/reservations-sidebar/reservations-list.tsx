@@ -19,6 +19,8 @@ type ReservationsListProps = {
   reservations: readonly Reservation[];
   tables: readonly ReservationTableReference[];
   floors: readonly ReservationFloorReference[];
+  selectedTableId: string | null;
+  onTableSelect: (tableId: string) => void;
   onAction: (reservationId: string, action: ReservationAction) => void;
 };
 
@@ -26,6 +28,8 @@ export function ReservationsList({
   reservations,
   tables,
   floors,
+  selectedTableId,
+  onTableSelect,
   onAction,
 }: ReservationsListProps) {
   if (reservations.length === 0) {
@@ -71,6 +75,8 @@ export function ReservationsList({
             guestsCount={reservation.guestsCount}
             phone={formatGuestPhone(reservation.guestPhone)}
             note={reservation.comment}
+            isSelected={reservation.tableId === selectedTableId}
+            onSelect={() => onTableSelect(reservation.tableId)}
             onAction={onAction}
           />
         );

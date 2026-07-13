@@ -1,12 +1,28 @@
 import { isSameDay, parseISO } from "date-fns";
 
 import type {
+  DiningTable,
+  TableStatus,
+} from "@/features/floor-plan/model/types";
+import type {
   Reservation,
   ReservationFloorReference,
   ReservationStatus,
   ReservationStatusCounts,
   ReservationTableReference,
 } from "./types";
+
+const reservationStatusOverrides = new Set<ReservationStatus>([
+  "PENDING",
+  "CONFIRMED",
+]);
+
+const protectedTableStatuses = new Set<TableStatus>([
+  "OCCUPIED",
+  "BANQUET",
+  "MANUAL_BLOCKED",
+  "INACTIVE",
+]);
 
 export type ReservationTableContext = {
   tableNumber: number;
@@ -29,6 +45,38 @@ export function filterReservationsByStatus(
 ) {
   if (!status) return [...reservations];
   return reservations.filter((reservation) => reservation.status === status);
+}
+
+export function getReservedTableIds(
+  reservations: readonly Reservation[],
+  date: Date,
+) {
+  const tableIds = new Set<string>();
+
+  for (const reservation of reservations) {
+    if (
+      isSameDay(parseISO(reservation.reservationDate), date) &&
+      reservationStatusOverrides.has(reservation.status)
+    ) {
+      tableIds.add(reservation.tableId);
+    }
+  }
+
+  return tableIds;
+}
+
+export function getDisplayedTableStatus(
+  table: DiningTable,
+  reservedTableIds: ReadonlySet<string>,
+) {
+  if (
+    !reservedTableIds.has(table.id) ||
+    protectedTableStatuses.has(table.status)
+  ) {
+    return table.status;
+  }
+
+  return "RESERVED" as const;
 }
 
 export function getReservationStatusCounts(

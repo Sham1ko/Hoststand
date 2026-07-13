@@ -12,6 +12,8 @@ import {
 import {
   filterReservationsByDate,
   filterReservationsByStatus,
+  getDisplayedTableStatus,
+  getReservedTableIds,
   getReservationStatusCounts,
   getReservationTableContext,
 } from "@/features/reservations/model/selectors";
@@ -214,6 +216,52 @@ test("filters reservations by status and treats null as ALL", () => {
     ),
   ).toEqual(["pending"]);
   expect(filterReservationsByStatus(reservations, null)).toEqual(reservations);
+});
+
+test("derives reserved table statuses for active reservations on the selected date", () => {
+  const selectedDate = new Date(2026, 6, 12);
+  const reservedTableIds = getReservedTableIds(
+    [
+      reservation,
+      { ...reservation, id: "pending", tableId: "table-2", status: "PENDING" },
+      { ...reservation, id: "cancelled", tableId: "table-3", status: "CANCELLED" },
+      {
+        ...reservation,
+        id: "tomorrow",
+        tableId: "table-4",
+        reservationDate: "2026-07-13T18:00:00",
+      },
+    ],
+    selectedDate,
+  );
+
+  expect(reservedTableIds).toEqual(new Set(["table-1", "table-2"]));
+  expect(
+    getDisplayedTableStatus(
+      {
+        id: "table-1",
+        number: 1,
+        capacity: 4,
+        floorId: "floor-1",
+        status: "FREE",
+        layout: { x: 0, y: 0, w: 100, h: 100, rotation: 0, shape: "square" },
+      },
+      reservedTableIds,
+    ),
+  ).toBe("RESERVED");
+  expect(
+    getDisplayedTableStatus(
+      {
+        id: "table-2",
+        number: 2,
+        capacity: 4,
+        floorId: "floor-1",
+        status: "OCCUPIED",
+        layout: { x: 0, y: 0, w: 100, h: 100, rotation: 0, shape: "square" },
+      },
+      reservedTableIds,
+    ),
+  ).toBe("OCCUPIED");
 });
 
 test("resolves a reservation table and its floor through tableId", () => {

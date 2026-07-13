@@ -9,6 +9,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { startOfToday } from "date-fns";
 
 import type { CreateReservationInput } from "@/features/reservations/model/schemas";
 import type { ReservationAction } from "@/features/reservations/model/types";
@@ -39,6 +40,10 @@ import type { RestaurantState } from "../model/types";
 type RestaurantContextValue = {
   state: RestaurantState;
   setActiveFloorId: (floorId: string) => Promise<void>;
+  reservationDate: Date;
+  setReservationDate: (date: Date) => void;
+  focusedReservationTableId: string | null;
+  setFocusedReservationTableId: (tableId: string | null) => void;
   createReservation: (input: CreateReservationInput) => Promise<boolean>;
   applyReservationAction: (
     reservationId: string,
@@ -77,6 +82,9 @@ function RestaurantLoadingState() {
 
 export function RestaurantProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<RestaurantState | null>(null);
+  const [reservationDate, setReservationDate] = useState(startOfToday);
+  const [focusedReservationTableId, setFocusedReservationTableId] =
+    useState<string | null>(null);
   const repositoryRef = useRef<RestaurantRepository | null>(null);
 
   useEffect(() => {
@@ -278,6 +286,10 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
       value={{
         state,
         setActiveFloorId,
+        reservationDate,
+        setReservationDate,
+        focusedReservationTableId,
+        setFocusedReservationTableId,
         createReservation,
         applyReservationAction,
         updateTablePosition,

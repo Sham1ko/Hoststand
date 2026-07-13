@@ -3,6 +3,10 @@
 import { useState } from "react";
 
 import { useRestaurant } from "@/features/restaurant-state/ui/restaurant-provider";
+import {
+  getDisplayedTableStatus,
+  getReservedTableIds,
+} from "@/features/reservations/model/selectors";
 
 import { FloorMapControls } from "./floor-map-controls";
 import {
@@ -29,6 +33,9 @@ export function FloorMap() {
     updateZone,
     updateZoneRect,
     deleteZone,
+    reservationDate,
+    focusedReservationTableId,
+    setFocusedReservationTableId,
   } = useRestaurant();
   const [editorTool, setEditorTool] = useState<FloorMapEditorTool>("tables");
   const { floors, tables, activeFloorId } = state;
@@ -84,6 +91,10 @@ export function FloorMap() {
   );
   const visibleTables = tables.filter(
     (table) => table.floorId === activeFloorId,
+  );
+  const reservedTableIds = getReservedTableIds(
+    state.reservations,
+    reservationDate,
   );
   const visibleZones = state.zones.filter(
     (zone) => zone.floorId === activeFloorId && zone.isActive && zone.rect,
@@ -258,32 +269,49 @@ export function FloorMap() {
               </g>
 
               <g aria-label="Столы">
-                {visibleTables.map((table) => (
+                {visibleTables.map((table) => {
+                  const tableWithPreview =
+                    dragPreview?.tableId === table.id
+                      ? {
+                          ...table,
+                          layout: {
+                            ...table.layout,
+                            x: dragPreview.x,
+                            y: dragPreview.y,
+                          },
+                        }
+                      : table;
+
+                  return (
                   <TableNode
                     key={table.id}
-                    table={
-                      dragPreview?.tableId === table.id
-                        ? {
-                            ...table,
-                            layout: {
-                              ...table.layout,
-                              x: dragPreview.x,
-                              y: dragPreview.y,
-                            },
-                          }
-                        : table
-                    }
+                    table={{
+                      ...tableWithPreview,
+                      status: getDisplayedTableStatus(
+                        tableWithPreview,
+                        reservedTableIds,
+                      ),
+                    }}
                     isEditing={isTableEditing}
-                    isSelected={isTableEditing && table.id === selectedTableId}
-                    isInteractionDisabled={isZoneEditing}
-                    onPointerDown={(event) =>
-                      handleTablePointerDown(event, table)
+                    isSelected={
+                      (isTableEditing && table.id === selectedTableId) ||
+                      (!isEditing && table.id === focusedReservationTableId)
                     }
+                    isInteractionDisabled={isZoneEditing}
+                    onPointerDown={(event) => {
+                      if (!isEditing) {
+                        setFocusedReservationTableId(table.id);
+                        return;
+                      }
+
+                      handleTablePointerDown(event, table);
+                    }}
                     onPointerMove={handleTablePointerMove}
                     onPointerUp={finishTableDrag}
                     onPointerCancel={cancelTableDrag}
                   />
-                ))}
+                  );
+                })}
               </g>
             </g>
           </svg>
