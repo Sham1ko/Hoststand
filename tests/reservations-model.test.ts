@@ -4,6 +4,8 @@ import {
   formatReservationTimeRange,
 } from "@/features/reservations/lib/formatters";
 import {
+  filterReservationsByDate,
+  filterReservationsByStatus,
   getReservationStatusCounts,
   getReservationTableContext,
 } from "@/features/reservations/model/selectors";
@@ -51,6 +53,37 @@ test("counts reservations by API status", () => {
     CANCELLED: 1,
     COMPLETED: 0,
   });
+});
+
+test("filters reservations by calendar date", () => {
+  const nextDayReservation: Reservation = {
+    ...reservation,
+    id: "next-day",
+    reservationDate: "2026-07-13T10:00:00",
+  };
+
+  expect(
+    filterReservationsByDate(
+      [reservation, nextDayReservation],
+      new Date(2026, 6, 12),
+    ).map((item) => item.id),
+  ).toEqual(["reservation-test"]);
+});
+
+test("filters reservations by status and treats null as ALL", () => {
+  const pendingReservation: Reservation = {
+    ...reservation,
+    id: "pending",
+    status: "PENDING",
+  };
+  const reservations = [reservation, pendingReservation];
+
+  expect(
+    filterReservationsByStatus(reservations, "PENDING").map(
+      (item) => item.id,
+    ),
+  ).toEqual(["pending"]);
+  expect(filterReservationsByStatus(reservations, null)).toEqual(reservations);
 });
 
 test("resolves a reservation table and its floor through tableId", () => {

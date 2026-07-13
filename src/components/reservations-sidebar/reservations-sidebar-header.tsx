@@ -1,7 +1,6 @@
 "use client";
 
 import { CalendarPlus } from "lucide-react";
-import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import type { ReservationStatusCounts } from "@/features/reservations/model/selectors";
@@ -13,16 +12,20 @@ import {
 } from "./reservations-status-filter";
 
 type ReservationsSidebarHeaderProps = {
+  date: Date;
+  activeStatus: ReservationStatusFilterValue;
   statusCounts: ReservationStatusCounts;
+  onDateChange: (date: Date) => void;
+  onStatusChange: (status: ReservationStatusFilterValue) => void;
 };
 
 export function ReservationsSidebarHeader({
+  date,
+  activeStatus,
   statusCounts,
+  onDateChange,
+  onStatusChange,
 }: ReservationsSidebarHeaderProps) {
-  const [date, setDate] = useState(() => new Date());
-  const [activeStatus, setActiveStatus] =
-    useState<ReservationStatusFilterValue>("ALL");
-
   return (
     <div className="flex flex-col gap-3 border-b border-slate-200 p-4">
       <div className="flex items-center justify-between">
@@ -36,12 +39,12 @@ export function ReservationsSidebarHeader({
         </Button>
       </div>
 
-      <ReservationsDatePicker date={date} onDateChange={setDate} />
+      <ReservationsDatePicker date={date} onDateChange={onDateChange} />
 
       <ReservationsStatusFilter
         value={activeStatus}
         counts={statusCounts}
-        onValueChange={setActiveStatus}
+        onValueChange={onStatusChange}
       />
     </div>
   );

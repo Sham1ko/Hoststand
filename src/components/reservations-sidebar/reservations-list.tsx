@@ -23,6 +23,22 @@ export function ReservationsList({
   tables,
   floors,
 }: ReservationsListProps) {
+  if (reservations.length === 0) {
+    return (
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center bg-slate-50 px-8 text-center">
+        <div className="grid size-10 place-items-center rounded-full bg-white text-slate-400 ring-1 ring-slate-200">
+          <CalendarX2 aria-hidden="true" className="size-5" />
+        </div>
+        <p className="mt-3 text-sm font-medium text-slate-700">
+          Брони не найдены
+        </p>
+        <p className="mt-1 text-xs leading-relaxed text-slate-400">
+          Попробуйте выбрать другую дату или изменить статус
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div
       aria-label="Список броней"
@@ -55,3 +71,4 @@ export function ReservationsList({
     </div>
   );
 }
+import { CalendarX2 } from "lucide-react";

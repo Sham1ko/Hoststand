@@ -1,3 +1,5 @@
+import { isSameDay, parseISO } from "date-fns";
+
 import type {
   Reservation,
   ReservationFloorReference,
@@ -15,6 +17,23 @@ export type ReservationTableContext = {
   capacity: number;
   floorName: string;
 };
+
+export function filterReservationsByDate(
+  reservations: readonly Reservation[],
+  date: Date,
+) {
+  return reservations.filter((reservation) =>
+    isSameDay(parseISO(reservation.reservationDate), date),
+  );
+}
+
+export function filterReservationsByStatus(
+  reservations: readonly Reservation[],
+  status: ReservationStatus | null,
+) {
+  if (!status) return [...reservations];
+  return reservations.filter((reservation) => reservation.status === status);
+}
 
 export function getReservationStatusCounts(
   reservations: readonly Reservation[],
