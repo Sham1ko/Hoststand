@@ -2,7 +2,7 @@
 
 import { format, setHours, setMinutes } from "date-fns";
 import { CalendarPlus, ChevronDown } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { useState, type SubmitEvent } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -37,7 +37,7 @@ export function CreateReservationDialog({
     "yyyy-MM-dd'T'HH:mm",
   );
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(undefined);
 
