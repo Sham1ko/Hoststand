@@ -7,7 +7,7 @@ import type {
 import type {
   CreateTableInput,
   CreateZoneInput,
-} from "@/features/restaurant-state/model/schemas";
+} from "@/features/floor-plan/model/schemas";
 
 type UseFloorMapCommandsOptions = {
   activeFloorId: string;

@@ -1,11 +1,11 @@
-import { createRestaurantTable } from "@/features/restaurant-state/model/actions";
-import { createTableSchema } from "@/features/restaurant-state/model/schemas";
+import { createRestaurantTable } from "@/features/restaurant/model/table-actions";
+import { createTableSchema } from "@/features/floor-plan/model/schemas";
 import {
   invalidPayloadResponse,
   mutationErrorResponse,
   parseJsonBody,
-} from "@/features/restaurant-state/server/http";
-import { mutateRestaurant } from "@/features/restaurant-state/server/restaurant-store";
+} from "@/features/restaurant/server/http";
+import { mutateRestaurant } from "@/features/restaurant/server/restaurant-store";
 
 export async function POST(request: Request) {
   const input = await parseJsonBody(request, createTableSchema);

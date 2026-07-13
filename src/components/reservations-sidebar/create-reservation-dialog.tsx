@@ -22,7 +22,7 @@ import {
   type CreateReservationFormValues,
   type CreateReservationInput,
 } from "@/features/reservations/model/schemas";
-import { useRestaurant } from "@/features/restaurant-state/ui/restaurant-provider";
+import { useRestaurant } from "@/features/restaurant/ui/restaurant-provider";
 
 const fieldClassName =
   "h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15 aria-invalid:border-red-400 aria-invalid:ring-2 aria-invalid:ring-red-100 placeholder:text-slate-400";

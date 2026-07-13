@@ -7,7 +7,7 @@ import {
   filterReservationsByStatus,
   getReservationStatusCounts,
 } from "@/features/reservations/model/selectors";
-import { useRestaurant } from "@/features/restaurant-state/ui/restaurant-provider";
+import { useRestaurant } from "@/features/restaurant/ui/restaurant-provider";
 
 import { ReservationsList } from "./reservations-list";
 import { ReservationsSidebarHeader } from "./reservations-sidebar-header";

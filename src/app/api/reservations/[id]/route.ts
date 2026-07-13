@@ -1,11 +1,11 @@
-import { applyRestaurantReservationAction } from "@/features/restaurant-state/model/actions";
-import { reservationActionSchema } from "@/features/restaurant-state/model/schemas";
+import { applyRestaurantReservationAction } from "@/features/restaurant/model/reservation-actions";
+import { reservationActionSchema } from "@/features/reservations/model/schemas";
 import {
   invalidPayloadResponse,
   mutationErrorResponse,
   parseJsonBody,
-} from "@/features/restaurant-state/server/http";
-import { mutateRestaurant } from "@/features/restaurant-state/server/restaurant-store";
+} from "@/features/restaurant/server/http";
+import { mutateRestaurant } from "@/features/restaurant/server/restaurant-store";
 
 type RouteContext = {
   params: Promise<{ id: string }>;

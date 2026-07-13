@@ -7,7 +7,7 @@ import type {
   TableShape,
   TableStatus,
 } from "@/features/floor-plan/model/types";
-import type { TablePatchInput } from "@/features/restaurant-state/model/schemas";
+import type { TablePatchInput } from "@/features/floor-plan/model/schemas";
 
 const fieldClassName =
   "h-8 w-full rounded-md border border-slate-200 bg-white px-2 text-xs text-slate-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15";

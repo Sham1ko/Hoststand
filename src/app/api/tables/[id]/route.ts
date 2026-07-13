@@ -3,18 +3,18 @@ import {
   type TableDetails,
   updateRestaurantTable,
   updateRestaurantTablePosition,
-} from "@/features/restaurant-state/model/actions";
+} from "@/features/restaurant/model/table-actions";
 import {
   tablePatchSchema,
   type TablePatchInput,
-} from "@/features/restaurant-state/model/schemas";
+} from "@/features/floor-plan/model/schemas";
 import type { DiningTable } from "@/features/floor-plan/model/types";
 import {
   invalidPayloadResponse,
   mutationErrorResponse,
   parseJsonBody,
-} from "@/features/restaurant-state/server/http";
-import { mutateRestaurant } from "@/features/restaurant-state/server/restaurant-store";
+} from "@/features/restaurant/server/http";
+import { mutateRestaurant } from "@/features/restaurant/server/restaurant-store";
 
 type RouteContext = {
   params: Promise<{ id: string }>;

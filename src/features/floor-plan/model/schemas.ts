@@ -105,41 +105,6 @@ export const tableFloorSchema = z
   })
   .strict();
 
-export const reservationActionSchema = z
-  .object({
-    action: z.enum(["confirm", "complete", "cancel"]),
-  })
-  .strict();
-
-export const reservationSchema = z
-  .object({
-    id: entityIdSchema,
-    tableId: entityIdSchema,
-    guestName: z.string().trim().min(1),
-    guestPhone: z.string().trim().min(1),
-    guestsCount: z.number().int().positive(),
-    reservationDate: z
-      .string()
-      .refine((value) => !Number.isNaN(Date.parse(value))),
-    durationMinutes: z.number().int().positive(),
-    comment: z.string().optional(),
-    status: z.enum(["PENDING", "CONFIRMED", "CANCELLED", "COMPLETED"]),
-    createdAt: z
-      .string()
-      .refine((value) => !Number.isNaN(Date.parse(value))),
-  })
-  .strict();
-
-export const restaurantStateSchema = z
-  .object({
-    floors: z.array(tableFloorSchema),
-    zones: z.array(tableZoneSchema),
-    tables: z.array(diningTableSchema),
-    reservations: z.array(reservationSchema),
-    activeFloorId: entityIdSchema,
-  })
-  .strict();
-
 export type CreateTableInput = z.infer<typeof createTableSchema>;
 export type CreateZoneInput = z.infer<typeof createZoneSchema>;
 export type TablePatchInput = z.infer<typeof tablePatchSchema>;

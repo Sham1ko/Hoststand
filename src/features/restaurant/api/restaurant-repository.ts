@@ -1,22 +1,24 @@
 import * as z from "zod";
 
 import type { DiningTable, TableZone } from "@/features/floor-plan/model/types";
-import type { CreateReservationInput } from "@/features/reservations/model/schemas";
-import type {
-  Reservation,
-  ReservationAction,
-} from "@/features/reservations/model/types";
-
 import {
   diningTableSchema,
-  reservationSchema,
-  restaurantStateSchema,
   tableZoneSchema,
   type CreateTableInput,
   type CreateZoneInput,
   type TablePatchInput,
   type ZonePatchInput,
-} from "../model/schemas";
+} from "@/features/floor-plan/model/schemas";
+import {
+  reservationSchema,
+  type CreateReservationInput,
+} from "@/features/reservations/model/schemas";
+import type {
+  Reservation,
+  ReservationAction,
+} from "@/features/reservations/model/types";
+
+import { restaurantStateSchema } from "../model/restaurant-schema";
 import type { RestaurantState } from "../model/types";
 
 export interface RestaurantRepository {

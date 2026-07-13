@@ -1,11 +1,11 @@
 import { createReservationSchema } from "@/features/reservations/model/schemas";
-import { createRestaurantReservation } from "@/features/restaurant-state/model/actions";
+import { createRestaurantReservation } from "@/features/restaurant/model/reservation-actions";
 import {
   invalidPayloadResponse,
   mutationErrorResponse,
   parseJsonBody,
-} from "@/features/restaurant-state/server/http";
-import { mutateRestaurant } from "@/features/restaurant-state/server/restaurant-store";
+} from "@/features/restaurant/server/http";
+import { mutateRestaurant } from "@/features/restaurant/server/restaurant-store";
 
 export async function POST(request: Request) {
   const input = await parseJsonBody(request, createReservationSchema);

@@ -1,16 +1,20 @@
-import { createHttpRestaurantRepository } from "@/features/restaurant-state/api/restaurant-repository";
-import { createRestaurantSeed } from "@/features/restaurant-state/data/seed";
+import { createHttpRestaurantRepository } from "@/features/restaurant/api/restaurant-repository";
+import { createRestaurantSeed } from "@/features/restaurant/data/seed";
 import {
   applyRestaurantReservationAction,
-  createRestaurantTable,
   createRestaurantReservation,
-  createRestaurantZone,
+} from "@/features/restaurant/model/reservation-actions";
+import {
+  createRestaurantTable,
   deleteRestaurantTable,
-  deleteRestaurantZone,
   updateRestaurantTablePosition,
   updateRestaurantTable,
+} from "@/features/restaurant/model/table-actions";
+import {
+  createRestaurantZone,
+  deleteRestaurantZone,
   updateRestaurantZone,
-} from "@/features/restaurant-state/model/actions";
+} from "@/features/restaurant/model/zone-actions";
 import {
   GET as GET_RESTAURANT,
 } from "@/app/api/restaurant/route";

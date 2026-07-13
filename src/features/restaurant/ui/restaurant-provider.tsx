@@ -13,6 +13,11 @@ import { startOfToday } from "date-fns";
 import { RefreshCw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import type {
+  CreateTableInput,
+  CreateZoneInput,
+  TablePatchInput,
+} from "@/features/floor-plan/model/schemas";
 import type { DiningTable, TableZone } from "@/features/floor-plan/model/types";
 import type { CreateReservationInput } from "@/features/reservations/model/schemas";
 import type { ReservationAction } from "@/features/reservations/model/types";
@@ -21,12 +26,7 @@ import {
   createHttpRestaurantRepository,
   type RestaurantRepository,
 } from "../api/restaurant-repository";
-import type { ZoneDetails } from "../model/actions";
-import type {
-  CreateTableInput,
-  CreateZoneInput,
-  TablePatchInput,
-} from "../model/schemas";
+import type { ZoneDetails } from "../model/zone-actions";
 import type { RestaurantState } from "../model/types";
 
 type RestaurantContextValue = {

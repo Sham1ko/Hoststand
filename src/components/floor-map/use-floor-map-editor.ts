@@ -11,7 +11,7 @@ import {
   type Point,
 } from "@/features/floor-plan/model/geometry";
 import type { DiningTable } from "@/features/floor-plan/model/types";
-import type { TablePosition } from "@/features/restaurant-state/model/actions";
+import type { TablePosition } from "@/features/restaurant/model/table-actions";
 
 type TableDragState = {
   tableId: string;

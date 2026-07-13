@@ -1,14 +1,14 @@
 import {
   deleteRestaurantZone,
   updateRestaurantZone,
-} from "@/features/restaurant-state/model/actions";
-import { zonePatchSchema } from "@/features/restaurant-state/model/schemas";
+} from "@/features/restaurant/model/zone-actions";
+import { zonePatchSchema } from "@/features/floor-plan/model/schemas";
 import {
   invalidPayloadResponse,
   mutationErrorResponse,
   parseJsonBody,
-} from "@/features/restaurant-state/server/http";
-import { mutateRestaurant } from "@/features/restaurant-state/server/restaurant-store";
+} from "@/features/restaurant/server/http";
+import { mutateRestaurant } from "@/features/restaurant/server/restaurant-store";
 
 type RouteContext = {
   params: Promise<{ id: string }>;

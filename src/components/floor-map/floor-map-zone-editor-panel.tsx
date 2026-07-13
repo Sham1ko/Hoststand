@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
 import type { TableZone } from "@/features/floor-plan/model/types";
-import type { ZoneDetails } from "@/features/restaurant-state/model/actions";
+import type { ZoneDetails } from "@/features/restaurant/model/zone-actions";
 
 const fieldClassName =
   "h-8 w-full rounded-md border border-slate-200 bg-white px-2 text-xs text-slate-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15";

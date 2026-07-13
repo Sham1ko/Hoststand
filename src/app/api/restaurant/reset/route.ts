@@ -1,4 +1,4 @@
-import { resetRestaurant } from "@/features/restaurant-state/server/restaurant-store";
+import { resetRestaurant } from "@/features/restaurant/server/restaurant-store";
 
 export const dynamic = "force-dynamic";
 

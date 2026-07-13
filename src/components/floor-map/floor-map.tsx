@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { useRestaurant } from "@/features/restaurant-state/ui/restaurant-provider";
+import { useRestaurant } from "@/features/restaurant/ui/restaurant-provider";
 import { getReservedTableIds } from "@/features/reservations/model/selectors";
 
 import { FloorMapCanvas } from "./floor-map-canvas";
