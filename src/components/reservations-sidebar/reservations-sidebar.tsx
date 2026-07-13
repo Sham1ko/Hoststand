@@ -12,14 +12,10 @@ import {
 } from "@/features/reservations/model/selectors";
 import type {
   Reservation,
+  ReservationAction,
   ReservationsResponse,
-  ReservationStatus,
   ReservationStatusCounts,
 } from "@/features/reservations/model/types";
-import {
-  cancelReservation,
-  completeReservation,
-} from "@/features/reservations/model/transitions";
 
 import { ReservationsList } from "./reservations-list";
 import { ReservationsSidebarHeader } from "./reservations-sidebar-header";
@@ -32,18 +28,6 @@ const emptyStatusCounts: ReservationStatusCounts = {
   CANCELLED: 0,
   COMPLETED: 0,
 };
-
-function moveStatusCount(
-  counts: ReservationStatusCounts,
-  from: ReservationStatus,
-  to: ReservationStatus,
-): ReservationStatusCounts {
-  return {
-    ...counts,
-    [from]: counts[from] - 1,
-    [to]: counts[to] + 1,
-  };
-}
 
 export function ReservationsSidebar() {
   const [initialDate] = useState(() => startOfToday());
@@ -68,32 +52,31 @@ export function ReservationsSidebar() {
     activeStatus === "ALL" ? null : activeStatus,
   );
 
-  const handleComplete = (reservationId: string) => {
-    const reservation = reservations.find((item) => item.id === reservationId);
-    if (reservation?.status !== "CONFIRMED") return;
+  const runReservationAction = (
+    reservationId: string,
+    action: ReservationAction,
+  ) => {
+    fetch(
+      `/api/reservations/${reservationId}?date=${format(date, "yyyy-MM-dd")}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      },
+    ).then(async (response) => {
+      if (!response.ok) return;
 
-    setReservations((current) =>
-      completeReservation(current, reservationId),
-    );
-    setStatusCounts((current) =>
-      moveStatusCount(current, reservation.status, "COMPLETED"),
-    );
+      const data = (await response.json()) as ReservationsResponse;
+      setReservations(data.data);
+      setStatusCounts(data.meta.statusCounts);
+    });
   };
 
-  const handleCancel = (reservationId: string) => {
-    const reservation = reservations.find((item) => item.id === reservationId);
-    if (
-      reservation?.status !== "PENDING" &&
-      reservation?.status !== "CONFIRMED"
-    ) {
-      return;
-    }
+  const handleComplete = (reservationId: string) =>
+    runReservationAction(reservationId, "complete");
 
-    setReservations((current) => cancelReservation(current, reservationId));
-    setStatusCounts((current) =>
-      moveStatusCount(current, reservation.status, "CANCELLED"),
-    );
-  };
+  const handleCancel = (reservationId: string) =>
+    runReservationAction(reservationId, "cancel");
 
   return (
     <aside

@@ -1,4 +1,5 @@
 import { GET } from "@/app/api/reservations/route";
+import { PATCH } from "@/app/api/reservations/[id]/route";
 import {
   formatGuestPhone,
   formatGuestsCount,
@@ -70,6 +71,36 @@ test("returns reservation status counts in API metadata", async () => {
   expect(body.meta.statusCounts).toEqual(
     getReservationStatusCounts(body.data),
   );
+});
+
+test("completes and cancels reservations through the API", async () => {
+  const completeResponse = await PATCH(
+    new Request("http://localhost/api/reservations/reservation-1", {
+      method: "PATCH",
+      body: JSON.stringify({ action: "complete" }),
+    }),
+    { params: Promise.resolve({ id: "reservation-1" }) },
+  );
+  const completed = (await completeResponse.json()) as ReservationsResponse;
+
+  expect(
+    completed.data.find((item) => item.id === "reservation-1")?.status,
+  ).toBe("COMPLETED");
+  expect(completed.meta.statusCounts.COMPLETED).toBe(2);
+
+  const cancelResponse = await PATCH(
+    new Request("http://localhost/api/reservations/reservation-3", {
+      method: "PATCH",
+      body: JSON.stringify({ action: "cancel" }),
+    }),
+    { params: Promise.resolve({ id: "reservation-3" }) },
+  );
+  const cancelled = (await cancelResponse.json()) as ReservationsResponse;
+
+  expect(
+    cancelled.data.find((item) => item.id === "reservation-3")?.status,
+  ).toBe("CANCELLED");
+  expect(cancelled.meta.statusCounts.CANCELLED).toBe(2);
 });
 
 test("filters reservations by calendar date", () => {
