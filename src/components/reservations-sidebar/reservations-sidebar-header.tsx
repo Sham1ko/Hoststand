@@ -1,10 +1,8 @@
 "use client";
 
-import { CalendarPlus } from "lucide-react";
-
-import { Button } from "@/components/ui/button";
 import type { ReservationStatusCounts } from "@/features/reservations/model/types";
 
+import { CreateReservationDialog } from "./create-reservation-dialog";
 import { ReservationsDatePicker } from "./reservations-date-picker";
 import {
   ReservationsStatusFilter,
@@ -33,10 +31,7 @@ export function ReservationsSidebarHeader({
           Брони
         </h2>
 
-        <Button type="button" size="default">
-          <CalendarPlus aria-hidden="true" data-icon="inline-start" />
-          Новая
-        </Button>
+        <CreateReservationDialog date={date} />
       </div>
 
       <ReservationsDatePicker date={date} onDateChange={onDateChange} />
