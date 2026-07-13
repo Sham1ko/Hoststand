@@ -38,20 +38,32 @@ function useReservations(date: Date) {
 
   const dateParam = format(date, "yyyy-MM-dd");
 
-  const loadReservations = useCallback(async () => {
-    const data = await getReservations(dateParam);
+  const loadReservations = useCallback(async (signal: AbortSignal) => {
+    const data = await getReservations(dateParam, signal);
 
-    if (!data) return;
+    if (!data || signal.aborted) return;
     setReservations(data.data);
     setStatusCounts(data.meta.statusCounts);
   }, [dateParam]);
 
   useEffect(() => {
-    loadReservations();
-    window.addEventListener(RESERVATIONS_CHANGED_EVENT, loadReservations);
+    const controller = new AbortController();
+    const reloadReservations = () => {
+      void loadReservations(controller.signal);
+    };
+
+    reloadReservations();
+    window.addEventListener(
+      RESERVATIONS_CHANGED_EVENT,
+      reloadReservations,
+    );
 
     return () => {
-      window.removeEventListener(RESERVATIONS_CHANGED_EVENT, loadReservations);
+      controller.abort();
+      window.removeEventListener(
+        RESERVATIONS_CHANGED_EVENT,
+        reloadReservations,
+      );
     };
   }, [loadReservations]);
 
@@ -78,8 +90,7 @@ function useReservations(date: Date) {
 }
 
 export function ReservationsSidebar() {
-  const [initialDate] = useState(() => startOfToday());
-  const [date, setDate] = useState(initialDate);
+  const [date, setDate] = useState(startOfToday);
   const [activeStatus, setActiveStatus] =
     useState<ReservationStatusFilterValue>("ALL");
   const { reservations, statusCounts, runReservationAction } =

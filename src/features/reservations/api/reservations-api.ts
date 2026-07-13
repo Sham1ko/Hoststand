@@ -3,8 +3,18 @@ import type {
   ReservationsResponse,
 } from "../model/types";
 
-export async function getReservations(dateParam: string) {
-  const response = await fetch(`/api/reservations?date=${dateParam}`);
+export async function getReservations(
+  dateParam: string,
+  signal?: AbortSignal,
+) {
+  let response: Response;
+
+  try {
+    response = await fetch(`/api/reservations?date=${dateParam}`, { signal });
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") return null;
+    throw error;
+  }
 
   if (!response.ok) return null;
 
