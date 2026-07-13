@@ -21,7 +21,7 @@ type ZoneDragState = {
   hasMoved: boolean;
 };
 
-type ZonePreview = NonNullable<TableZone["rect"]> & {
+export type ZoneDragPreview = NonNullable<TableZone["rect"]> & {
   zoneId: string;
 };
 
@@ -60,7 +60,7 @@ export function useFloorMapZoneEditor({
 }: UseFloorMapZoneEditorOptions) {
   const zoneDragRef = useRef<ZoneDragState | null>(null);
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
-  const [dragPreview, setDragPreview] = useState<ZonePreview | null>(null);
+  const [dragPreview, setDragPreview] = useState<ZoneDragPreview | null>(null);
 
   const selectZone = (zoneId: string) => {
     setSelectedZoneId(zoneId);

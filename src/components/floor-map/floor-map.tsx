@@ -3,12 +3,9 @@
 import { useState } from "react";
 
 import { useRestaurant } from "@/features/restaurant-state/ui/restaurant-provider";
-import type { TablePosition } from "@/features/restaurant-state/model/actions";
-import {
-  getDisplayedTableStatus,
-  getReservedTableIds,
-} from "@/features/reservations/model/selectors";
+import { getReservedTableIds } from "@/features/reservations/model/selectors";
 
+import { FloorMapCanvas } from "./floor-map-canvas";
 import { FloorMapControls } from "./floor-map-controls";
 import {
   FloorMapEditorControls,
@@ -16,11 +13,11 @@ import {
 } from "./floor-map-editor-controls";
 import { FloorMapEditorPanel } from "./floor-map-editor-panel";
 import { FloorMapZoneEditorPanel } from "./floor-map-zone-editor-panel";
-import { TableNode } from "./table-node";
 import { useFloorMapCamera } from "./use-floor-map-camera";
+import { useFloorMapCommands } from "./use-floor-map-commands";
 import { useFloorMapEditor } from "./use-floor-map-editor";
 import { useFloorMapZoneEditor } from "./use-floor-map-zone-editor";
-import { ZoneNode } from "./zone-node";
+import { usePendingTablePositions } from "./use-pending-table-positions";
 
 export function FloorMap() {
   const {
@@ -39,10 +36,13 @@ export function FloorMap() {
     setFocusedReservationTableId,
   } = useRestaurant();
   const [editorTool, setEditorTool] = useState<FloorMapEditorTool>("tables");
-  const [pendingTablePositions, setPendingTablePositions] = useState<
-    Record<string, TablePosition>
-  >({});
-  const [isSavingTablePositions, setIsSavingTablePositions] = useState(false);
+  const {
+    positions: pendingTablePositions,
+    isSaving: isSavingTablePositions,
+    stagePosition: stageTablePosition,
+    discardPosition: discardPendingTablePosition,
+    savePositions: saveTablePositions,
+  } = usePendingTablePositions(updateTablePosition);
   const { floors, tables, activeFloorId } = state;
   const {
     svgRef,
@@ -68,12 +68,7 @@ export function FloorMap() {
     cancelTableDrag,
   } = useFloorMapEditor({
     camera,
-    onTablePositionChange: (tableId, position) => {
-      setPendingTablePositions((currentPositions) => ({
-        ...currentPositions,
-        [tableId]: position,
-      }));
-    },
+    onTablePositionChange: stageTablePosition,
   });
   const isTableEditing = isEditing && editorTool === "tables";
   const isZoneEditing = isEditing && editorTool === "zones";
@@ -109,46 +104,17 @@ export function FloorMap() {
   );
   const selectedTable = tables.find((table) => table.id === selectedTableId);
   const selectedZone = state.zones.find((zone) => zone.id === selectedZoneId);
-
-  const createTableOnActiveFloor = async () => {
-    const offset = (visibleTables.length % 4) * 40;
-    const table = await createTable({
-      number: Math.max(0, ...tables.map((item) => item.number)) + 1,
-      capacity: 4,
-      floorId: activeFloorId,
-      status: "FREE",
-      layout: {
-        x: 800 + offset,
-        y: 500 + offset,
-        w: 150,
-        h: 150,
-        rotation: 0,
-        shape: "square",
-      },
+  const { createTableOnActiveFloor, createZoneOnActiveFloor } =
+    useFloorMapCommands({
+      activeFloorId,
+      tables,
+      visibleTableCount: visibleTables.length,
+      visibleZones,
+      createTable,
+      createZone,
+      selectTable,
+      selectZone,
     });
-
-    if (table) selectTable(table.id);
-  };
-
-  const createZoneOnActiveFloor = async () => {
-    const offset = (visibleZones.length % 4) * 40;
-    const zone = await createZone({
-      floorId: activeFloorId,
-      name: `Новая зона ${visibleZones.length + 1}`,
-      color: "#0ea5e9",
-      sortOrder:
-        Math.max(0, ...visibleZones.map((item) => item.sortOrder)) + 1,
-      isActive: true,
-      rect: {
-        x: 560 + offset,
-        y: 320 + offset,
-        w: 400,
-        h: 260,
-      },
-    });
-
-    if (zone) selectZone(zone.id);
-  };
 
   const selectEditorTool = (tool: FloorMapEditorTool) => {
     setEditorTool(tool);
@@ -157,38 +123,10 @@ export function FloorMap() {
   };
 
   const toggleEditor = async () => {
-    if (isEditing) {
-      const positions = Object.entries(pendingTablePositions);
-
-      if (positions.length > 0) {
-        setIsSavingTablePositions(true);
-
-        const results = await Promise.all(
-          positions.map(([tableId, position]) =>
-            updateTablePosition(tableId, position),
-          ),
-        );
-
-        setIsSavingTablePositions(false);
-
-        if (results.some((isSaved) => !isSaved)) return;
-
-        setPendingTablePositions({});
-      }
-    }
+    if (isEditing && !(await saveTablePositions())) return;
 
     toggleEditing();
     clearZoneSelection();
-  };
-
-  const discardPendingTablePosition = (tableId: string) => {
-    setPendingTablePositions((currentPositions) => {
-      if (!(tableId in currentPositions)) return currentPositions;
-
-      const nextPositions = { ...currentPositions };
-      delete nextPositions[tableId];
-      return nextPositions;
-    });
   };
 
   return (
@@ -244,121 +182,37 @@ export function FloorMap() {
         </div>
 
         <div className="relative min-h-0 flex-1">
-          <svg
-            ref={svgRef}
-            viewBox={`0 0 ${viewport.width || 1} ${viewport.height || 1}`}
-            preserveAspectRatio="none"
-            role="img"
-            aria-labelledby="floor-map-title floor-map-description"
-            className="size-full cursor-grab touch-none select-none active:cursor-grabbing"
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={finishPan}
-            onPointerCancel={finishPan}
+          <FloorMapCanvas
+            svgRef={svgRef}
+            viewport={viewport}
+            camera={camera}
+            floorName={selectedFloor?.name}
+            tables={visibleTables}
+            zones={visibleZones}
+            reservedTableIds={reservedTableIds}
+            pendingTablePositions={pendingTablePositions}
+            tableDragPreview={dragPreview}
+            zoneDragPreview={zoneDragPreview}
+            isEditing={isEditing}
+            isTableEditing={isTableEditing}
+            isZoneEditing={isZoneEditing}
+            selectedTableId={selectedTableId}
+            selectedZoneId={selectedZoneId}
+            focusedReservationTableId={focusedReservationTableId}
+            onTableFocus={setFocusedReservationTableId}
+            onCanvasPointerDown={handlePointerDown}
+            onCanvasPointerMove={handlePointerMove}
+            onCanvasPointerEnd={finishPan}
             onWheel={handleWheel}
-          >
-            <title id="floor-map-title">{`Карта столов: ${
-              selectedFloor?.name ?? "этаж не выбран"
-            }`}</title>
-            <desc id="floor-map-description">
-              {`На плане отображено столов: ${visibleTables.length}, зон: ${
-                visibleZones.length
-              }`}
-            </desc>
-
-            <defs>
-              <pattern
-                id="floor-map-grid"
-                width="20"
-                height="20"
-                patternUnits="userSpaceOnUse"
-              >
-                <circle cx="1.5" cy="1.5" r="1.5" className="fill-slate-200" />
-              </pattern>
-            </defs>
-
-            <rect width="100%" height="100%" className="fill-slate-50" />
-
-            <g
-              transform={`translate(${camera.offsetX} ${camera.offsetY}) scale(${camera.scale})`}
-            >
-              <rect width="1600" height="1000" className="fill-white" />
-              <rect width="1600" height="1000" fill="url(#floor-map-grid)" />
-
-              <g aria-label="Зоны">
-                {visibleZones.map((zone) => (
-                  <ZoneNode
-                    key={zone.id}
-                    zone={zone}
-                    rect={
-                      zoneDragPreview?.zoneId === zone.id
-                        ? zoneDragPreview
-                        : zone.rect
-                    }
-                    isEditing={isZoneEditing}
-                    isSelected={isZoneEditing && zone.id === selectedZoneId}
-                    onPointerDown={(event) =>
-                      handleZonePointerDown(event, zone)
-                    }
-                    onPointerMove={handleZonePointerMove}
-                    onPointerUp={finishZoneDrag}
-                    onPointerCancel={cancelZoneDrag}
-                  />
-                ))}
-              </g>
-
-              <g aria-label="Столы">
-                {visibleTables.map((table) => {
-                  const pendingPosition = pendingTablePositions[table.id];
-                  const previewPosition =
-                    dragPreview?.tableId === table.id
-                      ? dragPreview
-                      : pendingPosition;
-                  const tableWithPreview =
-                    previewPosition
-                      ? {
-                          ...table,
-                          layout: {
-                            ...table.layout,
-                            x: previewPosition.x,
-                            y: previewPosition.y,
-                          },
-                        }
-                      : table;
-
-                  return (
-                  <TableNode
-                    key={table.id}
-                    table={{
-                      ...tableWithPreview,
-                      status: getDisplayedTableStatus(
-                        tableWithPreview,
-                        reservedTableIds,
-                      ),
-                    }}
-                    isEditing={isTableEditing}
-                    isSelected={
-                      (isTableEditing && table.id === selectedTableId) ||
-                      (!isEditing && table.id === focusedReservationTableId)
-                    }
-                    isInteractionDisabled={isZoneEditing}
-                    onPointerDown={(event) => {
-                      if (!isEditing) {
-                        setFocusedReservationTableId(table.id);
-                        return;
-                      }
-
-                      handleTablePointerDown(event, tableWithPreview);
-                    }}
-                    onPointerMove={handleTablePointerMove}
-                    onPointerUp={finishTableDrag}
-                    onPointerCancel={cancelTableDrag}
-                  />
-                  );
-                })}
-              </g>
-            </g>
-          </svg>
+            onTablePointerDown={handleTablePointerDown}
+            onTablePointerMove={handleTablePointerMove}
+            onTablePointerUp={finishTableDrag}
+            onTablePointerCancel={cancelTableDrag}
+            onZonePointerDown={handleZonePointerDown}
+            onZonePointerMove={handleZonePointerMove}
+            onZonePointerUp={finishZoneDrag}
+            onZonePointerCancel={cancelZoneDrag}
+          />
 
           {isTableEditing && selectedTable && (
             <FloorMapEditorPanel

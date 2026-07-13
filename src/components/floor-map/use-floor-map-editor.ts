@@ -22,7 +22,7 @@ type TableDragState = {
   hasMoved: boolean;
 };
 
-type DragPreview = TablePosition & {
+export type TableDragPreview = TablePosition & {
   tableId: string;
 };
 
@@ -60,7 +60,7 @@ export function useFloorMapEditor({
   const tableDragRef = useRef<TableDragState | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
-  const [dragPreview, setDragPreview] = useState<DragPreview | null>(null);
+  const [dragPreview, setDragPreview] = useState<TableDragPreview | null>(null);
 
   const toggleEditing = () => {
     setIsEditing((currentValue) => !currentValue);
