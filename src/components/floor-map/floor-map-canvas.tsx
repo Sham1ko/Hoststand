@@ -12,7 +12,6 @@ import type {
   DiningTable,
   TableZone,
 } from "@/features/floor-plan/model/types";
-import type { TablePosition } from "@/features/restaurant-state/model/actions";
 import { getDisplayedTableStatus } from "@/features/reservations/model/selectors";
 
 import { TableNode } from "./table-node";
@@ -28,7 +27,6 @@ type FloorMapCanvasProps = {
   tables: DiningTable[];
   zones: TableZone[];
   reservedTableIds: ReadonlySet<string>;
-  pendingTablePositions: Record<string, TablePosition>;
   tableDragPreview: TableDragPreview | null;
   zoneDragPreview: ZoneDragPreview | null;
   isEditing: boolean;
@@ -66,7 +64,6 @@ export function FloorMapCanvas({
   tables,
   zones,
   reservedTableIds,
-  pendingTablePositions,
   tableDragPreview,
   zoneDragPreview,
   isEditing,
@@ -163,11 +160,10 @@ export function FloorMapCanvas({
 
         <g aria-label="Столы">
           {tables.map((table) => {
-            const pendingPosition = pendingTablePositions[table.id];
             const previewPosition =
               tableDragPreview?.tableId === table.id
                 ? tableDragPreview
-                : pendingPosition;
+                : undefined;
             const displayedTable = previewPosition
               ? {
                   ...table,

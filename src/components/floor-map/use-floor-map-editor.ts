@@ -62,8 +62,15 @@ export function useFloorMapEditor({
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
   const [dragPreview, setDragPreview] = useState<TableDragPreview | null>(null);
 
-  const toggleEditing = () => {
-    setIsEditing((currentValue) => !currentValue);
+  const startEditing = () => {
+    setIsEditing(true);
+    setSelectedTableId(null);
+    setDragPreview(null);
+    tableDragRef.current = null;
+  };
+
+  const stopEditing = () => {
+    setIsEditing(false);
     setSelectedTableId(null);
     setDragPreview(null);
     tableDragRef.current = null;
@@ -177,7 +184,8 @@ export function useFloorMapEditor({
     isEditing,
     selectedTableId,
     dragPreview,
-    toggleEditing,
+    startEditing,
+    stopEditing,
     selectTable,
     clearSelection,
     handleTablePointerDown,

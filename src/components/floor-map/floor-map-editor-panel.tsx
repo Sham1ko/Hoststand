@@ -1,6 +1,5 @@
-import { Save, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Trash2 } from "lucide-react";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import type {
@@ -8,7 +7,7 @@ import type {
   TableShape,
   TableStatus,
 } from "@/features/floor-plan/model/types";
-import type { TableDetails } from "@/features/restaurant-state/model/actions";
+import type { TablePatchInput } from "@/features/restaurant-state/model/schemas";
 
 const fieldClassName =
   "h-8 w-full rounded-md border border-slate-200 bg-white px-2 text-xs text-slate-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15";
@@ -31,73 +30,76 @@ const tableStatuses: { value: TableStatus; label: string }[] = [
 ];
 
 type TableFormValues = {
-  number: number;
-  capacity: number;
+  number: string;
+  capacity: string;
   shape: TableShape;
-  rotation: number;
-  width: number;
-  height: number;
+  rotation: string;
+  width: string;
+  height: string;
   status: TableStatus;
 };
 
 function getTableFormValues(table: DiningTable): TableFormValues {
   return {
-    number: table.number,
-    capacity: table.capacity,
+    number: String(table.number),
+    capacity: String(table.capacity),
     shape: table.layout.shape,
-    rotation: table.layout.rotation,
-    width: table.layout.w,
-    height: table.layout.h,
+    rotation: String(table.layout.rotation),
+    width: String(table.layout.w),
+    height: String(table.layout.h),
     status: table.status,
   };
 }
 
+type NumericTableField =
+  | "number"
+  | "capacity"
+  | "rotation"
+  | "width"
+  | "height";
+
 type FloorMapEditorPanelProps = {
   table: DiningTable;
   hasReservations: boolean;
-  onSave: (details: TableDetails) => Promise<boolean>;
+  onChange: (patch: TablePatchInput) => void;
   onDelete: () => Promise<boolean>;
 };
 
 export function FloorMapEditorPanel({
   table,
   hasReservations,
-  onSave,
+  onChange,
   onDelete,
 }: FloorMapEditorPanelProps) {
-  const [error, setError] = useState<string>();
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { isSubmitting },
-  } = useForm<TableFormValues>({
-    defaultValues: getTableFormValues(table),
-  });
+  const [values, setValues] = useState(() => getTableFormValues(table));
 
-  useEffect(() => {
-    reset(getTableFormValues(table));
-    setError(undefined);
-  }, [reset, table]);
+  const updateNumericField = (field: NumericTableField, rawValue: string) => {
+    setValues((currentValues) => ({
+      ...currentValues,
+      [field]: rawValue,
+    }));
 
-  const saveTable = async (values: TableFormValues) => {
-    setError(undefined);
+    if (rawValue.trim() === "") return;
 
-    const updated = await onSave({
-      number: values.number,
-      capacity: values.capacity,
-      status: values.status,
-      layout: {
-        shape: values.shape,
-        rotation: values.rotation,
-        w: values.width,
-        h: values.height,
-      },
-    });
+    const value = Number(rawValue);
 
-    if (!updated) {
-      setError("Проверьте номер и параметры стола");
+    if (!Number.isFinite(value)) return;
+
+    if (field === "number" || field === "capacity") {
+      if (!Number.isInteger(value) || value < 1) return;
+
+      onChange({ [field]: value });
+      return;
     }
+
+    if (field === "rotation") {
+      onChange({ layout: { rotation: value } });
+      return;
+    }
+
+    if (value < 40) return;
+
+    onChange({ layout: { [field === "width" ? "w" : "h"]: value } });
   };
 
   const handleDelete = async () => {
@@ -107,10 +109,9 @@ export function FloorMapEditorPanel({
   };
 
   return (
-    <form
+    <section
       aria-label={`Свойства стола №${table.number}`}
       className="absolute top-4 left-4 z-10 w-64 rounded-lg border border-slate-200 bg-white p-3 shadow-lg"
-      onSubmit={handleSubmit(saveTable)}
     >
       <div className="mb-3 flex items-center justify-between gap-2">
         <h3 className="text-sm font-semibold text-slate-950">
@@ -141,7 +142,10 @@ export function FloorMapEditorPanel({
             min={1}
             required
             className={fieldClassName}
-            {...register("number", { valueAsNumber: true })}
+            value={values.number}
+            onChange={(event) =>
+              updateNumericField("number", event.target.value)
+            }
           />
         </label>
         <label className={labelClassName}>
@@ -151,14 +155,22 @@ export function FloorMapEditorPanel({
             min={1}
             required
             className={fieldClassName}
-            {...register("capacity", { valueAsNumber: true })}
+            value={values.capacity}
+            onChange={(event) =>
+              updateNumericField("capacity", event.target.value)
+            }
           />
         </label>
         <label className={labelClassName}>
           Форма
           <select
             className={fieldClassName}
-            {...register("shape")}
+            value={values.shape}
+            onChange={(event) => {
+              const shape = event.target.value as TableShape;
+              setValues((currentValues) => ({ ...currentValues, shape }));
+              onChange({ layout: { shape } });
+            }}
           >
             {tableShapes.map((shape) => (
               <option key={shape.value} value={shape.value}>
@@ -172,7 +184,10 @@ export function FloorMapEditorPanel({
           <input
             type="number"
             className={fieldClassName}
-            {...register("rotation", { valueAsNumber: true })}
+            value={values.rotation}
+            onChange={(event) =>
+              updateNumericField("rotation", event.target.value)
+            }
           />
         </label>
         <label className={labelClassName}>
@@ -182,7 +197,10 @@ export function FloorMapEditorPanel({
             min={40}
             required
             className={fieldClassName}
-            {...register("width", { valueAsNumber: true })}
+            value={values.width}
+            onChange={(event) =>
+              updateNumericField("width", event.target.value)
+            }
           />
         </label>
         <label className={labelClassName}>
@@ -192,7 +210,10 @@ export function FloorMapEditorPanel({
             min={40}
             required
             className={fieldClassName}
-            {...register("height", { valueAsNumber: true })}
+            value={values.height}
+            onChange={(event) =>
+              updateNumericField("height", event.target.value)
+            }
           />
         </label>
       </div>
@@ -201,7 +222,12 @@ export function FloorMapEditorPanel({
         Статус
         <select
           className={fieldClassName}
-          {...register("status")}
+          value={values.status}
+          onChange={(event) => {
+            const status = event.target.value as TableStatus;
+            setValues((currentValues) => ({ ...currentValues, status }));
+            onChange({ status });
+          }}
         >
           {tableStatuses.map((status) => (
             <option key={status.value} value={status.value}>
@@ -211,20 +237,12 @@ export function FloorMapEditorPanel({
         </select>
       </label>
 
-      {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
       {hasReservations && (
         <p className="mt-2 text-xs text-slate-500">Есть связанные брони</p>
       )}
-
-      <Button
-        type="submit"
-        size="sm"
-        className="mt-3 w-full"
-        disabled={isSubmitting}
-      >
-        <Save aria-hidden="true" data-icon="inline-start" />
-        Сохранить
-      </Button>
-    </form>
+      <p className="mt-3 text-[11px] text-slate-400">
+        Сохранение — общей кнопкой сверху
+      </p>
+    </section>
   );
 }

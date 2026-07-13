@@ -13,24 +13,20 @@ import { startOfToday } from "date-fns";
 import { RefreshCw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import type { DiningTable, TableZone } from "@/features/floor-plan/model/types";
 import type { CreateReservationInput } from "@/features/reservations/model/schemas";
 import type { ReservationAction } from "@/features/reservations/model/types";
-import type { TableZone } from "@/features/floor-plan/model/types";
 
 import {
   createHttpRestaurantRepository,
   type RestaurantRepository,
 } from "../api/restaurant-repository";
-import type {
-  TableDetails,
-  TablePosition,
-  ZoneDetails,
-} from "../model/actions";
+import type { ZoneDetails } from "../model/actions";
 import type {
   CreateTableInput,
   CreateZoneInput,
+  TablePatchInput,
 } from "../model/schemas";
-import type { DiningTable } from "@/features/floor-plan/model/types";
 import type { RestaurantState } from "../model/types";
 
 type RestaurantContextValue = {
@@ -45,12 +41,8 @@ type RestaurantContextValue = {
     reservationId: string,
     action: ReservationAction,
   ) => Promise<boolean>;
-  updateTablePosition: (
-    tableId: string,
-    position: TablePosition,
-  ) => Promise<boolean>;
   createTable: (table: CreateTableInput) => Promise<DiningTable | null>;
-  updateTable: (tableId: string, details: TableDetails) => Promise<boolean>;
+  updateTable: (tableId: string, patch: TablePatchInput) => Promise<boolean>;
   deleteTable: (tableId: string) => Promise<boolean>;
   createZone: (zone: CreateZoneInput) => Promise<TableZone | null>;
   updateZone: (zoneId: string, details: ZoneDetails) => Promise<boolean>;
@@ -214,30 +206,6 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
     [enqueueMutation],
   );
 
-  const updateTablePosition = useCallback(
-    async (tableId: string, position: TablePosition) => {
-      try {
-        const table = await enqueueMutation((repository) =>
-          repository.patchTable(tableId, { layout: position }),
-        );
-
-        setState((currentState) =>
-          currentState
-            ? {
-                ...currentState,
-                tables: replaceEntity(currentState.tables, table),
-              }
-            : currentState,
-        );
-
-        return true;
-      } catch {
-        return false;
-      }
-    },
-    [enqueueMutation],
-  );
-
   const createTable = useCallback(
     async (input: CreateTableInput) => {
       try {
@@ -260,10 +228,10 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
   );
 
   const updateTable = useCallback(
-    async (tableId: string, details: TableDetails) => {
+    async (tableId: string, patch: TablePatchInput) => {
       try {
         const table = await enqueueMutation((repository) =>
-          repository.patchTable(tableId, details),
+          repository.patchTable(tableId, patch),
         );
 
         setState((currentState) =>
@@ -436,7 +404,6 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
         setFocusedReservationTableId,
         createReservation,
         applyReservationAction,
-        updateTablePosition,
         createTable,
         updateTable,
         deleteTable,

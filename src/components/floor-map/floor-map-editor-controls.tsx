@@ -1,4 +1,4 @@
-import { Check, Pencil, Plus } from "lucide-react";
+import { Check, Pencil, Plus, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
@@ -8,7 +8,9 @@ type FloorMapEditorControlsProps = {
   isEditing: boolean;
   isSaving: boolean;
   tool: FloorMapEditorTool;
-  onToggle: () => void;
+  onStart: () => void;
+  onSave: () => void;
+  onCancel: () => void;
   onCreateTable: () => void;
   onCreateZone: () => void;
   onToolChange: (tool: FloorMapEditorTool) => void;
@@ -18,7 +20,9 @@ export function FloorMapEditorControls({
   isEditing,
   isSaving,
   tool,
-  onToggle,
+  onStart,
+  onSave,
+  onCancel,
   onCreateTable,
   onCreateZone,
   onToolChange,
@@ -63,22 +67,42 @@ export function FloorMapEditorControls({
           </Button>
         </>
       )}
-      <Button
-        type="button"
-        variant={isEditing ? "default" : "outline"}
-        size="sm"
-        aria-pressed={isEditing}
-        title={isEditing ? "Сохранить изменения" : "Редактировать столы"}
-        disabled={isSaving}
-        onClick={onToggle}
-      >
-        {isEditing ? (
-          <Check aria-hidden="true" data-icon="inline-start" />
-        ) : (
+      {isEditing ? (
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            title="Отменить редактирование"
+            disabled={isSaving}
+            onClick={onCancel}
+          >
+            <X aria-hidden="true" data-icon="inline-start" />
+            Отмена
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            title="Сохранить изменения"
+            disabled={isSaving}
+            onClick={onSave}
+          >
+            <Check aria-hidden="true" data-icon="inline-start" />
+            Сохранить
+          </Button>
+        </>
+      ) : (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          title="Редактировать столы"
+          onClick={onStart}
+        >
           <Pencil aria-hidden="true" data-icon="inline-start" />
-        )}
-        {isEditing ? "Сохранить" : "Редактировать"}
-      </Button>
+          Редактировать
+        </Button>
+      )}
     </div>
   );
 }

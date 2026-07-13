@@ -17,13 +17,15 @@ import { useFloorMapCamera } from "./use-floor-map-camera";
 import { useFloorMapCommands } from "./use-floor-map-commands";
 import { useFloorMapEditor } from "./use-floor-map-editor";
 import { useFloorMapZoneEditor } from "./use-floor-map-zone-editor";
-import { usePendingTablePositions } from "./use-pending-table-positions";
+import {
+  applyTablePatch,
+  usePendingTableChanges,
+} from "./use-pending-table-changes";
 
 export function FloorMap() {
   const {
     state,
     setActiveFloorId,
-    updateTablePosition,
     createTable,
     updateTable,
     deleteTable,
@@ -37,12 +39,14 @@ export function FloorMap() {
   } = useRestaurant();
   const [editorTool, setEditorTool] = useState<FloorMapEditorTool>("tables");
   const {
-    positions: pendingTablePositions,
-    isSaving: isSavingTablePositions,
+    patches: pendingTablePatches,
+    isSaving: isSavingTableChanges,
+    stagePatch: stageTablePatch,
     stagePosition: stageTablePosition,
-    discardPosition: discardPendingTablePosition,
-    savePositions: saveTablePositions,
-  } = usePendingTablePositions(updateTablePosition);
+    discardTable: discardPendingTableChanges,
+    discardAll: discardAllTableChanges,
+    saveChanges: saveTableChanges,
+  } = usePendingTableChanges(updateTable);
   const { floors, tables, activeFloorId } = state;
   const {
     svgRef,
@@ -59,7 +63,8 @@ export function FloorMap() {
     isEditing,
     selectedTableId,
     dragPreview,
-    toggleEditing,
+    startEditing,
+    stopEditing,
     selectTable,
     clearSelection,
     handleTablePointerDown,
@@ -92,7 +97,10 @@ export function FloorMap() {
   const selectedFloor = activeFloors.find(
     (floor) => floor.id === activeFloorId,
   );
-  const visibleTables = tables.filter(
+  const displayedTables = tables.map((table) =>
+    applyTablePatch(table, pendingTablePatches[table.id]),
+  );
+  const visibleTables = displayedTables.filter(
     (table) => table.floorId === activeFloorId,
   );
   const reservedTableIds = getReservedTableIds(
@@ -102,7 +110,9 @@ export function FloorMap() {
   const visibleZones = state.zones.filter(
     (zone) => zone.floorId === activeFloorId && zone.isActive && zone.rect,
   );
-  const selectedTable = tables.find((table) => table.id === selectedTableId);
+  const selectedTable = displayedTables.find(
+    (table) => table.id === selectedTableId,
+  );
   const selectedZone = state.zones.find((zone) => zone.id === selectedZoneId);
   const { createTableOnActiveFloor, createZoneOnActiveFloor } =
     useFloorMapCommands({
@@ -122,10 +132,16 @@ export function FloorMap() {
     clearZoneSelection();
   };
 
-  const toggleEditor = async () => {
-    if (isEditing && !(await saveTablePositions())) return;
+  const saveAndExitEditor = async () => {
+    if (!(await saveTableChanges())) return;
 
-    toggleEditing();
+    stopEditing();
+    clearZoneSelection();
+  };
+
+  const cancelEditor = () => {
+    discardAllTableChanges();
+    stopEditing();
     clearZoneSelection();
   };
 
@@ -141,9 +157,11 @@ export function FloorMap() {
           <div className="flex items-center gap-2">
             <FloorMapEditorControls
               isEditing={isEditing}
-              isSaving={isSavingTablePositions}
+              isSaving={isSavingTableChanges}
               tool={editorTool}
-              onToggle={() => void toggleEditor()}
+              onStart={startEditing}
+              onSave={() => void saveAndExitEditor()}
+              onCancel={cancelEditor}
               onCreateTable={() => void createTableOnActiveFloor()}
               onCreateZone={() => void createZoneOnActiveFloor()}
               onToolChange={selectEditorTool}
@@ -190,7 +208,6 @@ export function FloorMap() {
             tables={visibleTables}
             zones={visibleZones}
             reservedTableIds={reservedTableIds}
-            pendingTablePositions={pendingTablePositions}
             tableDragPreview={dragPreview}
             zoneDragPreview={zoneDragPreview}
             isEditing={isEditing}
@@ -216,16 +233,17 @@ export function FloorMap() {
 
           {isTableEditing && selectedTable && (
             <FloorMapEditorPanel
+              key={selectedTable.id}
               table={selectedTable}
               hasReservations={state.reservations.some(
                 (reservation) => reservation.tableId === selectedTable.id,
               )}
-              onSave={(details) => updateTable(selectedTable.id, details)}
+              onChange={(patch) => stageTablePatch(selectedTable.id, patch)}
               onDelete={async () => {
                 const deleted = await deleteTable(selectedTable.id);
 
                 if (deleted) {
-                  discardPendingTablePosition(selectedTable.id);
+                  discardPendingTableChanges(selectedTable.id);
                   clearSelection();
                 }
 
