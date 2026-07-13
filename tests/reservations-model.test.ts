@@ -1,5 +1,6 @@
 import { GET } from "@/app/api/reservations/route";
 import { PATCH } from "@/app/api/reservations/[id]/route";
+import { POST as RESET } from "@/app/api/reset/route";
 import {
   formatGuestPhone,
   formatGuestsCount,
@@ -101,6 +102,25 @@ test("completes and cancels reservations through the API", async () => {
     cancelled.data.find((item) => item.id === "reservation-3")?.status,
   ).toBe("CANCELLED");
   expect(cancelled.meta.statusCounts.CANCELLED).toBe(2);
+});
+
+test("resets reservations to the initial seed through the API", async () => {
+  const response = RESET(
+    new Request("http://localhost/api/reset", {
+      method: "POST",
+    }),
+  );
+  const reset = (await response.json()) as ReservationsResponse;
+
+  expect(reset.data.find((item) => item.id === "reservation-1")?.status).toBe(
+    "CONFIRMED",
+  );
+  expect(reset.data.find((item) => item.id === "reservation-3")?.status).toBe(
+    "PENDING",
+  );
+  expect(reset.meta.statusCounts).toEqual(
+    getReservationStatusCounts(reset.data),
+  );
 });
 
 test("filters reservations by calendar date", () => {

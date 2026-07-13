@@ -8,13 +8,26 @@ import {
   completeReservation,
 } from "../model/transitions";
 import type {
+  Reservation,
   ReservationAction,
   ReservationsResponse,
 } from "../model/types";
 
-let reservations = createReservationsSeed();
+const globalStore = globalThis as typeof globalThis & {
+  qolayReservations?: Reservation[];
+};
+
+function getReservations() {
+  globalStore.qolayReservations ??= createReservationsSeed();
+  return globalStore.qolayReservations;
+}
+
+export function resetReservations() {
+  globalStore.qolayReservations = createReservationsSeed();
+}
 
 export function getReservationsResponse(date?: Date): ReservationsResponse {
+  const reservations = getReservations();
   const data = date
     ? filterReservationsByDate(reservations, date)
     : reservations;
@@ -31,6 +44,7 @@ export function applyReservationAction(
   reservationId: string,
   action: ReservationAction,
 ) {
+  const reservations = getReservations();
   const reservationExists = reservations.some(
     (reservation) => reservation.id === reservationId,
   );
@@ -46,6 +60,6 @@ export function applyReservationAction(
     return "invalid_transition" as const;
   }
 
-  reservations = updatedReservations;
+  globalStore.qolayReservations = updatedReservations;
   return "updated" as const;
 }

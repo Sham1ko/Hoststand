@@ -1,6 +1,20 @@
+"use client";
+
+import { RotateCcw } from "lucide-react";
 import Image from "next/image";
 
+import { Button } from "@/components/ui/button";
+import { RESERVATIONS_RESET_EVENT } from "@/features/reservations/lib/events";
+
 export function Header() {
+  const handleReset = () => {
+    fetch("/api/reset", { method: "POST" }).then((response) => {
+      if (response.ok) {
+        window.dispatchEvent(new Event(RESERVATIONS_RESET_EVENT));
+      }
+    });
+  };
+
   return (
     <header className="h-16 flex items-center border-b border-slate-200 bg-white">
       <div className="mx-auto flex w-full items-center gap-3 px-4">
@@ -21,6 +35,17 @@ export function Header() {
             Столы и брони
           </p>
         </div>
+
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="ml-auto"
+          onClick={handleReset}
+        >
+          <RotateCcw aria-hidden="true" data-icon="inline-start" />
+          Сбросить брони
+        </Button>
       </div>
     </header>
   );

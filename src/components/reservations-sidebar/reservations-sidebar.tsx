@@ -7,9 +7,8 @@ import {
   reservationFloorSeed,
   reservationTableSeed,
 } from "@/features/reservations/data/seed";
-import {
-  filterReservationsByStatus,
-} from "@/features/reservations/model/selectors";
+import { RESERVATIONS_RESET_EVENT } from "@/features/reservations/lib/events";
+import { filterReservationsByStatus } from "@/features/reservations/model/selectors";
 import type {
   Reservation,
   ReservationAction,
@@ -39,12 +38,21 @@ export function ReservationsSidebar() {
     useState<ReservationStatusFilterValue>("ALL");
 
   useEffect(() => {
-    fetch(`/api/reservations?date=${format(date, "yyyy-MM-dd")}`)
-      .then((response) => response.json())
-      .then((response: ReservationsResponse) => {
-        setReservations(response.data);
-        setStatusCounts(response.meta.statusCounts);
-      });
+    const loadReservations = () => {
+      fetch(`/api/reservations?date=${format(date, "yyyy-MM-dd")}`)
+        .then((response) => response.json())
+        .then((response: ReservationsResponse) => {
+          setReservations(response.data);
+          setStatusCounts(response.meta.statusCounts);
+        });
+    };
+
+    loadReservations();
+    window.addEventListener(RESERVATIONS_RESET_EVENT, loadReservations);
+
+    return () => {
+      window.removeEventListener(RESERVATIONS_RESET_EVENT, loadReservations);
+    };
   }, [date]);
 
   const visibleReservations = filterReservationsByStatus(
