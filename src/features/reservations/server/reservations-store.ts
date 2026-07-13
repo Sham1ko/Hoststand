@@ -15,6 +15,12 @@ import type {
   ReservationsResponse,
 } from "../model/types";
 
+const reservationActionHandlers = {
+  confirm: confirmReservation,
+  complete: completeReservation,
+  cancel: cancelReservation,
+} satisfies Record<ReservationAction, typeof confirmReservation>;
+
 const globalStore = globalThis as typeof globalThis & {
   qolayReservations?: Reservation[];
 };
@@ -66,12 +72,10 @@ export function applyReservationAction(
 
   if (!reservationExists) return "not_found" as const;
 
-  const updatedReservations =
-    action === "confirm"
-      ? confirmReservation(reservations, reservationId)
-      : action === "complete"
-        ? completeReservation(reservations, reservationId)
-        : cancelReservation(reservations, reservationId);
+  const updatedReservations = reservationActionHandlers[action](
+    reservations,
+    reservationId,
+  );
 
   if (updatedReservations === reservations) {
     return "invalid_transition" as const;
