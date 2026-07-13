@@ -186,7 +186,7 @@ export function FloorMapEditorPanel({
           />
         </label>
         <label className={labelClassName}>
-          Высота
+          Длина
           <input
             type="number"
             min={40}
