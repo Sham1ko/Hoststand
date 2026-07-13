@@ -105,11 +105,7 @@ test("completes and cancels reservations through the API", async () => {
 });
 
 test("resets reservations to the initial seed through the API", async () => {
-  const response = RESET(
-    new Request("http://localhost/api/reset", {
-      method: "POST",
-    }),
-  );
+  const response = RESET();
   const reset = (await response.json()) as ReservationsResponse;
 
   expect(reset.data.find((item) => item.id === "reservation-1")?.status).toBe(
