@@ -2,7 +2,7 @@ import {
   getBoundedTablePosition,
   type Point,
 } from "@/features/floor-plan/model/geometry";
-import type { DiningTable } from "@/features/floor-plan/model/types";
+import type { DiningTable } from "@/entities/table/model/types";
 
 import type { RestaurantState } from "./types";
 

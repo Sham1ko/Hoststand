@@ -1,4 +1,4 @@
-import { createReservationSchema } from "@/features/reservations/model/schemas";
+import { createReservationSchema } from "@/entities/reservation/model/schemas";
 import { createRestaurantReservation } from "@/features/restaurant/model/reservation-actions";
 import {
   invalidPayloadResponse,

@@ -7,8 +7,8 @@ import {
 import {
   tablePatchSchema,
   type TablePatchInput,
-} from "@/features/floor-plan/model/schemas";
-import type { DiningTable } from "@/features/floor-plan/model/types";
+} from "@/entities/table/model/schemas";
+import type { DiningTable } from "@/entities/table/model/types";
 import {
   invalidPayloadResponse,
   mutationErrorResponse,

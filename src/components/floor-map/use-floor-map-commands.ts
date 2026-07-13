@@ -1,13 +1,9 @@
 import { useCallback } from "react";
 
-import type {
-  DiningTable,
-  TableZone,
-} from "@/features/floor-plan/model/types";
-import type {
-  CreateTableInput,
-  CreateZoneInput,
-} from "@/features/floor-plan/model/schemas";
+import type { CreateTableInput } from "@/entities/table/model/schemas";
+import type { DiningTable } from "@/entities/table/model/types";
+import type { CreateZoneInput } from "@/entities/zone/model/schemas";
+import type { TableZone } from "@/entities/zone/model/types";
 
 type UseFloorMapCommandsOptions = {
   activeFloorId: string;

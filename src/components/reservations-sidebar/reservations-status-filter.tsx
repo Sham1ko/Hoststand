@@ -3,7 +3,7 @@
 import type {
   ReservationStatus,
   ReservationStatusCounts,
-} from "@/features/reservations/model/types";
+} from "@/entities/reservation/model/types";
 
 const reservationStatuses = [
   { id: "ALL", label: "Все" },

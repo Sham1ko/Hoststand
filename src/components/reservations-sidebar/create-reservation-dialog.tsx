@@ -21,7 +21,7 @@ import {
   createReservationSchema,
   type CreateReservationFormValues,
   type CreateReservationInput,
-} from "@/features/reservations/model/schemas";
+} from "@/entities/reservation/model/schemas";
 import { useRestaurant } from "@/features/restaurant/ui/restaurant-provider";
 
 const fieldClassName =

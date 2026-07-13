@@ -1,7 +1,7 @@
 import type {
   DiningTable,
   TableStatus,
-} from "@/features/floor-plan/model/types";
+} from "@/entities/table/model/types";
 import { Users } from "lucide-react";
 import type { PointerEvent } from "react";
 

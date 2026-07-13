@@ -1,4 +1,4 @@
-import type { DiningTable } from "./types";
+import type { DiningTable } from "@/entities/table/model/types";
 
 export const FLOOR_PLAN_SIZE = {
   width: 1600,

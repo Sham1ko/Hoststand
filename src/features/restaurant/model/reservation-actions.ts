@@ -3,8 +3,8 @@ import {
   completeReservation,
   confirmReservation,
 } from "@/features/reservations/model/transitions";
-import type { CreateReservationInput } from "@/features/reservations/model/schemas";
-import type { ReservationAction } from "@/features/reservations/model/types";
+import type { CreateReservationInput } from "@/entities/reservation/model/schemas";
+import type { ReservationAction } from "@/entities/reservation/model/types";
 
 import type { RestaurantState } from "./types";
 

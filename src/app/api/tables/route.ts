@@ -1,5 +1,5 @@
 import { createRestaurantTable } from "@/features/restaurant/model/table-actions";
-import { createTableSchema } from "@/features/floor-plan/model/schemas";
+import { createTableSchema } from "@/entities/table/model/schemas";
 import {
   invalidPayloadResponse,
   mutationErrorResponse,

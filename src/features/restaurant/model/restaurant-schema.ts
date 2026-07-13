@@ -1,11 +1,9 @@
 import * as z from "zod";
 
-import {
-  diningTableSchema,
-  tableFloorSchema,
-  tableZoneSchema,
-} from "@/features/floor-plan/model/schemas";
-import { reservationSchema } from "@/features/reservations/model/schemas";
+import { tableFloorSchema } from "@/entities/floor/model/schemas";
+import { reservationSchema } from "@/entities/reservation/model/schemas";
+import { diningTableSchema } from "@/entities/table/model/schemas";
+import { tableZoneSchema } from "@/entities/zone/model/schemas";
 
 export const restaurantStateSchema = z
   .object({

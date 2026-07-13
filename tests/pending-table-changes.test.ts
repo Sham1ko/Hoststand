@@ -1,4 +1,4 @@
-import type { DiningTable } from "@/features/floor-plan/model/types";
+import type { DiningTable } from "@/entities/table/model/types";
 import {
   applyTablePatch,
   createDraftTable,

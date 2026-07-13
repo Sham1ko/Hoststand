@@ -1,4 +1,5 @@
-import type { DiningTable, TableZone } from "@/features/floor-plan/model/types";
+import type { DiningTable } from "@/entities/table/model/types";
+import type { TableZone } from "@/entities/zone/model/types";
 import {
   diningTableSeed,
   tableFloorSeed,

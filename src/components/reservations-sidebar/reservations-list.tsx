@@ -11,7 +11,7 @@ import type {
   ReservationAction,
   ReservationFloorReference,
   ReservationTableReference,
-} from "@/features/reservations/model/types";
+} from "@/entities/reservation/model/types";
 
 import { ReservationCard } from "./reservation-card";
 

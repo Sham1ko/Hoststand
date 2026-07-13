@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
-import type { TableZone } from "@/features/floor-plan/model/types";
+import type { TableZone } from "@/entities/zone/model/types";
 import type { ZoneDetails } from "@/features/restaurant/model/zone-actions";
 
 const fieldClassName =

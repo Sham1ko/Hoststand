@@ -15,12 +15,13 @@ import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type {
   CreateTableInput,
-  CreateZoneInput,
   TablePatchInput,
-} from "@/features/floor-plan/model/schemas";
-import type { DiningTable, TableZone } from "@/features/floor-plan/model/types";
-import type { CreateReservationInput } from "@/features/reservations/model/schemas";
-import type { ReservationAction } from "@/features/reservations/model/types";
+} from "@/entities/table/model/schemas";
+import type { DiningTable } from "@/entities/table/model/types";
+import type { CreateZoneInput } from "@/entities/zone/model/schemas";
+import type { TableZone } from "@/entities/zone/model/types";
+import type { CreateReservationInput } from "@/entities/reservation/model/schemas";
+import type { ReservationAction } from "@/entities/reservation/model/types";
 
 import {
   createHttpRestaurantRepository,

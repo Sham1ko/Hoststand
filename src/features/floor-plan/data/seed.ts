@@ -1,9 +1,9 @@
 import type {
   DiningTable,
-  TableFloor,
   TableShape,
   TableStatus,
-} from "../model/types";
+} from "@/entities/table/model/types";
+import type { TableFloor } from "@/entities/floor/model/types";
 
 export const tableFloorSeed: readonly TableFloor[] = [
   { id: "floor-1", name: "1 этаж", sortOrder: 1, isActive: true },

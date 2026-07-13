@@ -10,7 +10,7 @@ import {
   type Camera,
   type Point,
 } from "@/features/floor-plan/model/geometry";
-import type { TableZone } from "@/features/floor-plan/model/types";
+import type { TableZone } from "@/entities/zone/model/types";
 
 type ZoneDragState = {
   zoneId: string;

@@ -1,7 +1,7 @@
 import { addMinutes, format, parseISO } from "date-fns";
 import { ru } from "date-fns/locale";
 
-import type { Reservation } from "../model/types";
+import type { Reservation } from "@/entities/reservation/model/types";
 
 export function formatReservationTimeRange(reservation: Reservation) {
   const start = parseISO(reservation.reservationDate);

@@ -1,10 +1,10 @@
 import { useCallback, useState } from "react";
 
-import type { DiningTable } from "@/features/floor-plan/model/types";
+import type { DiningTable } from "@/entities/table/model/types";
 import type {
   CreateTableInput,
   TablePatchInput,
-} from "@/features/floor-plan/model/schemas";
+} from "@/entities/table/model/schemas";
 import type { TablePosition } from "@/features/restaurant/model/table-actions";
 
 type SaveTablePatch = (

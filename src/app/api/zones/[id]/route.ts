@@ -2,7 +2,7 @@ import {
   deleteRestaurantZone,
   updateRestaurantZone,
 } from "@/features/restaurant/model/zone-actions";
-import { zonePatchSchema } from "@/features/floor-plan/model/schemas";
+import { zonePatchSchema } from "@/entities/zone/model/schemas";
 import {
   invalidPayloadResponse,
   mutationErrorResponse,

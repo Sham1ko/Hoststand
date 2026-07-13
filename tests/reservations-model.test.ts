@@ -16,7 +16,7 @@ import {
   completeReservation,
   confirmReservation,
 } from "@/features/reservations/model/transitions";
-import type { Reservation } from "@/features/reservations/model/types";
+import type { Reservation } from "@/entities/reservation/model/types";
 
 const reservation: Reservation = {
   id: "reservation-test",

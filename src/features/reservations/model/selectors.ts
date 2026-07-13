@@ -3,14 +3,14 @@ import { isSameDay, parseISO } from "date-fns";
 import type {
   DiningTable,
   TableStatus,
-} from "@/features/floor-plan/model/types";
+} from "@/entities/table/model/types";
 import type {
   Reservation,
   ReservationFloorReference,
   ReservationStatus,
   ReservationStatusCounts,
   ReservationTableReference,
-} from "./types";
+} from "@/entities/reservation/model/types";
 
 const reservationStatusOverrides = new Set<ReservationStatus>([
   "PENDING",

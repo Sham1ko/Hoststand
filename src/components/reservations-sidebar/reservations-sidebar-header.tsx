@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReservationStatusCounts } from "@/features/reservations/model/types";
+import type { ReservationStatusCounts } from "@/entities/reservation/model/types";
 
 import { CreateReservationDialog } from "./create-reservation-dialog";
 import { ReservationsDatePicker } from "./reservations-date-picker";

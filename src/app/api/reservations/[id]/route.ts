@@ -1,5 +1,5 @@
 import { applyRestaurantReservationAction } from "@/features/restaurant/model/reservation-actions";
-import { reservationActionSchema } from "@/features/reservations/model/schemas";
+import { reservationActionSchema } from "@/entities/reservation/model/schemas";
 import {
   invalidPayloadResponse,
   mutationErrorResponse,

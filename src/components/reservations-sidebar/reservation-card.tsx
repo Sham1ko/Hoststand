@@ -12,7 +12,7 @@ import { formatGuestsCount } from "@/features/reservations/lib/formatters";
 import type {
   ReservationAction,
   ReservationStatus,
-} from "@/features/reservations/model/types";
+} from "@/entities/reservation/model/types";
 
 const statusStyles: Record<
   ReservationStatus,

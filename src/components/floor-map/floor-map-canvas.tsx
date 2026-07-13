@@ -8,10 +8,8 @@ import type {
   Camera,
   Size,
 } from "@/features/floor-plan/model/geometry";
-import type {
-  DiningTable,
-  TableZone,
-} from "@/features/floor-plan/model/types";
+import type { DiningTable } from "@/entities/table/model/types";
+import type { TableZone } from "@/entities/zone/model/types";
 import { getDisplayedTableStatus } from "@/features/reservations/model/selectors";
 
 import { TableNode } from "./table-node";

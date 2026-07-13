@@ -1,6 +1,6 @@
 import { addDays, setHours, setMinutes, startOfDay } from "date-fns";
 
-import type { Reservation } from "../model/types";
+import type { Reservation } from "@/entities/reservation/model/types";
 
 function createDate(
   referenceDate: Date,

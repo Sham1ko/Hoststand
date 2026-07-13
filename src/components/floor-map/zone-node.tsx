@@ -1,6 +1,6 @@
 import type { PointerEvent } from "react";
 
-import type { TableZone } from "@/features/floor-plan/model/types";
+import type { TableZone } from "@/entities/zone/model/types";
 
 type ZoneNodeProps = {
   zone: TableZone;

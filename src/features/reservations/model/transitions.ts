@@ -1,4 +1,7 @@
-import type { Reservation, ReservationStatus } from "./types";
+import type {
+  Reservation,
+  ReservationStatus,
+} from "@/entities/reservation/model/types";
 
 function transitionReservation(
   reservations: Reservation[],
