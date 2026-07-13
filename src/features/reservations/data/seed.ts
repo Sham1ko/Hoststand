@@ -1,5 +1,10 @@
 import { addDays, setHours, setMinutes, startOfDay } from "date-fns";
 
+import {
+  diningTableSeed,
+  tableFloorSeed,
+} from "@/features/floor-plan/data/seed";
+
 import type {
   Reservation,
   ReservationFloorReference,
@@ -96,17 +101,13 @@ export function createReservationsSeed(
   ];
 }
 
-export const reservationTableSeed: ReservationTableReference[] = [
-  { id: "table-4", number: 4, capacity: 4, floorId: "floor-1" },
-  { id: "table-7", number: 7, capacity: 4, floorId: "floor-1" },
-  { id: "table-9", number: 9, capacity: 4, floorId: "floor-1" },
-  { id: "table-12", number: 12, capacity: 8, floorId: "floor-1" },
-  { id: "table-14", number: 14, capacity: 2, floorId: "summer" },
-  { id: "table-21", number: 21, capacity: 6, floorId: "floor-2" },
-];
+export const reservationTableSeed: ReservationTableReference[] =
+  diningTableSeed.map(({ id, number, capacity, floorId }) => ({
+    id,
+    number,
+    capacity,
+    floorId,
+  }));
 
-export const reservationFloorSeed: ReservationFloorReference[] = [
-  { id: "floor-1", name: "1 этаж" },
-  { id: "floor-2", name: "2 этаж" },
-  { id: "summer", name: "Летник" },
-];
+export const reservationFloorSeed: ReservationFloorReference[] =
+  tableFloorSeed.map(({ id, name }) => ({ id, name }));
