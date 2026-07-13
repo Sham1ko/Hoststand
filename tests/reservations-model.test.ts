@@ -9,6 +9,10 @@ import {
   getReservationStatusCounts,
   getReservationTableContext,
 } from "@/features/reservations/model/selectors";
+import {
+  cancelReservation,
+  completeReservation,
+} from "@/features/reservations/model/transitions";
 import type { Reservation } from "@/features/reservations/model/types";
 
 const reservation: Reservation = {
@@ -94,4 +98,32 @@ test("resolves a reservation table and its floor through tableId", () => {
       [{ id: "floor-1", name: "1 этаж" }],
     ),
   ).toEqual({ tableNumber: 12, capacity: 8, floorName: "1 этаж" });
+});
+
+test("completes only a confirmed reservation", () => {
+  expect(completeReservation([reservation], reservation.id)[0].status).toBe(
+    "COMPLETED",
+  );
+
+  const pendingReservation: Reservation = {
+    ...reservation,
+    status: "PENDING",
+  };
+  const reservations = [pendingReservation];
+
+  expect(completeReservation(reservations, reservation.id)).toBe(reservations);
+});
+
+test("cancels active reservations but leaves terminal statuses unchanged", () => {
+  expect(cancelReservation([reservation], reservation.id)[0].status).toBe(
+    "CANCELLED",
+  );
+
+  const completedReservation: Reservation = {
+    ...reservation,
+    status: "COMPLETED",
+  };
+  const reservations = [completedReservation];
+
+  expect(cancelReservation(reservations, reservation.id)).toBe(reservations);
 });

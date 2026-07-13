@@ -43,6 +43,8 @@ export type ReservationCardProps = {
   guestsCount: number;
   phone: string;
   note?: string;
+  onComplete: () => void;
+  onCancel: () => void;
 };
 
 export function ReservationCard({
@@ -55,8 +57,13 @@ export function ReservationCard({
   guestsCount,
   phone,
   note,
+  onComplete,
+  onCancel,
 }: ReservationCardProps) {
   const statusStyle = statusStyles[status];
+  const canComplete = status === "CONFIRMED";
+  const canCancel = status === "PENDING" || status === "CONFIRMED";
+  const canEdit = canCancel;
 
   return (
     <article className="rounded-lg border border-slate-200 bg-white p-3">
@@ -102,29 +109,41 @@ export function ReservationCard({
         </p>
       )}
 
-      <div className="mt-3 flex items-center gap-1.5">
-        <Button
-          type="button"
-          size="default"
-          className="bg-blue-50 text-blue-600 hover:bg-blue-100"
-        >
-          <Check aria-hidden="true" data-icon="inline-start" />
-          Завершить
-        </Button>
-        <Button type="button" variant="destructive" size="default">
-          <X aria-hidden="true" data-icon="inline-start" />
-          Отменить
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="default"
-          className="ml-auto text-slate-400 hover:text-slate-700"
-        >
-          <Pencil aria-hidden="true" data-icon="inline-start" />
-          Изменить
-        </Button>
-      </div>
+      {canEdit && (
+        <div className="mt-3 flex items-center gap-1.5">
+          {canComplete && (
+            <Button
+              type="button"
+              size="default"
+              className="bg-blue-50 text-blue-600 hover:bg-blue-100"
+              onClick={onComplete}
+            >
+              <Check aria-hidden="true" data-icon="inline-start" />
+              Завершить
+            </Button>
+          )}
+          {canCancel && (
+            <Button
+              type="button"
+              variant="destructive"
+              size="default"
+              onClick={onCancel}
+            >
+              <X aria-hidden="true" data-icon="inline-start" />
+              Отменить
+            </Button>
+          )}
+          <Button
+            type="button"
+            variant="ghost"
+            size="default"
+            className="ml-auto text-slate-400 hover:text-slate-700"
+          >
+            <Pencil aria-hidden="true" data-icon="inline-start" />
+            Изменить
+          </Button>
+        </div>
+      )}
     </article>
   );
 }

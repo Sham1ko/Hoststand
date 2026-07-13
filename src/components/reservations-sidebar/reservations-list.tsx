@@ -1,3 +1,5 @@
+import { CalendarX2 } from "lucide-react";
+
 import {
   formatGuestPhone,
   formatReservationDateLabel,
@@ -16,12 +18,16 @@ type ReservationsListProps = {
   reservations: readonly Reservation[];
   tables: readonly ReservationTableReference[];
   floors: readonly ReservationFloorReference[];
+  onComplete: (reservationId: string) => void;
+  onCancel: (reservationId: string) => void;
 };
 
 export function ReservationsList({
   reservations,
   tables,
   floors,
+  onComplete,
+  onCancel,
 }: ReservationsListProps) {
   if (reservations.length === 0) {
     return (
@@ -65,10 +71,11 @@ export function ReservationsList({
             guestsCount={reservation.guestsCount}
             phone={formatGuestPhone(reservation.guestPhone)}
             note={reservation.comment}
+            onComplete={() => onComplete(reservation.id)}
+            onCancel={() => onCancel(reservation.id)}
           />
         );
       })}
     </div>
   );
 }
-import { CalendarX2 } from "lucide-react";

@@ -13,6 +13,10 @@ import {
   filterReservationsByStatus,
   getReservationStatusCounts,
 } from "@/features/reservations/model/selectors";
+import {
+  cancelReservation,
+  completeReservation,
+} from "@/features/reservations/model/transitions";
 
 import { ReservationsList } from "./reservations-list";
 import { ReservationsSidebarHeader } from "./reservations-sidebar-header";
@@ -20,7 +24,9 @@ import type { ReservationStatusFilterValue } from "./reservations-status-filter"
 
 export function ReservationsSidebar() {
   const [initialDate] = useState(() => startOfToday());
-  const [reservations] = useState(() => createReservationsSeed(initialDate));
+  const [reservations, setReservations] = useState(() =>
+    createReservationsSeed(initialDate),
+  );
   const [date, setDate] = useState(initialDate);
   const [activeStatus, setActiveStatus] =
     useState<ReservationStatusFilterValue>("ALL");
@@ -31,6 +37,16 @@ export function ReservationsSidebar() {
     reservationsForDate,
     activeStatus === "ALL" ? null : activeStatus,
   );
+
+  const handleComplete = (reservationId: string) => {
+    setReservations((current) =>
+      completeReservation(current, reservationId),
+    );
+  };
+
+  const handleCancel = (reservationId: string) => {
+    setReservations((current) => cancelReservation(current, reservationId));
+  };
 
   return (
     <aside
@@ -48,6 +64,8 @@ export function ReservationsSidebar() {
         reservations={visibleReservations}
         tables={reservationTableSeed}
         floors={reservationFloorSeed}
+        onComplete={handleComplete}
+        onCancel={handleCancel}
       />
     </aside>
   );
