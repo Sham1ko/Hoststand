@@ -2,6 +2,7 @@
 
 import { format, setHours, setMinutes } from "date-fns";
 import { CalendarPlus, ChevronDown } from "lucide-react";
+import { useState, type FormEvent } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +16,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { reservationTableSeed } from "@/features/reservations/data/seed";
+import { RESERVATIONS_CHANGED_EVENT } from "@/features/reservations/lib/events";
 
 const fieldClassName =
   "h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15 placeholder:text-slate-400";
@@ -28,13 +30,51 @@ type CreateReservationDialogProps = {
 export function CreateReservationDialog({
   date,
 }: CreateReservationDialogProps) {
+  const [open, setOpen] = useState(false);
+  const [error, setError] = useState<string>();
   const defaultDateTime = format(
     setMinutes(setHours(date, 18), 0),
     "yyyy-MM-dd'T'HH:mm",
   );
 
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError(undefined);
+
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const response = await fetch("/api/reservations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        tableId: formData.get("tableId"),
+        guestName: formData.get("guestName"),
+        guestPhone: formData.get("guestPhone"),
+        guestsCount: Number(formData.get("guestsCount")),
+        reservationDate: formData.get("reservationDate"),
+        durationMinutes: Number(formData.get("durationMinutes")),
+        comment: formData.get("comment"),
+      }),
+    });
+
+    if (!response.ok) {
+      setError("Не удалось создать бронь");
+      return;
+    }
+
+    form.reset();
+    setOpen(false);
+    window.dispatchEvent(new Event(RESERVATIONS_CHANGED_EVENT));
+  };
+
   return (
-    <Dialog>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        setOpen(nextOpen);
+        if (!nextOpen) setError(undefined);
+      }}
+    >
       <DialogTrigger
         render={
           <Button type="button" size="default">
@@ -54,12 +94,15 @@ export function CreateReservationDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-4 px-6 py-5">
+        <form key={defaultDateTime} onSubmit={handleSubmit}>
+          <div className="grid gap-4 px-6 py-5">
           <label className={labelClassName}>
             Стол
             <span className="relative">
               <select
+                name="tableId"
                 defaultValue=""
+                required
                 className={`${fieldClassName} appearance-none pr-10`}
               >
                 <option value="" disabled>
@@ -82,7 +125,9 @@ export function CreateReservationDialog({
             Имя гостя
             <input
               type="text"
+              name="guestName"
               placeholder="Иван Иванов"
+              required
               className={fieldClassName}
             />
           </label>
@@ -92,7 +137,9 @@ export function CreateReservationDialog({
               Телефон
               <input
                 type="tel"
+                name="guestPhone"
                 defaultValue="+7"
+                required
                 className={fieldClassName}
               />
             </label>
@@ -101,8 +148,10 @@ export function CreateReservationDialog({
               Гостей
               <input
                 type="number"
+                name="guestsCount"
                 min={1}
                 defaultValue={2}
+                required
                 className={fieldClassName}
               />
             </label>
@@ -113,7 +162,9 @@ export function CreateReservationDialog({
               Дата и время
               <input
                 type="datetime-local"
+                name="reservationDate"
                 defaultValue={defaultDateTime}
+                required
                 className={fieldClassName}
               />
             </label>
@@ -122,7 +173,9 @@ export function CreateReservationDialog({
               Длительность
               <span className="relative">
                 <select
+                  name="durationMinutes"
                   defaultValue="120"
+                  required
                   className={`${fieldClassName} appearance-none pr-10`}
                 >
                   <option value="60">1 час</option>
@@ -142,25 +195,33 @@ export function CreateReservationDialog({
           <label className={labelClassName}>
             Комментарий
             <textarea
+              name="comment"
               rows={3}
               placeholder="У окна, пожалуйста"
               className="min-h-20 w-full resize-none rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15 placeholder:text-slate-400"
             />
           </label>
-        </div>
 
-        <DialogFooter className="grid grid-cols-2 border-t border-slate-100 px-6 py-4">
-          <DialogClose
-            render={
-              <Button type="button" variant="outline" size="lg" />
-            }
-          >
-            Отмена
-          </DialogClose>
-          <Button type="button" size="lg">
-            Создать бронь
-          </Button>
-        </DialogFooter>
+            {error && (
+              <p role="alert" className="text-xs font-medium text-red-600">
+                {error}
+              </p>
+            )}
+          </div>
+
+          <DialogFooter className="grid grid-cols-2 border-t border-slate-100 px-6 py-4">
+            <DialogClose
+              render={
+                <Button type="button" variant="outline" size="lg" />
+              }
+            >
+              Отмена
+            </DialogClose>
+            <Button type="submit" size="lg">
+              Создать бронь
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

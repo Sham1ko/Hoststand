@@ -7,7 +7,7 @@ import {
   reservationFloorSeed,
   reservationTableSeed,
 } from "@/features/reservations/data/seed";
-import { RESERVATIONS_RESET_EVENT } from "@/features/reservations/lib/events";
+import { RESERVATIONS_CHANGED_EVENT } from "@/features/reservations/lib/events";
 import { filterReservationsByStatus } from "@/features/reservations/model/selectors";
 import type {
   Reservation,
@@ -48,10 +48,10 @@ export function ReservationsSidebar() {
     };
 
     loadReservations();
-    window.addEventListener(RESERVATIONS_RESET_EVENT, loadReservations);
+    window.addEventListener(RESERVATIONS_CHANGED_EVENT, loadReservations);
 
     return () => {
-      window.removeEventListener(RESERVATIONS_RESET_EVENT, loadReservations);
+      window.removeEventListener(RESERVATIONS_CHANGED_EVENT, loadReservations);
     };
   }, [date]);
 

@@ -1,1 +1,1 @@
-export const RESERVATIONS_RESET_EVENT = "reservations:reset";
+export const RESERVATIONS_CHANGED_EVENT = "reservations:changed";

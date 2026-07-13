@@ -4,13 +4,13 @@ import { RotateCcw } from "lucide-react";
 import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
-import { RESERVATIONS_RESET_EVENT } from "@/features/reservations/lib/events";
+import { RESERVATIONS_CHANGED_EVENT } from "@/features/reservations/lib/events";
 
 export function Header() {
   const handleReset = () => {
     fetch("/api/reset", { method: "POST" }).then((response) => {
       if (response.ok) {
-        window.dispatchEvent(new Event(RESERVATIONS_RESET_EVENT));
+        window.dispatchEvent(new Event(RESERVATIONS_CHANGED_EVENT));
       }
     });
   };
