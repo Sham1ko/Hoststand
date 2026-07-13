@@ -1,0 +1,57 @@
+import {
+  FLOOR_PLAN_SIZE,
+  clampTablePosition,
+  fitCameraToViewport,
+  getBoundedTablePosition,
+  getRotatedTableHalfExtents,
+  screenToWorld,
+  worldToScreen,
+  zoomCameraAtPoint,
+} from "@/features/floor-plan/model/geometry";
+
+test("converts points between world and screen coordinates", () => {
+  const camera = { scale: 0.75, offsetX: 120, offsetY: 80 };
+  const worldPoint = { x: 640, y: 400 };
+
+  expect(screenToWorld(worldToScreen(worldPoint, camera), camera)).toEqual(
+    worldPoint,
+  );
+});
+
+test("keeps the world point under the cursor while zooming", () => {
+  const camera = { scale: 0.5, offsetX: 20, offsetY: 50 };
+  const cursor = { x: 200, y: 140 };
+  const worldPoint = screenToWorld(cursor, camera);
+  const zoomedCamera = zoomCameraAtPoint(camera, cursor, 1);
+
+  expect(worldToScreen(worldPoint, zoomedCamera)).toEqual(cursor);
+});
+
+test("fits the world canvas within the viewport with padding", () => {
+  expect(fitCameraToViewport({ width: 800, height: 600 })).toEqual({
+    scale: 0.45,
+    offsetX: 40,
+    offsetY: 75,
+  });
+});
+
+test("calculates rotated table bounds before clamping the position", () => {
+  const layout = { w: 200, h: 100, rotation: 90 };
+
+  expect(getRotatedTableHalfExtents(layout)).toEqual({ x: 50, y: 100 });
+  expect(clampTablePosition({ x: -1, y: 1200 }, layout)).toEqual({
+    x: 50,
+    y: FLOOR_PLAN_SIZE.height - 100,
+  });
+});
+
+test("snaps table positions before keeping them inside the world bounds", () => {
+  const layout = { w: 100, h: 100, rotation: 0 };
+
+  expect(
+    getBoundedTablePosition({ x: 31, y: 49 }, layout, true),
+  ).toEqual({ x: 50, y: 50 });
+  expect(
+    getBoundedTablePosition({ x: 2000, y: -20 }, layout, true),
+  ).toEqual({ x: 1550, y: 50 });
+});

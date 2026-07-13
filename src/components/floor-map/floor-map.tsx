@@ -1,12 +1,45 @@
 "use client";
 
+import { Maximize, Minus, Plus } from "lucide-react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type PointerEvent,
+  type WheelEvent,
+} from "react";
+
+import { Button } from "@/components/ui/button";
+import {
+  fitCameraToViewport,
+  zoomCameraAtPoint,
+  type Camera,
+  type Point,
+  type Size,
+} from "@/features/floor-plan/model/geometry";
 import { useRestaurant } from "@/features/restaurant-state/ui/restaurant-provider";
 
 import { TableNode } from "./table-node";
 
+const initialCamera: Camera = {
+  scale: 1,
+  offsetX: 0,
+  offsetY: 0,
+};
+
+type PanState = {
+  pointerId: number;
+  pointer: Point;
+  camera: Camera;
+};
+
 export function FloorMap() {
   const { state, setActiveFloorId } = useRestaurant();
   const { floors, tables, activeFloorId } = state;
+  const svgRef = useRef<SVGSVGElement>(null);
+  const panRef = useRef<PanState | null>(null);
+  const [viewport, setViewport] = useState<Size>({ width: 0, height: 0 });
+  const [camera, setCamera] = useState(initialCamera);
   const activeFloors = floors.filter((floor) => floor.isActive);
   const selectedFloor = activeFloors.find(
     (floor) => floor.id === activeFloorId,
@@ -14,6 +47,128 @@ export function FloorMap() {
   const visibleTables = tables.filter(
     (table) => table.floorId === activeFloorId,
   );
+
+  useEffect(() => {
+    const svg = svgRef.current;
+
+    if (!svg) return;
+
+    const resizeObserver = new ResizeObserver(([entry]) => {
+      const nextViewport = {
+        width: entry.contentRect.width,
+        height: entry.contentRect.height,
+      };
+
+      setViewport((currentViewport) =>
+        currentViewport.width === nextViewport.width &&
+        currentViewport.height === nextViewport.height
+          ? currentViewport
+          : nextViewport,
+      );
+    });
+
+    resizeObserver.observe(svg);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!viewport.width || !viewport.height) return;
+
+    setCamera(fitCameraToViewport(viewport));
+  }, [viewport]);
+
+  const getPointerPosition = (event: {
+    clientX: number;
+    clientY: number;
+  }) => {
+    const rect = svgRef.current?.getBoundingClientRect();
+
+    if (!rect) return null;
+
+    return {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
+    };
+  };
+
+  const fitCamera = () => {
+    if (!viewport.width || !viewport.height) return;
+
+    setCamera(fitCameraToViewport(viewport));
+  };
+
+  const zoomAtViewportCenter = (factor: number) => {
+    if (!viewport.width || !viewport.height) return;
+
+    const cursor = {
+      x: viewport.width / 2,
+      y: viewport.height / 2,
+    };
+
+    setCamera((currentCamera) =>
+      zoomCameraAtPoint(currentCamera, cursor, currentCamera.scale * factor),
+    );
+  };
+
+  const handleWheel = (event: WheelEvent<SVGSVGElement>) => {
+    const cursor = getPointerPosition(event);
+
+    if (!cursor) return;
+
+    event.preventDefault();
+
+    const factor = event.deltaY < 0 ? 1.1 : 1 / 1.1;
+
+    setCamera((currentCamera) =>
+      zoomCameraAtPoint(currentCamera, cursor, currentCamera.scale * factor),
+    );
+  };
+
+  const handlePointerDown = (event: PointerEvent<SVGSVGElement>) => {
+    if (!event.isPrimary || event.button !== 0) return;
+    if ((event.target as Element).closest("[data-table-node]")) return;
+
+    const pointer = getPointerPosition(event);
+
+    if (!pointer) return;
+
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    panRef.current = {
+      pointerId: event.pointerId,
+      pointer,
+      camera,
+    };
+  };
+
+  const handlePointerMove = (event: PointerEvent<SVGSVGElement>) => {
+    const pan = panRef.current;
+
+    if (!pan || pan.pointerId !== event.pointerId) return;
+
+    const pointer = getPointerPosition(event);
+
+    if (!pointer) return;
+
+    setCamera({
+      ...pan.camera,
+      offsetX: pan.camera.offsetX + pointer.x - pan.pointer.x,
+      offsetY: pan.camera.offsetY + pointer.y - pan.pointer.y,
+    });
+  };
+
+  const finishPan = (event: PointerEvent<SVGSVGElement>) => {
+    if (panRef.current?.pointerId !== event.pointerId) return;
+
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+
+    panRef.current = null;
+  };
 
   return (
     <section
@@ -52,13 +207,19 @@ export function FloorMap() {
           </div>
         </div>
 
-        <div className="min-h-0 flex-1">
+        <div className="relative min-h-0 flex-1">
           <svg
-            viewBox="0 0 1600 1000"
-            preserveAspectRatio="xMidYMid meet"
+            ref={svgRef}
+            viewBox={`0 0 ${viewport.width || 1} ${viewport.height || 1}`}
+            preserveAspectRatio="none"
             role="img"
             aria-labelledby="floor-map-title floor-map-description"
-            className="size-full"
+            className="size-full cursor-grab touch-none select-none active:cursor-grabbing"
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={finishPan}
+            onPointerCancel={finishPan}
+            onWheel={handleWheel}
           >
             <title id="floor-map-title">{`Карта столов: ${
               selectedFloor?.name ?? "этаж не выбран"
@@ -78,15 +239,58 @@ export function FloorMap() {
               </pattern>
             </defs>
 
-            <rect width="1600" height="1000" className="fill-white" />
-            <rect width="1600" height="1000" fill="url(#floor-map-grid)" />
+            <rect width="100%" height="100%" className="fill-slate-50" />
 
-            <g aria-label="Столы">
-              {visibleTables.map((table) => (
-                <TableNode key={table.id} table={table} />
-              ))}
+            <g
+              transform={`translate(${camera.offsetX} ${camera.offsetY}) scale(${camera.scale})`}
+            >
+              <rect width="1600" height="1000" className="fill-white" />
+              <rect width="1600" height="1000" fill="url(#floor-map-grid)" />
+
+              <g aria-label="Столы">
+                {visibleTables.map((table) => (
+                  <TableNode key={table.id} table={table} />
+                ))}
+              </g>
             </g>
           </svg>
+
+          <div
+            aria-label="Управление масштабом карты"
+            className="absolute right-4 bottom-4 flex overflow-hidden rounded-md border border-slate-200 bg-white shadow-sm"
+          >
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label="Уменьшить масштаб"
+              title="Уменьшить масштаб"
+              onClick={() => zoomAtViewportCenter(1 / 1.2)}
+            >
+              <Minus aria-hidden="true" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label="Вписать карту в экран"
+              title="Вписать карту в экран"
+              className="border-x border-slate-200"
+              onClick={fitCamera}
+            >
+              <Maximize aria-hidden="true" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label="Увеличить масштаб"
+              title="Увеличить масштаб"
+              onClick={() => zoomAtViewportCenter(1.2)}
+            >
+              <Plus aria-hidden="true" />
+            </Button>
+          </div>
         </div>
       </div>
     </section>

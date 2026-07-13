@@ -43,6 +43,7 @@ export function TableNode({ table }: TableNodeProps) {
 
   return (
     <g
+      data-table-node
       aria-label={`Стол №${table.number}, ${formatCapacity(table.capacity)}`}
       transform={`translate(${x} ${y}) rotate(${rotation})`}
       opacity={isInactive ? 0.65 : 1}
