@@ -115,7 +115,7 @@ export function CreateReservationDialog({
         }
       />
 
-      <DialogContent className="max-h-[calc(100vh-2rem)] gap-0 overflow-y-auto p-0 sm:max-w-xl [&_[data-slot=dialog-close]]:top-4 [&_[data-slot=dialog-close]]:right-4">
+      <DialogContent className="max-h-[calc(100vh-2rem)] gap-0 overflow-y-auto p-0 sm:max-w-xl **:data-[slot=dialog-close]:top-4 **:data-[slot=dialog-close]:right-4">
         <DialogHeader className="border-b border-slate-100 px-6 py-5">
           <DialogTitle className="text-xl font-semibold tracking-tight text-slate-950">
             Новая бронь
