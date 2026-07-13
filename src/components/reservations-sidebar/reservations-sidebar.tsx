@@ -6,7 +6,7 @@ import {
   reservationFloorSeed,
   reservationTableSeed,
   createReservationsSeed,
-} from "@/features/reservations/model/seed";
+} from "@/features/reservations/data/seed";
 import { getReservationStatusCounts } from "@/features/reservations/model/selectors";
 
 import { ReservationsList } from "./reservations-list";

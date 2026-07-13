@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { formatGuestsCount } from "@/features/reservations/model/selectors";
+import { formatGuestsCount } from "@/features/reservations/lib/formatters";
 import type { ReservationStatus } from "@/features/reservations/model/types";
 
 const statusStyles: Record<

@@ -4,7 +4,7 @@ import type {
   Reservation,
   ReservationFloorReference,
   ReservationTableReference,
-} from "./types";
+} from "../model/types";
 
 function createDate(
   referenceDate: Date,

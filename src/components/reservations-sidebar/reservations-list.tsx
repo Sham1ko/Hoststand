@@ -2,8 +2,8 @@ import {
   formatGuestPhone,
   formatReservationDateLabel,
   formatReservationTimeRange,
-  getReservationTableContext,
-} from "@/features/reservations/model/selectors";
+} from "@/features/reservations/lib/formatters";
+import { getReservationTableContext } from "@/features/reservations/model/selectors";
 import type {
   Reservation,
   ReservationFloorReference,
