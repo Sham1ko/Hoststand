@@ -1,8 +1,12 @@
 "use client";
 
 import { format, startOfToday } from "date-fns";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
+import {
+  getReservations,
+  updateReservationAction,
+} from "@/features/reservations/api/reservations-api";
 import {
   reservationFloorSeed,
   reservationTableSeed,
@@ -12,7 +16,6 @@ import { filterReservationsByStatus } from "@/features/reservations/model/select
 import type {
   Reservation,
   ReservationAction,
-  ReservationsResponse,
   ReservationStatusCounts,
 } from "@/features/reservations/model/types";
 
@@ -28,57 +31,64 @@ const emptyStatusCounts: ReservationStatusCounts = {
   COMPLETED: 0,
 };
 
-export function ReservationsSidebar() {
-  const [initialDate] = useState(() => startOfToday());
+function useReservations(date: Date) {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [statusCounts, setStatusCounts] =
     useState<ReservationStatusCounts>(emptyStatusCounts);
-  const [date, setDate] = useState(initialDate);
-  const [activeStatus, setActiveStatus] =
-    useState<ReservationStatusFilterValue>("ALL");
+
+  const dateParam = format(date, "yyyy-MM-dd");
+
+  const loadReservations = useCallback(async () => {
+    const data = await getReservations(dateParam);
+
+    if (!data) return;
+    setReservations(data.data);
+    setStatusCounts(data.meta.statusCounts);
+  }, [dateParam]);
 
   useEffect(() => {
-    const loadReservations = () => {
-      fetch(`/api/reservations?date=${format(date, "yyyy-MM-dd")}`)
-        .then((response) => response.json())
-        .then((response: ReservationsResponse) => {
-          setReservations(response.data);
-          setStatusCounts(response.meta.statusCounts);
-        });
-    };
-
     loadReservations();
     window.addEventListener(RESERVATIONS_CHANGED_EVENT, loadReservations);
 
     return () => {
       window.removeEventListener(RESERVATIONS_CHANGED_EVENT, loadReservations);
     };
-  }, [date]);
+  }, [loadReservations]);
+
+  const runReservationAction = async (
+    reservationId: string,
+    action: ReservationAction,
+  ) => {
+    const data = await updateReservationAction(
+      reservationId,
+      action,
+      dateParam,
+    );
+
+    if (!data) return;
+    setReservations(data.data);
+    setStatusCounts(data.meta.statusCounts);
+  };
+
+  return {
+    reservations,
+    statusCounts,
+    runReservationAction,
+  };
+}
+
+export function ReservationsSidebar() {
+  const [initialDate] = useState(() => startOfToday());
+  const [date, setDate] = useState(initialDate);
+  const [activeStatus, setActiveStatus] =
+    useState<ReservationStatusFilterValue>("ALL");
+  const { reservations, statusCounts, runReservationAction } =
+    useReservations(date);
 
   const visibleReservations = filterReservationsByStatus(
     reservations,
     activeStatus === "ALL" ? null : activeStatus,
   );
-
-  const runReservationAction = (
-    reservationId: string,
-    action: ReservationAction,
-  ) => {
-    fetch(
-      `/api/reservations/${reservationId}?date=${format(date, "yyyy-MM-dd")}`,
-      {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action }),
-      },
-    ).then(async (response) => {
-      if (!response.ok) return;
-
-      const data = (await response.json()) as ReservationsResponse;
-      setReservations(data.data);
-      setStatusCounts(data.meta.statusCounts);
-    });
-  };
 
   return (
     <aside
