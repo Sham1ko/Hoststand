@@ -1,3 +1,4 @@
+import { FloorMap } from "@/components/floor-map";
 import { Header } from "@/components/header";
 import { ReservationsSidebar } from "@/components/reservations-sidebar";
 
@@ -7,10 +8,7 @@ export default function Home() {
       <Header />
 
       <main className="flex min-h-0 flex-1">
-        <section
-          aria-label="Рабочая область"
-          className="min-w-0 flex-1 bg-slate-100"
-        />
+        <FloorMap />
 
         <ReservationsSidebar />
       </main>
