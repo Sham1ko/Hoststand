@@ -7,6 +7,7 @@ import {
   cancelReservation,
   completeReservation,
 } from "../model/transitions";
+import type { CreateReservationInput } from "../model/schemas";
 import type {
   Reservation,
   ReservationAction,
@@ -24,6 +25,19 @@ function getReservations() {
 
 export function resetReservations() {
   globalStore.qolayReservations = createReservationsSeed();
+}
+
+export function createReservation(input: CreateReservationInput) {
+  const reservation: Reservation = {
+    ...input,
+    id: crypto.randomUUID(),
+    status: "PENDING",
+    createdAt: new Date().toISOString(),
+  };
+
+  globalStore.qolayReservations = [...getReservations(), reservation];
+
+  return reservation;
 }
 
 export function getReservationsResponse(date?: Date): ReservationsResponse {

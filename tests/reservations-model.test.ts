@@ -1,4 +1,7 @@
-import { GET } from "@/app/api/reservations/route";
+import {
+  GET,
+  POST as CREATE_RESERVATION,
+} from "@/app/api/reservations/route";
 import { PATCH } from "@/app/api/reservations/[id]/route";
 import { POST as RESET } from "@/app/api/reset/route";
 import {
@@ -102,6 +105,54 @@ test("completes and cancels reservations through the API", async () => {
     cancelled.data.find((item) => item.id === "reservation-3")?.status,
   ).toBe("CANCELLED");
   expect(cancelled.meta.statusCounts.CANCELLED).toBe(2);
+});
+
+test("creates a pending reservation through the API", async () => {
+  const response = await CREATE_RESERVATION(
+    new Request("http://localhost/api/reservations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        tableId: "table-4",
+        guestName: "Новый гость",
+        guestPhone: "+77001234567",
+        guestsCount: 2,
+        reservationDate: "2026-07-13T16:00:00.000Z",
+        durationMinutes: 120,
+        comment: "Тестовая бронь",
+      }),
+    }),
+  );
+  const created = (await response.json()) as { data: Reservation };
+
+  expect(response.status).toBe(201);
+  expect(created.data).toEqual(
+    expect.objectContaining({
+      tableId: "table-4",
+      guestName: "Новый гость",
+      status: "PENDING",
+    }),
+  );
+
+  const reservationsResponse = GET(
+    new Request("http://localhost/api/reservations"),
+  );
+  const reservations =
+    (await reservationsResponse.json()) as ReservationsResponse;
+
+  expect(reservations.data).toContainEqual(created.data);
+});
+
+test("rejects invalid reservation data", async () => {
+  const response = await CREATE_RESERVATION(
+    new Request("http://localhost/api/reservations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ guestName: "" }),
+    }),
+  );
+
+  expect(response.status).toBe(400);
 });
 
 test("resets reservations to the initial seed through the API", async () => {
