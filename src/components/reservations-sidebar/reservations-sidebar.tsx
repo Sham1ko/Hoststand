@@ -1,18 +1,18 @@
 "use client";
 
 import { startOfToday } from "date-fns";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
   reservationFloorSeed,
   reservationTableSeed,
-  createReservationsSeed,
 } from "@/features/reservations/data/seed";
 import {
   filterReservationsByDate,
   filterReservationsByStatus,
   getReservationStatusCounts,
 } from "@/features/reservations/model/selectors";
+import type { Reservation } from "@/features/reservations/model/types";
 import {
   cancelReservation,
   completeReservation,
@@ -24,12 +24,16 @@ import type { ReservationStatusFilterValue } from "./reservations-status-filter"
 
 export function ReservationsSidebar() {
   const [initialDate] = useState(() => startOfToday());
-  const [reservations, setReservations] = useState(() =>
-    createReservationsSeed(initialDate),
-  );
+  const [reservations, setReservations] = useState<Reservation[]>([]);
   const [date, setDate] = useState(initialDate);
   const [activeStatus, setActiveStatus] =
     useState<ReservationStatusFilterValue>("ALL");
+
+  useEffect(() => {
+    fetch("/api/reservations")
+      .then((response) => response.json())
+      .then((data: Reservation[]) => setReservations(data));
+  }, []);
 
   const reservationsForDate = filterReservationsByDate(reservations, date);
   const statusCounts = getReservationStatusCounts(reservationsForDate);
