@@ -14,7 +14,9 @@ type UseFloorMapCommandsOptions = {
   tables: readonly DiningTable[];
   visibleTableCount: number;
   visibleZones: readonly TableZone[];
-  createTable: (input: CreateTableInput) => Promise<DiningTable | null>;
+  createTable: (
+    input: CreateTableInput,
+  ) => DiningTable | null | Promise<DiningTable | null>;
   createZone: (input: CreateZoneInput) => Promise<TableZone | null>;
   selectTable: (tableId: string) => void;
   selectZone: (zoneId: string) => void;

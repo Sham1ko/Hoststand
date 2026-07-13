@@ -1,6 +1,7 @@
 import type { DiningTable } from "@/features/floor-plan/model/types";
 import {
   applyTablePatch,
+  createDraftTable,
   getDraftTables,
   mergeTablePatches,
 } from "@/components/floor-map/use-pending-table-changes";
@@ -53,10 +54,46 @@ test("applies a pending patch without mutating the stored table", () => {
 test("hides a table staged for deletion without changing stored tables", () => {
   const displayedTables = getDraftTables(
     [table],
+    [],
     {},
     new Set([table.id]),
   );
 
   expect(displayedTables).toEqual([]);
   expect(table.id).toBe("table-1");
+});
+
+test("adds a new table to the draft without changing stored tables", () => {
+  const createdTable = createDraftTable(
+    {
+      number: 2,
+      capacity: 6,
+      floorId: "floor-1",
+      status: "FREE",
+      layout: {
+        x: 240,
+        y: 280,
+        w: 180,
+        h: 120,
+        rotation: 0,
+        shape: "rect",
+      },
+    },
+    "draft-table-2",
+  );
+
+  const displayedTables = getDraftTables(
+    [table],
+    [createdTable],
+    { "draft-table-2": { layout: { shape: "round" } } },
+    new Set(),
+  );
+
+  expect(displayedTables).toHaveLength(2);
+  expect(displayedTables[1]).toMatchObject({
+    id: "draft-table-2",
+    number: 2,
+    layout: { shape: "round", x: 240, y: 280 },
+  });
+  expect(table.number).toBe(1);
 });

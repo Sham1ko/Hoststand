@@ -40,14 +40,16 @@ export function FloorMap() {
   const [editorTool, setEditorTool] = useState<FloorMapEditorTool>("tables");
   const {
     patches: pendingTablePatches,
+    createdTables,
     deletedTableIds,
     isSaving: isSavingTableChanges,
     stagePatch: stageTablePatch,
     stagePosition: stageTablePosition,
+    stageCreation: stageTableCreation,
     stageDeletion: stageTableDeletion,
     discardAll: discardAllTableChanges,
     saveChanges: saveTableChanges,
-  } = usePendingTableChanges(updateTable, deleteTable);
+  } = usePendingTableChanges(updateTable, deleteTable, createTable);
   const { floors, tables, activeFloorId } = state;
   const {
     svgRef,
@@ -100,6 +102,7 @@ export function FloorMap() {
   );
   const displayedTables = getDraftTables(
     tables,
+    Object.values(createdTables),
     pendingTablePatches,
     deletedTableIds,
   );
@@ -120,10 +123,10 @@ export function FloorMap() {
   const { createTableOnActiveFloor, createZoneOnActiveFloor } =
     useFloorMapCommands({
       activeFloorId,
-      tables,
+      tables: displayedTables,
       visibleTableCount: visibleTables.length,
       visibleZones,
-      createTable,
+      createTable: stageTableCreation,
       createZone,
       selectTable,
       selectZone,
