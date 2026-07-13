@@ -2,6 +2,7 @@ import type {
   DiningTable,
   TableStatus,
 } from "@/features/floor-plan/model/types";
+import { Users } from "lucide-react";
 import type { PointerEvent } from "react";
 
 const statusStyles: Record<
@@ -126,13 +127,23 @@ export function TableNode({
         >
           №{table.number}
         </text>
-        <text
-          textAnchor="middle"
-          y={32}
-          className="fill-slate-500 text-[24px] font-medium"
-        >
-          {formatCapacity(table.capacity)}
-        </text>
+        <g className="text-slate-400">
+          <Users
+            x={-28}
+            y={15}
+            width={30}
+            height={30}
+            strokeWidth={2}
+          />
+          <text
+            x={12}
+            y={31}
+            dominantBaseline="middle"
+            className="fill-current text-[30px] font-medium"
+          >
+            {table.capacity}
+          </text>
+        </g>
       </g>
     </g>
   );
