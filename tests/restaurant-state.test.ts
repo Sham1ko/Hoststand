@@ -6,6 +6,7 @@ import { createRestaurantSeed } from "@/features/restaurant-state/data/seed";
 import {
   applyRestaurantReservationAction,
   createRestaurantReservation,
+  updateRestaurantTablePosition,
 } from "@/features/restaurant-state/model/actions";
 
 class MemoryStorage implements Storage {
@@ -143,4 +144,20 @@ test("creates and transitions reservations through pure restaurant actions", () 
   expect(
     applyRestaurantReservationAction(state, "reservation-3", "complete"),
   ).toBeNull();
+});
+
+test("moves only the requested table and normalizes its final position", () => {
+  const state = createRestaurantSeed();
+  const updated = updateRestaurantTablePosition(state, "table-1", {
+    x: 109,
+    y: 211,
+  });
+
+  expect(
+    updated?.tables.find((table) => table.id === "table-1")?.layout,
+  ).toMatchObject({ x: 100, y: 220 });
+  expect(updated?.tables.find((table) => table.id === "table-2")).toBe(
+    state.tables.find((table) => table.id === "table-2"),
+  );
+  expect(updateRestaurantTablePosition(state, "missing-table", { x: 0, y: 0 })).toBeNull();
 });

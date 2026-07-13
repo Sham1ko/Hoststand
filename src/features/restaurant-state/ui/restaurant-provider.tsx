@@ -20,6 +20,8 @@ import {
 import {
   applyRestaurantReservationAction,
   createRestaurantReservation,
+  type TablePosition,
+  updateRestaurantTablePosition,
 } from "../model/actions";
 import type { RestaurantState } from "../model/types";
 
@@ -30,6 +32,10 @@ type RestaurantContextValue = {
   applyReservationAction: (
     reservationId: string,
     action: ReservationAction,
+  ) => Promise<boolean>;
+  updateTablePosition: (
+    tableId: string,
+    position: TablePosition,
   ) => Promise<boolean>;
   resetDemo: () => Promise<void>;
 };
@@ -120,6 +126,20 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
     [saveState, state],
   );
 
+  const updateTablePosition = useCallback(
+    async (tableId: string, position: TablePosition) => {
+      if (!state) return false;
+
+      const nextState = updateRestaurantTablePosition(state, tableId, position);
+
+      if (!nextState) return false;
+
+      await saveState(nextState);
+      return true;
+    },
+    [saveState, state],
+  );
+
   const resetDemo = useCallback(async () => {
     const nextState = await repositoryRef.current?.resetDemo();
 
@@ -135,6 +155,7 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
         setActiveFloorId,
         createReservation,
         applyReservationAction,
+        updateTablePosition,
         resetDemo,
       }}
     >

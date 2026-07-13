@@ -2,6 +2,7 @@ import type {
   DiningTable,
   TableStatus,
 } from "@/features/floor-plan/model/types";
+import type { PointerEvent } from "react";
 
 const statusStyles: Record<
   TableStatus,
@@ -33,9 +34,23 @@ function formatCapacity(capacity: number) {
 
 type TableNodeProps = {
   table: DiningTable;
+  isEditing?: boolean;
+  isSelected?: boolean;
+  onPointerDown?: (event: PointerEvent<SVGGElement>) => void;
+  onPointerMove?: (event: PointerEvent<SVGGElement>) => void;
+  onPointerUp?: (event: PointerEvent<SVGGElement>) => void;
+  onPointerCancel?: (event: PointerEvent<SVGGElement>) => void;
 };
 
-export function TableNode({ table }: TableNodeProps) {
+export function TableNode({
+  table,
+  isEditing = false,
+  isSelected = false,
+  onPointerDown,
+  onPointerMove,
+  onPointerUp,
+  onPointerCancel,
+}: TableNodeProps) {
   const { x, y, w, h, rotation, shape } = table.layout;
   const style = statusStyles[table.status];
   const isRound = shape === "round";
@@ -47,7 +62,35 @@ export function TableNode({ table }: TableNodeProps) {
       aria-label={`Стол №${table.number}, ${formatCapacity(table.capacity)}`}
       transform={`translate(${x} ${y}) rotate(${rotation})`}
       opacity={isInactive ? 0.65 : 1}
+      className={isEditing ? "cursor-move" : undefined}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerCancel}
     >
+      {isSelected &&
+        (isRound ? (
+          <ellipse
+            rx={w / 2 + 10}
+            ry={h / 2 + 10}
+            fill="none"
+            stroke="#0f172a"
+            strokeWidth={5}
+            opacity={0.7}
+          />
+        ) : (
+          <rect
+            x={-w / 2 - 10}
+            y={-h / 2 - 10}
+            width={w + 20}
+            height={h + 20}
+            rx={shape === "square" ? 28 : 34}
+            fill="none"
+            stroke="#0f172a"
+            strokeWidth={5}
+            opacity={0.7}
+          />
+        ))}
       {isRound ? (
         <ellipse
           rx={w / 2}

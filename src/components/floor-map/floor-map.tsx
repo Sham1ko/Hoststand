@@ -3,11 +3,13 @@
 import { useRestaurant } from "@/features/restaurant-state/ui/restaurant-provider";
 
 import { FloorMapControls } from "./floor-map-controls";
+import { FloorMapEditorControls } from "./floor-map-editor-controls";
 import { TableNode } from "./table-node";
 import { useFloorMapCamera } from "./use-floor-map-camera";
+import { useFloorMapEditor } from "./use-floor-map-editor";
 
 export function FloorMap() {
-  const { state, setActiveFloorId } = useRestaurant();
+  const { state, setActiveFloorId, updateTablePosition } = useRestaurant();
   const { floors, tables, activeFloorId } = state;
   const {
     svgRef,
@@ -20,6 +22,21 @@ export function FloorMap() {
     handlePointerMove,
     finishPan,
   } = useFloorMapCamera();
+  const {
+    isEditing,
+    selectedTableId,
+    dragPreview,
+    toggleEditing,
+    handleTablePointerDown,
+    handleTablePointerMove,
+    finishTableDrag,
+    cancelTableDrag,
+  } = useFloorMapEditor({
+    camera,
+    onTablePositionChange: (tableId, position) => {
+      void updateTablePosition(tableId, position);
+    },
+  });
   const activeFloors = floors.filter((floor) => floor.isActive);
   const selectedFloor = activeFloors.find(
     (floor) => floor.id === activeFloorId,
@@ -37,31 +54,37 @@ export function FloorMap() {
         <div className="flex items-center justify-between gap-4 border-b border-slate-100 px-4 py-3">
           <h2 className="text-sm font-semibold text-slate-900">План зала</h2>
 
-          <div
-            role="tablist"
-            aria-label="Этажи ресторана"
-            className="flex items-center gap-1 rounded-lg bg-slate-100 p-1"
-          >
-            {activeFloors.map((floor) => {
-              const isSelected = floor.id === activeFloorId;
+          <div className="flex items-center gap-2">
+            <FloorMapEditorControls
+              isEditing={isEditing}
+              onToggle={toggleEditing}
+            />
+            <div
+              role="tablist"
+              aria-label="Этажи ресторана"
+              className="flex items-center gap-1 rounded-lg bg-slate-100 p-1"
+            >
+              {activeFloors.map((floor) => {
+                const isSelected = floor.id === activeFloorId;
 
-              return (
-                <button
-                  key={floor.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={isSelected}
-                  className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-                    isSelected
-                      ? "bg-white text-slate-950 shadow-sm"
-                      : "text-slate-500 hover:text-slate-800"
-                  }`}
-                  onClick={() => void setActiveFloorId(floor.id)}
-                >
-                  {floor.name}
-                </button>
-              );
-            })}
+                return (
+                  <button
+                    key={floor.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={isSelected}
+                    className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                      isSelected
+                        ? "bg-white text-slate-950 shadow-sm"
+                        : "text-slate-500 hover:text-slate-800"
+                    }`}
+                    onClick={() => void setActiveFloorId(floor.id)}
+                  >
+                    {floor.name}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
 
@@ -107,7 +130,29 @@ export function FloorMap() {
 
               <g aria-label="Столы">
                 {visibleTables.map((table) => (
-                  <TableNode key={table.id} table={table} />
+                  <TableNode
+                    key={table.id}
+                    table={
+                      dragPreview?.tableId === table.id
+                        ? {
+                            ...table,
+                            layout: {
+                              ...table.layout,
+                              x: dragPreview.x,
+                              y: dragPreview.y,
+                            },
+                          }
+                        : table
+                    }
+                    isEditing={isEditing}
+                    isSelected={isEditing && table.id === selectedTableId}
+                    onPointerDown={(event) =>
+                      handleTablePointerDown(event, table)
+                    }
+                    onPointerMove={handleTablePointerMove}
+                    onPointerUp={finishTableDrag}
+                    onPointerCancel={cancelTableDrag}
+                  />
                 ))}
               </g>
             </g>
