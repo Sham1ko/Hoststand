@@ -6,6 +6,7 @@ export type FloorMapEditorTool = "tables" | "zones";
 
 type FloorMapEditorControlsProps = {
   isEditing: boolean;
+  isSaving: boolean;
   tool: FloorMapEditorTool;
   onToggle: () => void;
   onCreateTable: () => void;
@@ -15,6 +16,7 @@ type FloorMapEditorControlsProps = {
 
 export function FloorMapEditorControls({
   isEditing,
+  isSaving,
   tool,
   onToggle,
   onCreateTable,
@@ -66,7 +68,8 @@ export function FloorMapEditorControls({
         variant={isEditing ? "default" : "outline"}
         size="sm"
         aria-pressed={isEditing}
-        title={isEditing ? "Завершить редактирование" : "Редактировать столы"}
+        title={isEditing ? "Сохранить изменения" : "Редактировать столы"}
+        disabled={isSaving}
         onClick={onToggle}
       >
         {isEditing ? (
@@ -74,7 +77,7 @@ export function FloorMapEditorControls({
         ) : (
           <Pencil aria-hidden="true" data-icon="inline-start" />
         )}
-        {isEditing ? "Готово" : "Редактировать"}
+        {isEditing ? "Сохранить" : "Редактировать"}
       </Button>
     </div>
   );

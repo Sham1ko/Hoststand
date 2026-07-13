@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { useRestaurant } from "@/features/restaurant-state/ui/restaurant-provider";
+import type { TablePosition } from "@/features/restaurant-state/model/actions";
 import {
   getDisplayedTableStatus,
   getReservedTableIds,
@@ -38,6 +39,10 @@ export function FloorMap() {
     setFocusedReservationTableId,
   } = useRestaurant();
   const [editorTool, setEditorTool] = useState<FloorMapEditorTool>("tables");
+  const [pendingTablePositions, setPendingTablePositions] = useState<
+    Record<string, TablePosition>
+  >({});
+  const [isSavingTablePositions, setIsSavingTablePositions] = useState(false);
   const { floors, tables, activeFloorId } = state;
   const {
     svgRef,
@@ -64,7 +69,10 @@ export function FloorMap() {
   } = useFloorMapEditor({
     camera,
     onTablePositionChange: (tableId, position) => {
-      void updateTablePosition(tableId, position);
+      setPendingTablePositions((currentPositions) => ({
+        ...currentPositions,
+        [tableId]: position,
+      }));
     },
   });
   const isTableEditing = isEditing && editorTool === "tables";
@@ -148,9 +156,39 @@ export function FloorMap() {
     clearZoneSelection();
   };
 
-  const toggleEditor = () => {
+  const toggleEditor = async () => {
+    if (isEditing) {
+      const positions = Object.entries(pendingTablePositions);
+
+      if (positions.length > 0) {
+        setIsSavingTablePositions(true);
+
+        const results = await Promise.all(
+          positions.map(([tableId, position]) =>
+            updateTablePosition(tableId, position),
+          ),
+        );
+
+        setIsSavingTablePositions(false);
+
+        if (results.some((isSaved) => !isSaved)) return;
+
+        setPendingTablePositions({});
+      }
+    }
+
     toggleEditing();
     clearZoneSelection();
+  };
+
+  const discardPendingTablePosition = (tableId: string) => {
+    setPendingTablePositions((currentPositions) => {
+      if (!(tableId in currentPositions)) return currentPositions;
+
+      const nextPositions = { ...currentPositions };
+      delete nextPositions[tableId];
+      return nextPositions;
+    });
   };
 
   return (
@@ -165,8 +203,9 @@ export function FloorMap() {
           <div className="flex items-center gap-2">
             <FloorMapEditorControls
               isEditing={isEditing}
+              isSaving={isSavingTablePositions}
               tool={editorTool}
-              onToggle={toggleEditor}
+              onToggle={() => void toggleEditor()}
               onCreateTable={() => void createTableOnActiveFloor()}
               onCreateZone={() => void createZoneOnActiveFloor()}
               onToolChange={selectEditorTool}
@@ -270,14 +309,19 @@ export function FloorMap() {
 
               <g aria-label="Столы">
                 {visibleTables.map((table) => {
-                  const tableWithPreview =
+                  const pendingPosition = pendingTablePositions[table.id];
+                  const previewPosition =
                     dragPreview?.tableId === table.id
+                      ? dragPreview
+                      : pendingPosition;
+                  const tableWithPreview =
+                    previewPosition
                       ? {
                           ...table,
                           layout: {
                             ...table.layout,
-                            x: dragPreview.x,
-                            y: dragPreview.y,
+                            x: previewPosition.x,
+                            y: previewPosition.y,
                           },
                         }
                       : table;
@@ -304,7 +348,7 @@ export function FloorMap() {
                         return;
                       }
 
-                      handleTablePointerDown(event, table);
+                      handleTablePointerDown(event, tableWithPreview);
                     }}
                     onPointerMove={handleTablePointerMove}
                     onPointerUp={finishTableDrag}
@@ -326,7 +370,10 @@ export function FloorMap() {
               onDelete={async () => {
                 const deleted = await deleteTable(selectedTable.id);
 
-                if (deleted) clearSelection();
+                if (deleted) {
+                  discardPendingTablePosition(selectedTable.id);
+                  clearSelection();
+                }
 
                 return deleted;
               }}
