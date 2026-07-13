@@ -25,6 +25,12 @@ export function ZoneNode({
 }: ZoneNodeProps) {
   if (!rect) return null;
 
+  const labelWidth = Math.min(
+    200,
+    Math.max(100, Array.from(zone.name).length * 11 + 42),
+  );
+  const labelX = Math.max(14, Math.min(40, rect.w - labelWidth - 14));
+
   return (
     <g
       data-zone-node
@@ -48,14 +54,27 @@ export function ZoneNode({
         strokeWidth={isSelected ? 3 : 1.5}
         strokeDasharray="7 5"
       />
-      <text
-        x={20}
-        y={38}
-        fill={zone.color}
-        className="pointer-events-none text-[26px] font-semibold"
-      >
-        {zone.name}
-      </text>
+      <g className="pointer-events-none">
+        <rect
+          x={labelX}
+          y={-22}
+          width={labelWidth}
+          height={44}
+          rx={22}
+          fill={zone.color}
+          style={{ filter: "drop-shadow(0 3px 3px rgb(15 23 42 / 0.14))" }}
+        />
+        <text
+          x={labelX + labelWidth / 2}
+          y={1}
+          fill="white"
+          textAnchor="middle"
+          dominantBaseline="middle"
+          className="text-[22px] font-bold"
+        >
+          {zone.name}
+        </text>
+      </g>
       {isSelected && (
         <rect
           data-zone-resize-handle
