@@ -9,7 +9,10 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { formatGuestsCount } from "@/features/reservations/lib/formatters";
-import type { ReservationStatus } from "@/features/reservations/model/types";
+import type {
+  ReservationAction,
+  ReservationStatus,
+} from "@/features/reservations/model/types";
 
 const statusStyles: Record<
   ReservationStatus,
@@ -34,6 +37,7 @@ const statusStyles: Record<
 };
 
 export type ReservationCardProps = {
+  reservationId: string;
   time: string;
   dateLabel: string;
   guestName: string;
@@ -43,12 +47,11 @@ export type ReservationCardProps = {
   guestsCount: number;
   phone: string;
   note?: string;
-  onConfirm: () => void;
-  onComplete: () => void;
-  onCancel: () => void;
+  onAction: (reservationId: string, action: ReservationAction) => void;
 };
 
 export function ReservationCard({
+  reservationId,
   time,
   dateLabel,
   guestName,
@@ -58,9 +61,7 @@ export function ReservationCard({
   guestsCount,
   phone,
   note,
-  onConfirm,
-  onComplete,
-  onCancel,
+  onAction,
 }: ReservationCardProps) {
   const statusStyle = statusStyles[status];
   const canConfirm = status === "PENDING";
@@ -119,7 +120,7 @@ export function ReservationCard({
               type="button"
               size="default"
               className="bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
-              onClick={onConfirm}
+              onClick={() => onAction(reservationId, "confirm")}
             >
               <Check aria-hidden="true" data-icon="inline-start" />
               Подтвердить
@@ -130,7 +131,7 @@ export function ReservationCard({
               type="button"
               size="default"
               className="bg-blue-50 text-blue-600 hover:bg-blue-100"
-              onClick={onComplete}
+              onClick={() => onAction(reservationId, "complete")}
             >
               <Check aria-hidden="true" data-icon="inline-start" />
               Завершить
@@ -141,7 +142,7 @@ export function ReservationCard({
               type="button"
               variant="destructive"
               size="default"
-              onClick={onCancel}
+              onClick={() => onAction(reservationId, "cancel")}
             >
               <X aria-hidden="true" data-icon="inline-start" />
               Отменить

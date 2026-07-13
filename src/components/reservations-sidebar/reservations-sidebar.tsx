@@ -80,10 +80,6 @@ export function ReservationsSidebar() {
     });
   };
 
-  const createReservationActionHandler =
-    (action: ReservationAction) => (reservationId: string) =>
-      runReservationAction(reservationId, action);
-
   return (
     <aside
       aria-label="Управление бронями"
@@ -100,9 +96,7 @@ export function ReservationsSidebar() {
         reservations={visibleReservations}
         tables={reservationTableSeed}
         floors={reservationFloorSeed}
-        onConfirm={createReservationActionHandler("confirm")}
-        onComplete={createReservationActionHandler("complete")}
-        onCancel={createReservationActionHandler("cancel")}
+        onAction={runReservationAction}
       />
     </aside>
   );

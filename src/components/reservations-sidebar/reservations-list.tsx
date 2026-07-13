@@ -8,6 +8,7 @@ import {
 import { getReservationTableContext } from "@/features/reservations/model/selectors";
 import type {
   Reservation,
+  ReservationAction,
   ReservationFloorReference,
   ReservationTableReference,
 } from "@/features/reservations/model/types";
@@ -18,18 +19,14 @@ type ReservationsListProps = {
   reservations: readonly Reservation[];
   tables: readonly ReservationTableReference[];
   floors: readonly ReservationFloorReference[];
-  onConfirm: (reservationId: string) => void;
-  onComplete: (reservationId: string) => void;
-  onCancel: (reservationId: string) => void;
+  onAction: (reservationId: string, action: ReservationAction) => void;
 };
 
 export function ReservationsList({
   reservations,
   tables,
   floors,
-  onConfirm,
-  onComplete,
-  onCancel,
+  onAction,
 }: ReservationsListProps) {
   if (reservations.length === 0) {
     return (
@@ -64,6 +61,7 @@ export function ReservationsList({
         return (
           <ReservationCard
             key={reservation.id}
+            reservationId={reservation.id}
             time={formatReservationTimeRange(reservation)}
             dateLabel={formatReservationDateLabel(reservation)}
             guestName={reservation.guestName}
@@ -73,9 +71,7 @@ export function ReservationsList({
             guestsCount={reservation.guestsCount}
             phone={formatGuestPhone(reservation.guestPhone)}
             note={reservation.comment}
-            onConfirm={() => onConfirm(reservation.id)}
-            onComplete={() => onComplete(reservation.id)}
-            onCancel={() => onCancel(reservation.id)}
+            onAction={onAction}
           />
         );
       })}
