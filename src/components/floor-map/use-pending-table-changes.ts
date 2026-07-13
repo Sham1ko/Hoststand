@@ -8,6 +8,7 @@ type SaveTablePatch = (
   tableId: string,
   patch: TablePatchInput,
 ) => Promise<boolean>;
+type DeleteTable = (tableId: string) => Promise<boolean>;
 
 export function mergeTablePatches(
   currentPatch: TablePatchInput | undefined,
@@ -41,8 +42,24 @@ export function applyTablePatch(
   };
 }
 
-export function usePendingTableChanges(saveTablePatch: SaveTablePatch) {
+export function getDraftTables(
+  tables: readonly DiningTable[],
+  patches: Readonly<Record<string, TablePatchInput>>,
+  deletedTableIds: ReadonlySet<string>,
+) {
+  return tables
+    .filter((table) => !deletedTableIds.has(table.id))
+    .map((table) => applyTablePatch(table, patches[table.id]));
+}
+
+export function usePendingTableChanges(
+  saveTablePatch: SaveTablePatch,
+  deleteTable: DeleteTable,
+) {
   const [patches, setPatches] = useState<Record<string, TablePatchInput>>({});
+  const [deletedTableIds, setDeletedTableIds] = useState<ReadonlySet<string>>(
+    () => new Set(),
+  );
   const [isSaving, setIsSaving] = useState(false);
 
   const stagePatch = useCallback(
@@ -62,7 +79,7 @@ export function usePendingTableChanges(saveTablePatch: SaveTablePatch) {
     [stagePatch],
   );
 
-  const discardTable = useCallback((tableId: string) => {
+  const stageDeletion = useCallback((tableId: string) => {
     setPatches((currentPatches) => {
       if (!(tableId in currentPatches)) return currentPatches;
 
@@ -70,41 +87,53 @@ export function usePendingTableChanges(saveTablePatch: SaveTablePatch) {
       delete nextPatches[tableId];
       return nextPatches;
     });
+    setDeletedTableIds((currentIds) => {
+      const nextIds = new Set(currentIds);
+      nextIds.add(tableId);
+      return nextIds;
+    });
   }, []);
 
   const discardAll = useCallback(() => {
     setPatches({});
+    setDeletedTableIds(new Set());
   }, []);
 
   const saveChanges = useCallback(async () => {
     const pendingPatches = Object.entries(patches);
+    const pendingDeletions = Array.from(deletedTableIds);
 
-    if (pendingPatches.length === 0) return true;
+    if (pendingPatches.length === 0 && pendingDeletions.length === 0) {
+      return true;
+    }
 
     setIsSaving(true);
 
     try {
-      const results = await Promise.all(
-        pendingPatches.map(([tableId, patch]) =>
+      const results = await Promise.all([
+        ...pendingPatches.map(([tableId, patch]) =>
           saveTablePatch(tableId, patch),
         ),
-      );
+        ...pendingDeletions.map((tableId) => deleteTable(tableId)),
+      ]);
 
       if (results.some((isSaved) => !isSaved)) return false;
 
       setPatches({});
+      setDeletedTableIds(new Set());
       return true;
     } finally {
       setIsSaving(false);
     }
-  }, [patches, saveTablePatch]);
+  }, [deleteTable, deletedTableIds, patches, saveTablePatch]);
 
   return {
     patches,
+    deletedTableIds,
     isSaving,
     stagePatch,
     stagePosition,
-    discardTable,
+    stageDeletion,
     discardAll,
     saveChanges,
   };

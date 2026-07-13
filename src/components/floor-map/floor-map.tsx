@@ -18,7 +18,7 @@ import { useFloorMapCommands } from "./use-floor-map-commands";
 import { useFloorMapEditor } from "./use-floor-map-editor";
 import { useFloorMapZoneEditor } from "./use-floor-map-zone-editor";
 import {
-  applyTablePatch,
+  getDraftTables,
   usePendingTableChanges,
 } from "./use-pending-table-changes";
 
@@ -40,13 +40,14 @@ export function FloorMap() {
   const [editorTool, setEditorTool] = useState<FloorMapEditorTool>("tables");
   const {
     patches: pendingTablePatches,
+    deletedTableIds,
     isSaving: isSavingTableChanges,
     stagePatch: stageTablePatch,
     stagePosition: stageTablePosition,
-    discardTable: discardPendingTableChanges,
+    stageDeletion: stageTableDeletion,
     discardAll: discardAllTableChanges,
     saveChanges: saveTableChanges,
-  } = usePendingTableChanges(updateTable);
+  } = usePendingTableChanges(updateTable, deleteTable);
   const { floors, tables, activeFloorId } = state;
   const {
     svgRef,
@@ -97,8 +98,10 @@ export function FloorMap() {
   const selectedFloor = activeFloors.find(
     (floor) => floor.id === activeFloorId,
   );
-  const displayedTables = tables.map((table) =>
-    applyTablePatch(table, pendingTablePatches[table.id]),
+  const displayedTables = getDraftTables(
+    tables,
+    pendingTablePatches,
+    deletedTableIds,
   );
   const visibleTables = displayedTables.filter(
     (table) => table.floorId === activeFloorId,
@@ -239,15 +242,9 @@ export function FloorMap() {
                 (reservation) => reservation.tableId === selectedTable.id,
               )}
               onChange={(patch) => stageTablePatch(selectedTable.id, patch)}
-              onDelete={async () => {
-                const deleted = await deleteTable(selectedTable.id);
-
-                if (deleted) {
-                  discardPendingTableChanges(selectedTable.id);
-                  clearSelection();
-                }
-
-                return deleted;
+              onDelete={() => {
+                stageTableDeletion(selectedTable.id);
+                clearSelection();
               }}
             />
           )}

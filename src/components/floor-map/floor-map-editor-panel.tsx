@@ -62,7 +62,7 @@ type FloorMapEditorPanelProps = {
   table: DiningTable;
   hasReservations: boolean;
   onChange: (patch: TablePatchInput) => void;
-  onDelete: () => Promise<boolean>;
+  onDelete: () => void;
 };
 
 export function FloorMapEditorPanel({
@@ -102,10 +102,10 @@ export function FloorMapEditorPanel({
     onChange({ layout: { [field === "width" ? "w" : "h"]: value } });
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!window.confirm(`Удалить стол №${table.number}?`)) return;
 
-    await onDelete();
+    onDelete();
   };
 
   return (
@@ -128,7 +128,7 @@ export function FloorMapEditorPanel({
               : "Удалить стол"
           }
           disabled={hasReservations}
-          onClick={() => void handleDelete()}
+          onClick={handleDelete}
         >
           <Trash2 aria-hidden="true" />
         </Button>

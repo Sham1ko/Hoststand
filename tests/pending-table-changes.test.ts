@@ -1,6 +1,7 @@
 import type { DiningTable } from "@/features/floor-plan/model/types";
 import {
   applyTablePatch,
+  getDraftTables,
   mergeTablePatches,
 } from "@/components/floor-map/use-pending-table-changes";
 
@@ -47,4 +48,15 @@ test("applies a pending patch without mutating the stored table", () => {
     status: "FREE",
     layout: { shape: "square", x: 100 },
   });
+});
+
+test("hides a table staged for deletion without changing stored tables", () => {
+  const displayedTables = getDraftTables(
+    [table],
+    {},
+    new Set([table.id]),
+  );
+
+  expect(displayedTables).toEqual([]);
+  expect(table.id).toBe("table-1");
 });
