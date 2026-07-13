@@ -1,29 +1,18 @@
 "use client";
 
-import { useState } from "react";
-
-import type {
-  DiningTable,
-  TableFloor,
-} from "@/features/floor-plan/model/types";
+import { useRestaurant } from "@/features/restaurant-state/ui/restaurant-provider";
 
 import { TableNode } from "./table-node";
 
-type FloorMapProps = {
-  floors: readonly TableFloor[];
-  tables: readonly DiningTable[];
-};
-
-export function FloorMap({ floors, tables }: FloorMapProps) {
+export function FloorMap() {
+  const { state, setActiveFloorId } = useRestaurant();
+  const { floors, tables, activeFloorId } = state;
   const activeFloors = floors.filter((floor) => floor.isActive);
-  const [selectedFloorId, setSelectedFloorId] = useState(
-    () => activeFloors[0]?.id ?? "",
-  );
   const selectedFloor = activeFloors.find(
-    (floor) => floor.id === selectedFloorId,
+    (floor) => floor.id === activeFloorId,
   );
   const visibleTables = tables.filter(
-    (table) => table.floorId === selectedFloorId,
+    (table) => table.floorId === activeFloorId,
   );
 
   return (
@@ -41,7 +30,7 @@ export function FloorMap({ floors, tables }: FloorMapProps) {
             className="flex items-center gap-1 rounded-lg bg-slate-100 p-1"
           >
             {activeFloors.map((floor) => {
-              const isSelected = floor.id === selectedFloorId;
+              const isSelected = floor.id === activeFloorId;
 
               return (
                 <button
@@ -54,7 +43,7 @@ export function FloorMap({ floors, tables }: FloorMapProps) {
                       ? "bg-white text-slate-950 shadow-sm"
                       : "text-slate-500 hover:text-slate-800"
                   }`}
-                  onClick={() => setSelectedFloorId(floor.id)}
+                  onClick={() => void setActiveFloorId(floor.id)}
                 >
                   {floor.name}
                 </button>

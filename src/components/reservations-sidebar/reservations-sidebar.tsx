@@ -1,100 +1,26 @@
 "use client";
 
-import { format, startOfToday } from "date-fns";
-import { useCallback, useEffect, useState } from "react";
+import { startOfToday } from "date-fns";
+import { useState } from "react";
 
 import {
-  getReservations,
-  updateReservationAction,
-} from "@/features/reservations/api/reservations-api";
-import {
-  reservationFloorSeed,
-  reservationTableSeed,
-} from "@/features/reservations/data/seed";
-import { RESERVATIONS_CHANGED_EVENT } from "@/features/reservations/lib/events";
-import { filterReservationsByStatus } from "@/features/reservations/model/selectors";
-import type {
-  Reservation,
-  ReservationAction,
-  ReservationStatusCounts,
-} from "@/features/reservations/model/types";
+  filterReservationsByDate,
+  filterReservationsByStatus,
+  getReservationStatusCounts,
+} from "@/features/reservations/model/selectors";
+import { useRestaurant } from "@/features/restaurant-state/ui/restaurant-provider";
 
 import { ReservationsList } from "./reservations-list";
 import { ReservationsSidebarHeader } from "./reservations-sidebar-header";
 import type { ReservationStatusFilterValue } from "./reservations-status-filter";
 
-const emptyStatusCounts: ReservationStatusCounts = {
-  ALL: 0,
-  PENDING: 0,
-  CONFIRMED: 0,
-  CANCELLED: 0,
-  COMPLETED: 0,
-};
-
-function useReservations(date: Date) {
-  const [reservations, setReservations] = useState<Reservation[]>([]);
-  const [statusCounts, setStatusCounts] =
-    useState<ReservationStatusCounts>(emptyStatusCounts);
-
-  const dateParam = format(date, "yyyy-MM-dd");
-
-  const loadReservations = useCallback(async (signal: AbortSignal) => {
-    const data = await getReservations(dateParam, signal);
-
-    if (!data || signal.aborted) return;
-    setReservations(data.data);
-    setStatusCounts(data.meta.statusCounts);
-  }, [dateParam]);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    const reloadReservations = () => {
-      void loadReservations(controller.signal);
-    };
-
-    reloadReservations();
-    window.addEventListener(
-      RESERVATIONS_CHANGED_EVENT,
-      reloadReservations,
-    );
-
-    return () => {
-      controller.abort();
-      window.removeEventListener(
-        RESERVATIONS_CHANGED_EVENT,
-        reloadReservations,
-      );
-    };
-  }, [loadReservations]);
-
-  const runReservationAction = async (
-    reservationId: string,
-    action: ReservationAction,
-  ) => {
-    const data = await updateReservationAction(
-      reservationId,
-      action,
-      dateParam,
-    );
-
-    if (!data) return;
-    setReservations(data.data);
-    setStatusCounts(data.meta.statusCounts);
-  };
-
-  return {
-    reservations,
-    statusCounts,
-    runReservationAction,
-  };
-}
-
 export function ReservationsSidebar() {
   const [date, setDate] = useState(startOfToday);
   const [activeStatus, setActiveStatus] =
     useState<ReservationStatusFilterValue>("ALL");
-  const { reservations, statusCounts, runReservationAction } =
-    useReservations(date);
+  const { state, applyReservationAction } = useRestaurant();
+  const reservations = filterReservationsByDate(state.reservations, date);
+  const statusCounts = getReservationStatusCounts(reservations);
 
   const visibleReservations = filterReservationsByStatus(
     reservations,
@@ -115,9 +41,11 @@ export function ReservationsSidebar() {
       />
       <ReservationsList
         reservations={visibleReservations}
-        tables={reservationTableSeed}
-        floors={reservationFloorSeed}
-        onAction={runReservationAction}
+        tables={state.tables}
+        floors={state.floors}
+        onAction={(reservationId, action) => {
+          void applyReservationAction(reservationId, action);
+        }}
       />
     </aside>
   );

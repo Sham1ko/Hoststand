@@ -4,16 +4,10 @@ import { RotateCcw } from "lucide-react";
 import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
-import { RESERVATIONS_CHANGED_EVENT } from "@/features/reservations/lib/events";
+import { useRestaurant } from "@/features/restaurant-state/ui/restaurant-provider";
 
 export function Header() {
-  const handleReset = () => {
-    fetch("/api/reset", { method: "POST" }).then((response) => {
-      if (response.ok) {
-        window.dispatchEvent(new Event(RESERVATIONS_CHANGED_EVENT));
-      }
-    });
-  };
+  const { resetDemo } = useRestaurant();
 
   return (
     <header className="h-16 flex items-center border-b border-slate-200 bg-white">
@@ -41,10 +35,10 @@ export function Header() {
           variant="outline"
           size="sm"
           className="ml-auto"
-          onClick={handleReset}
+          onClick={() => void resetDemo()}
         >
           <RotateCcw aria-hidden="true" data-icon="inline-start" />
-          Сбросить брони
+          Сбросить демо
         </Button>
       </div>
     </header>

@@ -17,13 +17,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { reservationTableSeed } from "@/features/reservations/data/seed";
-import { RESERVATIONS_CHANGED_EVENT } from "@/features/reservations/lib/events";
 import {
   createReservationSchema,
   type CreateReservationFormValues,
   type CreateReservationInput,
 } from "@/features/reservations/model/schemas";
+import { useRestaurant } from "@/features/restaurant-state/ui/restaurant-provider";
 
 const fieldClassName =
   "h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15 aria-invalid:border-red-400 aria-invalid:ring-2 aria-invalid:ring-red-100 placeholder:text-slate-400";
@@ -40,6 +39,7 @@ export function CreateReservationDialog({
 }: CreateReservationDialogProps) {
   const [open, setOpen] = useState(false);
   const [requestError, setRequestError] = useState<string>();
+  const { state, createReservation } = useRestaurant();
   const defaultDateTime = format(
     setMinutes(setHours(date, 18), 0),
     "yyyy-MM-dd'T'HH:mm",
@@ -82,20 +82,15 @@ export function CreateReservationDialog({
   const submitReservation = async (values: CreateReservationInput) => {
     setRequestError(undefined);
 
-    const response = await fetch("/api/reservations", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(values),
-    });
+    const isCreated = await createReservation(values);
 
-    if (!response.ok) {
+    if (!isCreated) {
       setRequestError("Не удалось создать бронь");
       return;
     }
 
     reset();
     setOpen(false);
-    window.dispatchEvent(new Event(RESERVATIONS_CHANGED_EVENT));
   };
 
   return (
@@ -143,7 +138,7 @@ export function CreateReservationDialog({
                   <option value="" disabled>
                     Выберите стол...
                   </option>
-                  {reservationTableSeed.map((table) => (
+                  {state.tables.map((table) => (
                     <option key={table.id} value={table.id}>
                       Стол №{table.number} · до {table.capacity} гостей
                     </option>
