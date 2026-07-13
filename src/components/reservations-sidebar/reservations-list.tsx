@@ -18,6 +18,7 @@ type ReservationsListProps = {
   reservations: readonly Reservation[];
   tables: readonly ReservationTableReference[];
   floors: readonly ReservationFloorReference[];
+  onConfirm: (reservationId: string) => void;
   onComplete: (reservationId: string) => void;
   onCancel: (reservationId: string) => void;
 };
@@ -26,6 +27,7 @@ export function ReservationsList({
   reservations,
   tables,
   floors,
+  onConfirm,
   onComplete,
   onCancel,
 }: ReservationsListProps) {
@@ -71,6 +73,7 @@ export function ReservationsList({
             guestsCount={reservation.guestsCount}
             phone={formatGuestPhone(reservation.guestPhone)}
             note={reservation.comment}
+            onConfirm={() => onConfirm(reservation.id)}
             onComplete={() => onComplete(reservation.id)}
             onCancel={() => onCancel(reservation.id)}
           />

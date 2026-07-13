@@ -80,11 +80,9 @@ export function ReservationsSidebar() {
     });
   };
 
-  const handleComplete = (reservationId: string) =>
-    runReservationAction(reservationId, "complete");
-
-  const handleCancel = (reservationId: string) =>
-    runReservationAction(reservationId, "cancel");
+  const createReservationActionHandler =
+    (action: ReservationAction) => (reservationId: string) =>
+      runReservationAction(reservationId, action);
 
   return (
     <aside
@@ -102,8 +100,9 @@ export function ReservationsSidebar() {
         reservations={visibleReservations}
         tables={reservationTableSeed}
         floors={reservationFloorSeed}
-        onComplete={handleComplete}
-        onCancel={handleCancel}
+        onConfirm={createReservationActionHandler("confirm")}
+        onComplete={createReservationActionHandler("complete")}
+        onCancel={createReservationActionHandler("cancel")}
       />
     </aside>
   );

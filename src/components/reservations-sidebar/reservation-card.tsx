@@ -43,6 +43,7 @@ export type ReservationCardProps = {
   guestsCount: number;
   phone: string;
   note?: string;
+  onConfirm: () => void;
   onComplete: () => void;
   onCancel: () => void;
 };
@@ -57,10 +58,12 @@ export function ReservationCard({
   guestsCount,
   phone,
   note,
+  onConfirm,
   onComplete,
   onCancel,
 }: ReservationCardProps) {
   const statusStyle = statusStyles[status];
+  const canConfirm = status === "PENDING";
   const canComplete = status === "CONFIRMED";
   const canCancel = status === "PENDING" || status === "CONFIRMED";
   const canEdit = canCancel;
@@ -111,6 +114,17 @@ export function ReservationCard({
 
       {canEdit && (
         <div className="mt-3 flex items-center gap-1.5">
+          {canConfirm && (
+            <Button
+              type="button"
+              size="default"
+              className="bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
+              onClick={onConfirm}
+            >
+              <Check aria-hidden="true" data-icon="inline-start" />
+              Подтвердить
+            </Button>
+          )}
           {canComplete && (
             <Button
               type="button"

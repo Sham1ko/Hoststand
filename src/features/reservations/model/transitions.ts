@@ -35,6 +35,18 @@ export function completeReservation(
   );
 }
 
+export function confirmReservation(
+  reservations: Reservation[],
+  reservationId: string,
+) {
+  return transitionReservation(
+    reservations,
+    reservationId,
+    ["PENDING"],
+    "CONFIRMED",
+  );
+}
+
 export function cancelReservation(
   reservations: Reservation[],
   reservationId: string,

@@ -11,7 +11,7 @@ type RouteContext = {
 };
 
 function isReservationAction(value: unknown): value is ReservationAction {
-  return value === "complete" || value === "cancel";
+  return value === "confirm" || value === "complete" || value === "cancel";
 }
 
 export async function PATCH(request: Request, context: RouteContext) {

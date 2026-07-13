@@ -4,7 +4,7 @@ export type ReservationStatus =
   | "CANCELLED"
   | "COMPLETED";
 
-export type ReservationAction = "complete" | "cancel";
+export type ReservationAction = "confirm" | "complete" | "cancel";
 
 export type ReservationStatusCounts = Record<
   ReservationStatus | "ALL",

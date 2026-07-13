@@ -6,6 +6,7 @@ import {
 import {
   cancelReservation,
   completeReservation,
+  confirmReservation,
 } from "../model/transitions";
 import type { CreateReservationInput } from "../model/schemas";
 import type {
@@ -66,9 +67,11 @@ export function applyReservationAction(
   if (!reservationExists) return "not_found" as const;
 
   const updatedReservations =
-    action === "complete"
-      ? completeReservation(reservations, reservationId)
-      : cancelReservation(reservations, reservationId);
+    action === "confirm"
+      ? confirmReservation(reservations, reservationId)
+      : action === "complete"
+        ? completeReservation(reservations, reservationId)
+        : cancelReservation(reservations, reservationId);
 
   if (updatedReservations === reservations) {
     return "invalid_transition" as const;

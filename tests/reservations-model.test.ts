@@ -18,6 +18,7 @@ import {
 import {
   cancelReservation,
   completeReservation,
+  confirmReservation,
 } from "@/features/reservations/model/transitions";
 import type {
   Reservation,
@@ -77,7 +78,21 @@ test("returns reservation status counts in API metadata", async () => {
   );
 });
 
-test("completes and cancels reservations through the API", async () => {
+test("confirms, completes, and cancels reservations through the API", async () => {
+  const confirmResponse = await PATCH(
+    new Request("http://localhost/api/reservations/reservation-3", {
+      method: "PATCH",
+      body: JSON.stringify({ action: "confirm" }),
+    }),
+    { params: Promise.resolve({ id: "reservation-3" }) },
+  );
+  const confirmed = (await confirmResponse.json()) as ReservationsResponse;
+
+  expect(
+    confirmed.data.find((item) => item.id === "reservation-3")?.status,
+  ).toBe("CONFIRMED");
+  expect(confirmed.meta.statusCounts.CONFIRMED).toBe(4);
+
   const completeResponse = await PATCH(
     new Request("http://localhost/api/reservations/reservation-1", {
       method: "PATCH",
@@ -93,16 +108,16 @@ test("completes and cancels reservations through the API", async () => {
   expect(completed.meta.statusCounts.COMPLETED).toBe(2);
 
   const cancelResponse = await PATCH(
-    new Request("http://localhost/api/reservations/reservation-3", {
+    new Request("http://localhost/api/reservations/reservation-2", {
       method: "PATCH",
       body: JSON.stringify({ action: "cancel" }),
     }),
-    { params: Promise.resolve({ id: "reservation-3" }) },
+    { params: Promise.resolve({ id: "reservation-2" }) },
   );
   const cancelled = (await cancelResponse.json()) as ReservationsResponse;
 
   expect(
-    cancelled.data.find((item) => item.id === "reservation-3")?.status,
+    cancelled.data.find((item) => item.id === "reservation-2")?.status,
   ).toBe("CANCELLED");
   expect(cancelled.meta.statusCounts.CANCELLED).toBe(2);
 });
@@ -223,6 +238,24 @@ test("completes only a confirmed reservation", () => {
   const reservations = [pendingReservation];
 
   expect(completeReservation(reservations, reservation.id)).toBe(reservations);
+});
+
+test("confirms only a pending reservation", () => {
+  const pendingReservation: Reservation = {
+    ...reservation,
+    status: "PENDING",
+  };
+
+  const confirmedReservation = confirmReservation(
+    [pendingReservation],
+    reservation.id,
+  );
+
+  expect(confirmedReservation[0].status).toBe("CONFIRMED");
+
+  const reservations = [reservation];
+
+  expect(confirmReservation(reservations, reservation.id)).toBe(reservations);
 });
 
 test("cancels active reservations but leaves terminal statuses unchanged", () => {
