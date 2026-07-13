@@ -5,8 +5,11 @@ import {
 import { createRestaurantSeed } from "@/features/restaurant-state/data/seed";
 import {
   applyRestaurantReservationAction,
+  createRestaurantTable,
   createRestaurantReservation,
+  deleteRestaurantTable,
   updateRestaurantTablePosition,
+  updateRestaurantTable,
 } from "@/features/restaurant-state/model/actions";
 
 class MemoryStorage implements Storage {
@@ -160,4 +163,41 @@ test("moves only the requested table and normalizes its final position", () => {
     state.tables.find((table) => table.id === "table-2"),
   );
   expect(updateRestaurantTablePosition(state, "missing-table", { x: 0, y: 0 })).toBeNull();
+});
+
+test("creates, updates, and safely deletes tables through restaurant actions", () => {
+  const state = createRestaurantSeed();
+  const created = createRestaurantTable(state, {
+    id: "table-new",
+    number: 25,
+    capacity: 4,
+    floorId: "floor-1",
+    status: "FREE",
+    layout: {
+      x: 803,
+      y: 503,
+      w: 150,
+      h: 150,
+      rotation: 0,
+      shape: "square",
+    },
+  });
+
+  expect(created?.tables).toHaveLength(25);
+  expect(created?.tables.at(-1)?.layout).toMatchObject({ x: 800, y: 500 });
+
+  const updated = updateRestaurantTable(created!, "table-new", {
+    number: 25,
+    capacity: 6,
+    status: "BANQUET",
+    layout: { w: 180, h: 120, rotation: 15, shape: "rect" },
+  });
+
+  expect(updated?.tables.at(-1)).toMatchObject({
+    capacity: 6,
+    status: "BANQUET",
+    layout: { w: 180, h: 120, rotation: 15, shape: "rect" },
+  });
+  expect(deleteRestaurantTable(updated!, "table-new")?.tables).toHaveLength(24);
+  expect(deleteRestaurantTable(state, "table-12")).toBeNull();
 });

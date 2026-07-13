@@ -69,6 +69,16 @@ export function useFloorMapEditor({
     tableDragRef.current = null;
   };
 
+  const selectTable = (tableId: string) => {
+    setSelectedTableId(tableId);
+  };
+
+  const clearSelection = () => {
+    setSelectedTableId(null);
+    setDragPreview(null);
+    tableDragRef.current = null;
+  };
+
   const handleTablePointerDown = (
     event: PointerEvent<SVGGElement>,
     table: DiningTable,
@@ -168,6 +178,8 @@ export function useFloorMapEditor({
     selectedTableId,
     dragPreview,
     toggleEditing,
+    selectTable,
+    clearSelection,
     handleTablePointerDown,
     handleTablePointerMove,
     finishTableDrag,

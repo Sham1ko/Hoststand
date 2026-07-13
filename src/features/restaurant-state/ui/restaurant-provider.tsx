@@ -19,10 +19,15 @@ import {
 } from "../api/restaurant-repository";
 import {
   applyRestaurantReservationAction,
+  createRestaurantTable,
   createRestaurantReservation,
+  deleteRestaurantTable,
+  type TableDetails,
   type TablePosition,
+  updateRestaurantTable,
   updateRestaurantTablePosition,
 } from "../model/actions";
+import type { DiningTable } from "@/features/floor-plan/model/types";
 import type { RestaurantState } from "../model/types";
 
 type RestaurantContextValue = {
@@ -37,6 +42,9 @@ type RestaurantContextValue = {
     tableId: string,
     position: TablePosition,
   ) => Promise<boolean>;
+  createTable: (table: Omit<DiningTable, "id">) => Promise<DiningTable | null>;
+  updateTable: (tableId: string, details: TableDetails) => Promise<boolean>;
+  deleteTable: (tableId: string) => Promise<boolean>;
   resetDemo: () => Promise<void>;
 };
 
@@ -140,6 +148,51 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
     [saveState, state],
   );
 
+  const createTable = useCallback(
+    async (table: Omit<DiningTable, "id">) => {
+      if (!state) return null;
+
+      const nextState = createRestaurantTable(state, {
+        ...table,
+        id: crypto.randomUUID(),
+      });
+
+      if (!nextState) return null;
+
+      await saveState(nextState);
+      return nextState.tables.at(-1) ?? null;
+    },
+    [saveState, state],
+  );
+
+  const updateTable = useCallback(
+    async (tableId: string, details: TableDetails) => {
+      if (!state) return false;
+
+      const nextState = updateRestaurantTable(state, tableId, details);
+
+      if (!nextState) return false;
+
+      await saveState(nextState);
+      return true;
+    },
+    [saveState, state],
+  );
+
+  const deleteTable = useCallback(
+    async (tableId: string) => {
+      if (!state) return false;
+
+      const nextState = deleteRestaurantTable(state, tableId);
+
+      if (!nextState) return false;
+
+      await saveState(nextState);
+      return true;
+    },
+    [saveState, state],
+  );
+
   const resetDemo = useCallback(async () => {
     const nextState = await repositoryRef.current?.resetDemo();
 
@@ -156,6 +209,9 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
         createReservation,
         applyReservationAction,
         updateTablePosition,
+        createTable,
+        updateTable,
+        deleteTable,
         resetDemo,
       }}
     >

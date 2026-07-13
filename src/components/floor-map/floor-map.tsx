@@ -4,12 +4,20 @@ import { useRestaurant } from "@/features/restaurant-state/ui/restaurant-provide
 
 import { FloorMapControls } from "./floor-map-controls";
 import { FloorMapEditorControls } from "./floor-map-editor-controls";
+import { FloorMapEditorPanel } from "./floor-map-editor-panel";
 import { TableNode } from "./table-node";
 import { useFloorMapCamera } from "./use-floor-map-camera";
 import { useFloorMapEditor } from "./use-floor-map-editor";
 
 export function FloorMap() {
-  const { state, setActiveFloorId, updateTablePosition } = useRestaurant();
+  const {
+    state,
+    setActiveFloorId,
+    updateTablePosition,
+    createTable,
+    updateTable,
+    deleteTable,
+  } = useRestaurant();
   const { floors, tables, activeFloorId } = state;
   const {
     svgRef,
@@ -27,6 +35,8 @@ export function FloorMap() {
     selectedTableId,
     dragPreview,
     toggleEditing,
+    selectTable,
+    clearSelection,
     handleTablePointerDown,
     handleTablePointerMove,
     finishTableDrag,
@@ -44,6 +54,27 @@ export function FloorMap() {
   const visibleTables = tables.filter(
     (table) => table.floorId === activeFloorId,
   );
+  const selectedTable = tables.find((table) => table.id === selectedTableId);
+
+  const createTableOnActiveFloor = async () => {
+    const offset = (visibleTables.length % 4) * 40;
+    const table = await createTable({
+      number: Math.max(0, ...tables.map((item) => item.number)) + 1,
+      capacity: 4,
+      floorId: activeFloorId,
+      status: "FREE",
+      layout: {
+        x: 800 + offset,
+        y: 500 + offset,
+        w: 150,
+        h: 150,
+        rotation: 0,
+        shape: "square",
+      },
+    });
+
+    if (table) selectTable(table.id);
+  };
 
   return (
     <section
@@ -58,6 +89,7 @@ export function FloorMap() {
             <FloorMapEditorControls
               isEditing={isEditing}
               onToggle={toggleEditing}
+              onCreateTable={() => void createTableOnActiveFloor()}
             />
             <div
               role="tablist"
@@ -78,7 +110,10 @@ export function FloorMap() {
                         ? "bg-white text-slate-950 shadow-sm"
                         : "text-slate-500 hover:text-slate-800"
                     }`}
-                    onClick={() => void setActiveFloorId(floor.id)}
+                    onClick={() => {
+                      clearSelection();
+                      void setActiveFloorId(floor.id);
+                    }}
                   >
                     {floor.name}
                   </button>
@@ -157,6 +192,23 @@ export function FloorMap() {
               </g>
             </g>
           </svg>
+
+          {isEditing && selectedTable && (
+            <FloorMapEditorPanel
+              table={selectedTable}
+              hasReservations={state.reservations.some(
+                (reservation) => reservation.tableId === selectedTable.id,
+              )}
+              onSave={(details) => updateTable(selectedTable.id, details)}
+              onDelete={async () => {
+                const deleted = await deleteTable(selectedTable.id);
+
+                if (deleted) clearSelection();
+
+                return deleted;
+              }}
+            />
+          )}
 
           <FloorMapControls
             onZoomOut={() => zoomAtViewportCenter(1 / 1.2)}
