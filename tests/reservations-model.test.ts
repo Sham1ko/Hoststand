@@ -1,3 +1,4 @@
+import { GET } from "@/app/api/reservations/route";
 import {
   formatGuestPhone,
   formatGuestsCount,
@@ -13,7 +14,10 @@ import {
   cancelReservation,
   completeReservation,
 } from "@/features/reservations/model/transitions";
-import type { Reservation } from "@/features/reservations/model/types";
+import type {
+  Reservation,
+  ReservationsResponse,
+} from "@/features/reservations/model/types";
 
 const reservation: Reservation = {
   id: "reservation-test",
@@ -57,6 +61,15 @@ test("counts reservations by API status", () => {
     CANCELLED: 1,
     COMPLETED: 0,
   });
+});
+
+test("returns reservation status counts in API metadata", async () => {
+  const response = GET(new Request("http://localhost/api/reservations"));
+  const body = (await response.json()) as ReservationsResponse;
+
+  expect(body.meta.statusCounts).toEqual(
+    getReservationStatusCounts(body.data),
+  );
 });
 
 test("filters reservations by calendar date", () => {

@@ -1,7 +1,9 @@
 "use client";
 
-import type { ReservationStatusCounts } from "@/features/reservations/model/selectors";
-import type { ReservationStatus } from "@/features/reservations/model/types";
+import type {
+  ReservationStatus,
+  ReservationStatusCounts,
+} from "@/features/reservations/model/types";
 
 const reservationStatuses = [
   { id: "ALL", label: "Все" },

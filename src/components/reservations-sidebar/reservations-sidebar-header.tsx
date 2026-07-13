@@ -3,7 +3,7 @@
 import { CalendarPlus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import type { ReservationStatusCounts } from "@/features/reservations/model/selectors";
+import type { ReservationStatusCounts } from "@/features/reservations/model/types";
 
 import { ReservationsDatePicker } from "./reservations-date-picker";
 import {

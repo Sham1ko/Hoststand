@@ -4,6 +4,11 @@ export type ReservationStatus =
   | "CANCELLED"
   | "COMPLETED";
 
+export type ReservationStatusCounts = Record<
+  ReservationStatus | "ALL",
+  number
+>;
+
 export interface Reservation {
   id: string;
   tableId: string;
@@ -15,6 +20,13 @@ export interface Reservation {
   comment?: string;
   status: ReservationStatus;
   createdAt: string;
+}
+
+export interface ReservationsResponse {
+  data: Reservation[];
+  meta: {
+    statusCounts: ReservationStatusCounts;
+  };
 }
 
 export interface ReservationTableReference {

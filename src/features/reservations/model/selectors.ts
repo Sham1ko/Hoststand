@@ -4,13 +4,9 @@ import type {
   Reservation,
   ReservationFloorReference,
   ReservationStatus,
+  ReservationStatusCounts,
   ReservationTableReference,
 } from "./types";
-
-export type ReservationStatusCounts = Record<
-  ReservationStatus | "ALL",
-  number
->;
 
 export type ReservationTableContext = {
   tableNumber: number;

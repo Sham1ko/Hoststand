@@ -1,6 +1,6 @@
 "use client";
 
-import { startOfToday } from "date-fns";
+import { format, startOfToday } from "date-fns";
 import { useEffect, useState } from "react";
 
 import {
@@ -8,11 +8,14 @@ import {
   reservationTableSeed,
 } from "@/features/reservations/data/seed";
 import {
-  filterReservationsByDate,
   filterReservationsByStatus,
-  getReservationStatusCounts,
 } from "@/features/reservations/model/selectors";
-import type { Reservation } from "@/features/reservations/model/types";
+import type {
+  Reservation,
+  ReservationsResponse,
+  ReservationStatus,
+  ReservationStatusCounts,
+} from "@/features/reservations/model/types";
 import {
   cancelReservation,
   completeReservation,
@@ -22,34 +25,74 @@ import { ReservationsList } from "./reservations-list";
 import { ReservationsSidebarHeader } from "./reservations-sidebar-header";
 import type { ReservationStatusFilterValue } from "./reservations-status-filter";
 
+const emptyStatusCounts: ReservationStatusCounts = {
+  ALL: 0,
+  PENDING: 0,
+  CONFIRMED: 0,
+  CANCELLED: 0,
+  COMPLETED: 0,
+};
+
+function moveStatusCount(
+  counts: ReservationStatusCounts,
+  from: ReservationStatus,
+  to: ReservationStatus,
+): ReservationStatusCounts {
+  return {
+    ...counts,
+    [from]: counts[from] - 1,
+    [to]: counts[to] + 1,
+  };
+}
+
 export function ReservationsSidebar() {
   const [initialDate] = useState(() => startOfToday());
   const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [statusCounts, setStatusCounts] =
+    useState<ReservationStatusCounts>(emptyStatusCounts);
   const [date, setDate] = useState(initialDate);
   const [activeStatus, setActiveStatus] =
     useState<ReservationStatusFilterValue>("ALL");
 
   useEffect(() => {
-    fetch("/api/reservations")
+    fetch(`/api/reservations?date=${format(date, "yyyy-MM-dd")}`)
       .then((response) => response.json())
-      .then((data: Reservation[]) => setReservations(data));
-  }, []);
+      .then((response: ReservationsResponse) => {
+        setReservations(response.data);
+        setStatusCounts(response.meta.statusCounts);
+      });
+  }, [date]);
 
-  const reservationsForDate = filterReservationsByDate(reservations, date);
-  const statusCounts = getReservationStatusCounts(reservationsForDate);
   const visibleReservations = filterReservationsByStatus(
-    reservationsForDate,
+    reservations,
     activeStatus === "ALL" ? null : activeStatus,
   );
 
   const handleComplete = (reservationId: string) => {
+    const reservation = reservations.find((item) => item.id === reservationId);
+    if (reservation?.status !== "CONFIRMED") return;
+
     setReservations((current) =>
       completeReservation(current, reservationId),
+    );
+    setStatusCounts((current) =>
+      moveStatusCount(current, reservation.status, "COMPLETED"),
     );
   };
 
   const handleCancel = (reservationId: string) => {
+    const reservation = reservations.find((item) => item.id === reservationId);
+    if (
+      reservation?.status !== "PENDING" &&
+      reservation?.status !== "CONFIRMED"
+    ) {
+      return;
+    }
+
     setReservations((current) => cancelReservation(current, reservationId));
+    setStatusCounts((current) =>
+      moveStatusCount(current, reservation.status, "CANCELLED"),
+    );
   };
 
   return (
