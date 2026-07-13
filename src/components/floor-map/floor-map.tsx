@@ -1,6 +1,5 @@
 "use client";
 
-import { Maximize, Minus, Plus } from "lucide-react";
 import {
   useEffect,
   useRef,
@@ -19,6 +18,7 @@ import {
 } from "@/features/floor-plan/model/geometry";
 import { useRestaurant } from "@/features/restaurant-state/ui/restaurant-provider";
 
+import { FloorMapControls } from "./floor-map-controls";
 import { TableNode } from "./table-node";
 
 const initialCamera: Camera = {
@@ -255,42 +255,11 @@ export function FloorMap() {
             </g>
           </svg>
 
-          <div
-            aria-label="Управление масштабом карты"
-            className="absolute right-4 bottom-4 flex overflow-hidden rounded-md border border-slate-200 bg-white shadow-sm"
-          >
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              aria-label="Уменьшить масштаб"
-              title="Уменьшить масштаб"
-              onClick={() => zoomAtViewportCenter(1 / 1.2)}
-            >
-              <Minus aria-hidden="true" />
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              aria-label="Вписать карту в экран"
-              title="Вписать карту в экран"
-              className="border-x border-slate-200"
-              onClick={fitCamera}
-            >
-              <Maximize aria-hidden="true" />
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              aria-label="Увеличить масштаб"
-              title="Увеличить масштаб"
-              onClick={() => zoomAtViewportCenter(1.2)}
-            >
-              <Plus aria-hidden="true" />
-            </Button>
-          </div>
+          <FloorMapControls
+            onZoomOut={() => zoomAtViewportCenter(1 / 1.2)}
+            onFit={fitCamera}
+            onZoomIn={() => zoomAtViewportCenter(1.2)}
+          />
         </div>
       </div>
     </section>
