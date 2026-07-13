@@ -12,6 +12,7 @@ import {
 
 import type { CreateReservationInput } from "@/features/reservations/model/schemas";
 import type { ReservationAction } from "@/features/reservations/model/types";
+import type { TableZone } from "@/features/floor-plan/model/types";
 
 import {
   createLocalStorageRestaurantRepository,
@@ -21,11 +22,16 @@ import {
   applyRestaurantReservationAction,
   createRestaurantTable,
   createRestaurantReservation,
+  createRestaurantZone,
   deleteRestaurantTable,
+  deleteRestaurantZone,
   type TableDetails,
   type TablePosition,
+  type ZoneDetails,
   updateRestaurantTable,
   updateRestaurantTablePosition,
+  updateRestaurantZone,
+  updateRestaurantZoneRect,
 } from "../model/actions";
 import type { DiningTable } from "@/features/floor-plan/model/types";
 import type { RestaurantState } from "../model/types";
@@ -45,6 +51,13 @@ type RestaurantContextValue = {
   createTable: (table: Omit<DiningTable, "id">) => Promise<DiningTable | null>;
   updateTable: (tableId: string, details: TableDetails) => Promise<boolean>;
   deleteTable: (tableId: string) => Promise<boolean>;
+  createZone: (zone: Omit<TableZone, "id">) => Promise<TableZone | null>;
+  updateZone: (zoneId: string, details: ZoneDetails) => Promise<boolean>;
+  updateZoneRect: (
+    zoneId: string,
+    rect: NonNullable<TableZone["rect"]>,
+  ) => Promise<boolean>;
+  deleteZone: (zoneId: string) => Promise<boolean>;
   resetDemo: () => Promise<void>;
 };
 
@@ -193,6 +206,65 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
     [saveState, state],
   );
 
+  const createZone = useCallback(
+    async (zone: Omit<TableZone, "id">) => {
+      if (!state) return null;
+
+      const nextState = createRestaurantZone(state, {
+        ...zone,
+        id: crypto.randomUUID(),
+      });
+
+      if (!nextState) return null;
+
+      await saveState(nextState);
+      return nextState.zones.at(-1) ?? null;
+    },
+    [saveState, state],
+  );
+
+  const updateZone = useCallback(
+    async (zoneId: string, details: ZoneDetails) => {
+      if (!state) return false;
+
+      const nextState = updateRestaurantZone(state, zoneId, details);
+
+      if (!nextState) return false;
+
+      await saveState(nextState);
+      return true;
+    },
+    [saveState, state],
+  );
+
+  const updateZoneRect = useCallback(
+    async (zoneId: string, rect: NonNullable<TableZone["rect"]>) => {
+      if (!state) return false;
+
+      const nextState = updateRestaurantZoneRect(state, zoneId, rect);
+
+      if (!nextState) return false;
+
+      await saveState(nextState);
+      return true;
+    },
+    [saveState, state],
+  );
+
+  const deleteZone = useCallback(
+    async (zoneId: string) => {
+      if (!state) return false;
+
+      const nextState = deleteRestaurantZone(state, zoneId);
+
+      if (!nextState) return false;
+
+      await saveState(nextState);
+      return true;
+    },
+    [saveState, state],
+  );
+
   const resetDemo = useCallback(async () => {
     const nextState = await repositoryRef.current?.resetDemo();
 
@@ -212,6 +284,10 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
         createTable,
         updateTable,
         deleteTable,
+        createZone,
+        updateZone,
+        updateZoneRect,
+        deleteZone,
         resetDemo,
       }}
     >

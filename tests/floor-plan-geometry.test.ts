@@ -3,6 +3,7 @@ import {
   clampTablePosition,
   fitCameraToViewport,
   getBoundedTablePosition,
+  getBoundedZoneRect,
   getRotatedTableHalfExtents,
   screenToWorld,
   worldToScreen,
@@ -54,4 +55,10 @@ test("snaps table positions before keeping them inside the world bounds", () => 
   expect(
     getBoundedTablePosition({ x: 2000, y: -20 }, layout, true),
   ).toEqual({ x: 1550, y: 50 });
+});
+
+test("keeps zones on the grid and within the floor plan", () => {
+  expect(
+    getBoundedZoneRect({ x: -20, y: 940, w: 80, h: 100 }, true),
+  ).toEqual({ x: 0, y: 880, w: 120, h: 120 });
 });

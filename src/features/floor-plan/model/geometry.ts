@@ -6,12 +6,20 @@ export const FLOOR_PLAN_SIZE = {
 } as const;
 
 export const FLOOR_PLAN_GRID_SIZE = 20;
+export const MIN_ZONE_SIZE = 120;
 export const MIN_CAMERA_SCALE = 0.25;
 export const MAX_CAMERA_SCALE = 2.5;
 
 export type Point = {
   x: number;
   y: number;
+};
+
+export type Rect = {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
 };
 
 export type Size = {
@@ -145,4 +153,24 @@ export function getBoundedTablePosition(
   const nextPosition = shouldSnap ? snapPointToGrid(position) : position;
 
   return clampTablePosition(nextPosition, layout);
+}
+
+export function getBoundedZoneRect(rect: Rect, shouldSnap: boolean): Rect {
+  const nextRect = shouldSnap
+    ? {
+        x: snapToGrid(rect.x),
+        y: snapToGrid(rect.y),
+        w: snapToGrid(rect.w),
+        h: snapToGrid(rect.h),
+      }
+    : rect;
+  const w = clamp(nextRect.w, MIN_ZONE_SIZE, FLOOR_PLAN_SIZE.width);
+  const h = clamp(nextRect.h, MIN_ZONE_SIZE, FLOOR_PLAN_SIZE.height);
+
+  return {
+    x: clamp(nextRect.x, 0, FLOOR_PLAN_SIZE.width - w),
+    y: clamp(nextRect.y, 0, FLOOR_PLAN_SIZE.height - h),
+    w,
+    h,
+  };
 }

@@ -36,6 +36,7 @@ type TableNodeProps = {
   table: DiningTable;
   isEditing?: boolean;
   isSelected?: boolean;
+  isInteractionDisabled?: boolean;
   onPointerDown?: (event: PointerEvent<SVGGElement>) => void;
   onPointerMove?: (event: PointerEvent<SVGGElement>) => void;
   onPointerUp?: (event: PointerEvent<SVGGElement>) => void;
@@ -46,6 +47,7 @@ export function TableNode({
   table,
   isEditing = false,
   isSelected = false,
+  isInteractionDisabled = false,
   onPointerDown,
   onPointerMove,
   onPointerUp,
@@ -63,6 +65,7 @@ export function TableNode({
       transform={`translate(${x} ${y}) rotate(${rotation})`}
       opacity={isInactive ? 0.65 : 1}
       className={isEditing ? "cursor-move" : undefined}
+      pointerEvents={isInteractionDisabled ? "none" : undefined}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}

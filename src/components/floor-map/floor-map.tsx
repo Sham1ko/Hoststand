@@ -1,13 +1,21 @@
 "use client";
 
+import { useState } from "react";
+
 import { useRestaurant } from "@/features/restaurant-state/ui/restaurant-provider";
 
 import { FloorMapControls } from "./floor-map-controls";
-import { FloorMapEditorControls } from "./floor-map-editor-controls";
+import {
+  FloorMapEditorControls,
+  type FloorMapEditorTool,
+} from "./floor-map-editor-controls";
 import { FloorMapEditorPanel } from "./floor-map-editor-panel";
+import { FloorMapZoneEditorPanel } from "./floor-map-zone-editor-panel";
 import { TableNode } from "./table-node";
 import { useFloorMapCamera } from "./use-floor-map-camera";
 import { useFloorMapEditor } from "./use-floor-map-editor";
+import { useFloorMapZoneEditor } from "./use-floor-map-zone-editor";
+import { ZoneNode } from "./zone-node";
 
 export function FloorMap() {
   const {
@@ -17,7 +25,12 @@ export function FloorMap() {
     createTable,
     updateTable,
     deleteTable,
+    createZone,
+    updateZone,
+    updateZoneRect,
+    deleteZone,
   } = useRestaurant();
+  const [editorTool, setEditorTool] = useState<FloorMapEditorTool>("tables");
   const { floors, tables, activeFloorId } = state;
   const {
     svgRef,
@@ -47,6 +60,24 @@ export function FloorMap() {
       void updateTablePosition(tableId, position);
     },
   });
+  const isTableEditing = isEditing && editorTool === "tables";
+  const isZoneEditing = isEditing && editorTool === "zones";
+  const {
+    selectedZoneId,
+    dragPreview: zoneDragPreview,
+    selectZone,
+    clearSelection: clearZoneSelection,
+    handleZonePointerDown,
+    handleZonePointerMove,
+    finishZoneDrag,
+    cancelZoneDrag,
+  } = useFloorMapZoneEditor({
+    camera,
+    isEditing: isZoneEditing,
+    onZoneRectChange: (zoneId, rect) => {
+      void updateZoneRect(zoneId, rect);
+    },
+  });
   const activeFloors = floors.filter((floor) => floor.isActive);
   const selectedFloor = activeFloors.find(
     (floor) => floor.id === activeFloorId,
@@ -54,7 +85,11 @@ export function FloorMap() {
   const visibleTables = tables.filter(
     (table) => table.floorId === activeFloorId,
   );
+  const visibleZones = state.zones.filter(
+    (zone) => zone.floorId === activeFloorId && zone.isActive && zone.rect,
+  );
   const selectedTable = tables.find((table) => table.id === selectedTableId);
+  const selectedZone = state.zones.find((zone) => zone.id === selectedZoneId);
 
   const createTableOnActiveFloor = async () => {
     const offset = (visibleTables.length % 4) * 40;
@@ -76,6 +111,37 @@ export function FloorMap() {
     if (table) selectTable(table.id);
   };
 
+  const createZoneOnActiveFloor = async () => {
+    const offset = (visibleZones.length % 4) * 40;
+    const zone = await createZone({
+      floorId: activeFloorId,
+      name: `Новая зона ${visibleZones.length + 1}`,
+      color: "#0ea5e9",
+      sortOrder:
+        Math.max(0, ...visibleZones.map((item) => item.sortOrder)) + 1,
+      isActive: true,
+      rect: {
+        x: 560 + offset,
+        y: 320 + offset,
+        w: 400,
+        h: 260,
+      },
+    });
+
+    if (zone) selectZone(zone.id);
+  };
+
+  const selectEditorTool = (tool: FloorMapEditorTool) => {
+    setEditorTool(tool);
+    clearSelection();
+    clearZoneSelection();
+  };
+
+  const toggleEditor = () => {
+    toggleEditing();
+    clearZoneSelection();
+  };
+
   return (
     <section
       aria-label="Карта столов"
@@ -88,8 +154,11 @@ export function FloorMap() {
           <div className="flex items-center gap-2">
             <FloorMapEditorControls
               isEditing={isEditing}
-              onToggle={toggleEditing}
+              tool={editorTool}
+              onToggle={toggleEditor}
               onCreateTable={() => void createTableOnActiveFloor()}
+              onCreateZone={() => void createZoneOnActiveFloor()}
+              onToolChange={selectEditorTool}
             />
             <div
               role="tablist"
@@ -105,12 +174,14 @@ export function FloorMap() {
                     type="button"
                     role="tab"
                     aria-selected={isSelected}
-                    className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${isSelected
-                      ? "bg-white text-slate-950 shadow-sm"
-                      : "text-slate-500 hover:text-slate-800"
-                      }`}
+                    className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                      isSelected
+                        ? "bg-white text-slate-950 shadow-sm"
+                        : "text-slate-500 hover:text-slate-800"
+                    }`}
                     onClick={() => {
                       clearSelection();
+                      clearZoneSelection();
                       void setActiveFloorId(floor.id);
                     }}
                   >
@@ -136,10 +207,13 @@ export function FloorMap() {
             onPointerCancel={finishPan}
             onWheel={handleWheel}
           >
-            <title id="floor-map-title">{`Карта столов: ${selectedFloor?.name ?? "этаж не выбран"
-              }`}</title>
+            <title id="floor-map-title">{`Карта столов: ${
+              selectedFloor?.name ?? "этаж не выбран"
+            }`}</title>
             <desc id="floor-map-description">
-              {`На плане отображено столов: ${visibleTables.length}`}
+              {`На плане отображено столов: ${visibleTables.length}, зон: ${
+                visibleZones.length
+              }`}
             </desc>
 
             <defs>
@@ -161,6 +235,28 @@ export function FloorMap() {
               <rect width="1600" height="1000" className="fill-white" />
               <rect width="1600" height="1000" fill="url(#floor-map-grid)" />
 
+              <g aria-label="Зоны">
+                {visibleZones.map((zone) => (
+                  <ZoneNode
+                    key={zone.id}
+                    zone={zone}
+                    rect={
+                      zoneDragPreview?.zoneId === zone.id
+                        ? zoneDragPreview
+                        : zone.rect
+                    }
+                    isEditing={isZoneEditing}
+                    isSelected={isZoneEditing && zone.id === selectedZoneId}
+                    onPointerDown={(event) =>
+                      handleZonePointerDown(event, zone)
+                    }
+                    onPointerMove={handleZonePointerMove}
+                    onPointerUp={finishZoneDrag}
+                    onPointerCancel={cancelZoneDrag}
+                  />
+                ))}
+              </g>
+
               <g aria-label="Столы">
                 {visibleTables.map((table) => (
                   <TableNode
@@ -168,17 +264,18 @@ export function FloorMap() {
                     table={
                       dragPreview?.tableId === table.id
                         ? {
-                          ...table,
-                          layout: {
-                            ...table.layout,
-                            x: dragPreview.x,
-                            y: dragPreview.y,
-                          },
-                        }
+                            ...table,
+                            layout: {
+                              ...table.layout,
+                              x: dragPreview.x,
+                              y: dragPreview.y,
+                            },
+                          }
                         : table
                     }
-                    isEditing={isEditing}
-                    isSelected={isEditing && table.id === selectedTableId}
+                    isEditing={isTableEditing}
+                    isSelected={isTableEditing && table.id === selectedTableId}
+                    isInteractionDisabled={isZoneEditing}
                     onPointerDown={(event) =>
                       handleTablePointerDown(event, table)
                     }
@@ -191,7 +288,7 @@ export function FloorMap() {
             </g>
           </svg>
 
-          {isEditing && selectedTable && (
+          {isTableEditing && selectedTable && (
             <FloorMapEditorPanel
               table={selectedTable}
               hasReservations={state.reservations.some(
@@ -202,6 +299,20 @@ export function FloorMap() {
                 const deleted = await deleteTable(selectedTable.id);
 
                 if (deleted) clearSelection();
+
+                return deleted;
+              }}
+            />
+          )}
+
+          {isZoneEditing && selectedZone && selectedZone.rect && (
+            <FloorMapZoneEditorPanel
+              zone={selectedZone}
+              onSave={(details) => updateZone(selectedZone.id, details)}
+              onDelete={async () => {
+                const deleted = await deleteZone(selectedZone.id);
+
+                if (deleted) clearZoneSelection();
 
                 return deleted;
               }}

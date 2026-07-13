@@ -7,9 +7,12 @@ import {
   applyRestaurantReservationAction,
   createRestaurantTable,
   createRestaurantReservation,
+  createRestaurantZone,
   deleteRestaurantTable,
+  deleteRestaurantZone,
   updateRestaurantTablePosition,
   updateRestaurantTable,
+  updateRestaurantZone,
 } from "@/features/restaurant-state/model/actions";
 
 class MemoryStorage implements Storage {
@@ -200,4 +203,47 @@ test("creates, updates, and safely deletes tables through restaurant actions", (
   });
   expect(deleteRestaurantTable(updated!, "table-new")?.tables).toHaveLength(24);
   expect(deleteRestaurantTable(state, "table-12")).toBeNull();
+});
+
+test("manages zones and updates a table zone after it moves", () => {
+  const state = createRestaurantSeed();
+  const moved = updateRestaurantTablePosition(state, "table-1", {
+    x: 1200,
+    y: 200,
+  });
+
+  expect(
+    moved?.tables.find((table) => table.id === "table-1")?.zoneId,
+  ).toBe("zone-window");
+
+  const created = createRestaurantZone(moved!, {
+    id: "zone-new",
+    floorId: "floor-1",
+    name: "Новая зона",
+    color: "#0ea5e9",
+    sortOrder: 3,
+    isActive: true,
+    rect: { x: 5, y: 5, w: 101, h: 99 },
+  });
+
+  expect(created?.zones.at(-1)?.rect).toEqual({ x: 0, y: 0, w: 120, h: 120 });
+
+  const updated = updateRestaurantZone(created!, "zone-new", {
+    name: "Бар",
+    color: "#14b8a6",
+    rect: { x: 400, y: 400, w: 300, h: 180 },
+  });
+
+  expect(updated?.zones.at(-1)).toMatchObject({
+    name: "Бар",
+    color: "#14b8a6",
+    rect: { x: 400, y: 400, w: 300, h: 180 },
+  });
+
+  const deleted = deleteRestaurantZone(moved!, "zone-window");
+
+  expect(deleted?.zones).toHaveLength(5);
+  expect(
+    deleted?.tables.find((table) => table.id === "table-1")?.zoneId,
+  ).toBeUndefined();
 });
