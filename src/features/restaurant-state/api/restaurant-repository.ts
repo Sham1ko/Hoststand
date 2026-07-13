@@ -1,111 +1,76 @@
-import { createRestaurantSeed } from "../data/seed";
+import * as z from "zod";
+
+import type { DiningTable, TableZone } from "@/features/floor-plan/model/types";
+import type { CreateReservationInput } from "@/features/reservations/model/schemas";
+import type {
+  Reservation,
+  ReservationAction,
+} from "@/features/reservations/model/types";
+
+import {
+  diningTableSchema,
+  reservationSchema,
+  restaurantStateSchema,
+  tableZoneSchema,
+  type CreateTableInput,
+  type CreateZoneInput,
+  type TablePatchInput,
+  type ZonePatchInput,
+} from "../model/schemas";
 import type { RestaurantState } from "../model/types";
-import { isRestaurantState } from "../model/validation";
-
-export const RESTAURANT_STORAGE_KEY = "qolay:restaurant:v1";
-
-const RESTAURANT_STORAGE_VERSION = 1;
 
 export interface RestaurantRepository {
   loadRestaurant(): Promise<RestaurantState>;
-  saveRestaurant(state: RestaurantState): Promise<void>;
+  createReservation(input: CreateReservationInput): Promise<Reservation>;
+  applyReservationAction(
+    reservationId: string,
+    action: ReservationAction,
+  ): Promise<Reservation>;
+  createTable(input: CreateTableInput): Promise<DiningTable>;
+  patchTable(tableId: string, patch: TablePatchInput): Promise<DiningTable>;
+  deleteTable(tableId: string): Promise<void>;
+  createZone(input: CreateZoneInput): Promise<TableZone>;
+  patchZone(zoneId: string, patch: ZonePatchInput): Promise<TableZone>;
+  deleteZone(zoneId: string): Promise<void>;
   resetDemo(): Promise<RestaurantState>;
-}
-
-type StoredRestaurantState = {
-  version: number;
-  data: RestaurantState;
-};
-
-function readStoredRestaurantState(value: string | null) {
-  if (!value) return null;
-
-  try {
-    const stored = JSON.parse(value) as Partial<StoredRestaurantState>;
-
-    if (
-      stored.version !== RESTAURANT_STORAGE_VERSION ||
-      !isRestaurantState(stored.data)
-    ) {
-      return null;
-    }
-
-    return stored.data;
-  } catch {
-    return null;
-  }
-}
-
-export function createLocalStorageRestaurantRepository(
-  storage: Storage,
-): RestaurantRepository {
-  async function saveRestaurant(state: RestaurantState) {
-    try {
-      storage.setItem(
-        RESTAURANT_STORAGE_KEY,
-        JSON.stringify({
-          version: RESTAURANT_STORAGE_VERSION,
-          data: state,
-        } satisfies StoredRestaurantState),
-      );
-    } catch {
-      // The in-memory state remains usable when browser storage is unavailable.
-    }
-  }
-
-  return {
-    async loadRestaurant() {
-      let stored: RestaurantState | null = null;
-
-      try {
-        stored = readStoredRestaurantState(
-          storage.getItem(RESTAURANT_STORAGE_KEY),
-        );
-      } catch {
-        stored = null;
-      }
-
-      if (stored) return stored;
-
-      const seed = createRestaurantSeed();
-      await saveRestaurant(seed);
-      return seed;
-    },
-    saveRestaurant,
-    async resetDemo() {
-      const seed = createRestaurantSeed();
-      await saveRestaurant(seed);
-      return seed;
-    },
-  };
 }
 
 type Fetcher = typeof fetch;
 
-type RestaurantResponse = {
-  data: RestaurantState;
-};
-
-function isRestaurantResponse(value: unknown): value is RestaurantResponse {
-  return (
-    Boolean(value) &&
-    typeof value === "object" &&
-    isRestaurantState((value as Partial<RestaurantResponse>).data)
-  );
-}
-
-async function readRestaurantResponse(response: Response) {
+async function readDataResponse<T>(
+  response: Response,
+  schema: z.ZodType<T>,
+) {
   if (!response.ok) {
     throw new Error(`Restaurant request failed with status ${response.status}`);
   }
 
   const body = (await response.json().catch(() => null)) as unknown;
+  const result = z.object({ data: schema }).strict().safeParse(body);
 
-  if (!isRestaurantResponse(body)) {
+  if (!result.success) {
     throw new Error("Restaurant response has an invalid shape");
   }
 
-  return body.data;
+  return result.data.data;
+}
+
+async function requireSuccessfulResponse(response: Response) {
+  if (!response.ok) {
+    throw new Error(`Restaurant request failed with status ${response.status}`);
+  }
+}
+
+function jsonRequest(method: "POST" | "PATCH", body: unknown): RequestInit {
+  return {
+    method,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  };
+}
+
+function resourceUrl(resource: "reservations" | "tables" | "zones", id: string) {
+  return `/api/${resource}/${encodeURIComponent(id)}`;
 }
 
 export function createHttpRestaurantRepository(
@@ -113,22 +78,73 @@ export function createHttpRestaurantRepository(
 ): RestaurantRepository {
   return {
     async loadRestaurant() {
-      return readRestaurantResponse(
+      return readDataResponse(
         await fetcher("/api/restaurant", { cache: "no-store" }),
+        restaurantStateSchema,
       );
     },
-    async saveRestaurant(state: RestaurantState) {
-      await readRestaurantResponse(
-        await fetcher("/api/restaurant", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(state),
-        }),
+    async createReservation(input) {
+      return readDataResponse(
+        await fetcher(
+          "/api/reservations",
+          jsonRequest("POST", input),
+        ),
+        reservationSchema,
+      );
+    },
+    async applyReservationAction(reservationId, action) {
+      return readDataResponse(
+        await fetcher(
+          resourceUrl("reservations", reservationId),
+          jsonRequest("PATCH", { action }),
+        ),
+        reservationSchema,
+      );
+    },
+    async createTable(input) {
+      return readDataResponse(
+        await fetcher("/api/tables", jsonRequest("POST", input)),
+        diningTableSchema,
+      );
+    },
+    async patchTable(tableId, patch) {
+      return readDataResponse(
+        await fetcher(
+          resourceUrl("tables", tableId),
+          jsonRequest("PATCH", patch),
+        ),
+        diningTableSchema,
+      );
+    },
+    async deleteTable(tableId) {
+      await requireSuccessfulResponse(
+        await fetcher(resourceUrl("tables", tableId), { method: "DELETE" }),
+      );
+    },
+    async createZone(input) {
+      return readDataResponse(
+        await fetcher("/api/zones", jsonRequest("POST", input)),
+        tableZoneSchema,
+      );
+    },
+    async patchZone(zoneId, patch) {
+      return readDataResponse(
+        await fetcher(
+          resourceUrl("zones", zoneId),
+          jsonRequest("PATCH", patch),
+        ),
+        tableZoneSchema,
+      );
+    },
+    async deleteZone(zoneId) {
+      await requireSuccessfulResponse(
+        await fetcher(resourceUrl("zones", zoneId), { method: "DELETE" }),
       );
     },
     async resetDemo() {
-      return readRestaurantResponse(
+      return readDataResponse(
         await fetcher("/api/restaurant/reset", { method: "POST" }),
+        restaurantStateSchema,
       );
     },
   };

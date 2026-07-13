@@ -1,40 +1,41 @@
-import { parseISO } from "date-fns";
-
-import type { ReservationAction } from "@/features/reservations/model/types";
+import { applyRestaurantReservationAction } from "@/features/restaurant-state/model/actions";
+import { reservationActionSchema } from "@/features/restaurant-state/model/schemas";
 import {
-  applyReservationAction,
-  getReservationsResponse,
-} from "@/features/reservations/server/reservations-store";
+  invalidPayloadResponse,
+  mutationErrorResponse,
+  parseJsonBody,
+} from "@/features/restaurant-state/server/http";
+import { mutateRestaurant } from "@/features/restaurant-state/server/restaurant-store";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
 };
 
-function isReservationAction(value: unknown): value is ReservationAction {
-  return value === "confirm" || value === "complete" || value === "cancel";
-}
-
 export async function PATCH(request: Request, context: RouteContext) {
+  const input = await parseJsonBody(request, reservationActionSchema);
+
+  if (!input) return invalidPayloadResponse();
+
   const { id } = await context.params;
-  const body = (await request.json()) as { action?: unknown };
+  const result = mutateRestaurant((state) => {
+    if (!state.reservations.some((reservation) => reservation.id === id)) {
+      return { status: "not_found" };
+    }
 
-  if (!isReservationAction(body.action)) {
-    return Response.json({ error: "Invalid action" }, { status: 400 });
+    const nextState = applyRestaurantReservationAction(state, id, input.action);
+
+    if (!nextState) return { status: "conflict" };
+
+    const reservation = nextState.reservations.find((item) => item.id === id);
+
+    if (!reservation) return { status: "conflict" };
+
+    return { status: "ok", state: nextState, data: reservation };
+  });
+
+  if (result.status !== "ok") {
+    return mutationErrorResponse(result, "Reservation");
   }
 
-  const result = applyReservationAction(id, body.action);
-
-  if (result === "not_found") {
-    return Response.json({ error: "Reservation not found" }, { status: 404 });
-  }
-
-  if (result === "invalid_transition") {
-    return Response.json({ error: "Action is not allowed" }, { status: 409 });
-  }
-
-  const date = new URL(request.url).searchParams.get("date");
-
-  return Response.json(
-    getReservationsResponse(date ? parseISO(date) : undefined),
-  );
+  return Response.json({ data: result.data });
 }

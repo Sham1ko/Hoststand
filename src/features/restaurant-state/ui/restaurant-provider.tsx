@@ -10,32 +10,26 @@ import {
   type ReactNode,
 } from "react";
 import { startOfToday } from "date-fns";
+import { RefreshCw } from "lucide-react";
 
-import { createRestaurantSeed } from "@/features/restaurant-state/data/seed";
+import { Button } from "@/components/ui/button";
 import type { CreateReservationInput } from "@/features/reservations/model/schemas";
 import type { ReservationAction } from "@/features/reservations/model/types";
 import type { TableZone } from "@/features/floor-plan/model/types";
 
 import {
   createHttpRestaurantRepository,
-  createLocalStorageRestaurantRepository,
   type RestaurantRepository,
 } from "../api/restaurant-repository";
-import {
-  applyRestaurantReservationAction,
-  createRestaurantTable,
-  createRestaurantReservation,
-  createRestaurantZone,
-  deleteRestaurantTable,
-  deleteRestaurantZone,
-  type TableDetails,
-  type TablePosition,
-  type ZoneDetails,
-  updateRestaurantTable,
-  updateRestaurantTablePosition,
-  updateRestaurantZone,
-  updateRestaurantZoneRect,
+import type {
+  TableDetails,
+  TablePosition,
+  ZoneDetails,
 } from "../model/actions";
+import type {
+  CreateTableInput,
+  CreateZoneInput,
+} from "../model/schemas";
 import type { DiningTable } from "@/features/floor-plan/model/types";
 import type { RestaurantState } from "../model/types";
 
@@ -55,10 +49,10 @@ type RestaurantContextValue = {
     tableId: string,
     position: TablePosition,
   ) => Promise<boolean>;
-  createTable: (table: Omit<DiningTable, "id">) => Promise<DiningTable | null>;
+  createTable: (table: CreateTableInput) => Promise<DiningTable | null>;
   updateTable: (tableId: string, details: TableDetails) => Promise<boolean>;
   deleteTable: (tableId: string) => Promise<boolean>;
-  createZone: (zone: Omit<TableZone, "id">) => Promise<TableZone | null>;
+  createZone: (zone: CreateZoneInput) => Promise<TableZone | null>;
   updateZone: (zoneId: string, details: ZoneDetails) => Promise<boolean>;
   updateZoneRect: (
     zoneId: string,
@@ -70,12 +64,8 @@ type RestaurantContextValue = {
 
 const RestaurantContext = createContext<RestaurantContextValue | null>(null);
 
-function createRestaurantRepository() {
-  if (process.env.NEXT_PUBLIC_RESTAURANT_REPOSITORY === "http") {
-    return createHttpRestaurantRepository();
-  }
-
-  return createLocalStorageRestaurantRepository(window.localStorage);
+function replaceEntity<T extends { id: string }>(items: T[], nextItem: T) {
+  return items.map((item) => (item.id === nextItem.id ? nextItem : item));
 }
 
 function RestaurantLoadingState() {
@@ -90,18 +80,36 @@ function RestaurantLoadingState() {
   );
 }
 
+function RestaurantLoadError({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className="flex h-screen flex-col items-center justify-center gap-3 bg-slate-100 px-6 text-center">
+      <p className="text-sm font-medium text-slate-800">
+        Не удалось загрузить данные ресторана
+      </p>
+      <Button type="button" variant="outline" onClick={onRetry}>
+        <RefreshCw aria-hidden="true" data-icon="inline-start" />
+        Повторить
+      </Button>
+    </div>
+  );
+}
+
 export function RestaurantProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<RestaurantState | null>(null);
   const [reservationDate, setReservationDate] = useState(startOfToday);
   const [focusedReservationTableId, setFocusedReservationTableId] =
     useState<string | null>(null);
+  const [loadAttempt, setLoadAttempt] = useState(0);
+  const [hasLoadError, setHasLoadError] = useState(false);
   const repositoryRef = useRef<RestaurantRepository | null>(null);
+  const mutationQueueRef = useRef<Promise<void>>(Promise.resolve());
 
   useEffect(() => {
-    const repository = createRestaurantRepository();
+    const repository = createHttpRestaurantRepository();
     let isMounted = true;
 
     repositoryRef.current = repository;
+    setHasLoadError(false);
 
     void repository
       .loadRestaurant()
@@ -109,204 +117,311 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
         if (isMounted) setState(nextState);
       })
       .catch(() => {
-        if (isMounted) setState(createRestaurantSeed());
+        if (isMounted) setHasLoadError(true);
       });
 
     return () => {
       isMounted = false;
     };
+  }, [loadAttempt]);
+
+  const enqueueMutation = useCallback(
+    <Result,>(
+      mutation: (repository: RestaurantRepository) => Promise<Result>,
+    ) => {
+      const result = mutationQueueRef.current.then(() => {
+        const repository = repositoryRef.current;
+
+        if (!repository) {
+          throw new Error("Restaurant repository is not ready");
+        }
+
+        return mutation(repository);
+      });
+
+      mutationQueueRef.current = result.then(
+        () => undefined,
+        () => undefined,
+      );
+
+      return result;
+    },
+    [],
+  );
+
+  const setActiveFloorId = useCallback(async (floorId: string) => {
+    setState((currentState) => {
+      if (
+        !currentState?.floors.some(
+          (floor) => floor.id === floorId && floor.isActive,
+        )
+      ) {
+        return currentState;
+      }
+
+      return { ...currentState, activeFloorId: floorId };
+    });
   }, []);
-
-  const saveState = useCallback(
-    async (nextState: RestaurantState) => {
-      const previousState = state;
-      const repository = repositoryRef.current;
-
-      if (!previousState || !repository) return false;
-
-      setState(nextState);
-
-      try {
-        await repository.saveRestaurant(nextState);
-        return true;
-      } catch {
-        setState((currentState) =>
-          currentState === nextState ? previousState : currentState,
-        );
-        return false;
-      }
-    },
-    [state],
-  );
-
-  const setActiveFloorId = useCallback(
-    async (floorId: string) => {
-      if (!state?.floors.some((floor) => floor.id === floorId && floor.isActive)) {
-        return;
-      }
-
-      await saveState({ ...state, activeFloorId: floorId });
-    },
-    [saveState, state],
-  );
 
   const createReservation = useCallback(
     async (input: CreateReservationInput) => {
-      if (!state) return false;
+      try {
+        const reservation = await enqueueMutation((repository) =>
+          repository.createReservation(input),
+        );
 
-      const result = createRestaurantReservation(
-        state,
-        input,
-        crypto.randomUUID(),
-        new Date().toISOString(),
-      );
+        setState((currentState) =>
+          currentState
+            ? {
+                ...currentState,
+                reservations: [...currentState.reservations, reservation],
+              }
+            : currentState,
+        );
 
-      if (!result) return false;
-
-      return saveState(result.state);
+        return true;
+      } catch {
+        return false;
+      }
     },
-    [saveState, state],
+    [enqueueMutation],
   );
 
   const applyReservationAction = useCallback(
     async (reservationId: string, action: ReservationAction) => {
-      if (!state) return false;
+      try {
+        const reservation = await enqueueMutation((repository) =>
+          repository.applyReservationAction(reservationId, action),
+        );
 
-      const nextState = applyRestaurantReservationAction(
-        state,
-        reservationId,
-        action,
-      );
+        setState((currentState) =>
+          currentState
+            ? {
+                ...currentState,
+                reservations: replaceEntity(
+                  currentState.reservations,
+                  reservation,
+                ),
+              }
+            : currentState,
+        );
 
-      if (!nextState) return false;
-
-      return saveState(nextState);
+        return true;
+      } catch {
+        return false;
+      }
     },
-    [saveState, state],
+    [enqueueMutation],
   );
 
   const updateTablePosition = useCallback(
     async (tableId: string, position: TablePosition) => {
-      if (!state) return false;
+      try {
+        const table = await enqueueMutation((repository) =>
+          repository.patchTable(tableId, { layout: position }),
+        );
 
-      const nextState = updateRestaurantTablePosition(state, tableId, position);
+        setState((currentState) =>
+          currentState
+            ? {
+                ...currentState,
+                tables: replaceEntity(currentState.tables, table),
+              }
+            : currentState,
+        );
 
-      if (!nextState) return false;
-
-      return saveState(nextState);
+        return true;
+      } catch {
+        return false;
+      }
     },
-    [saveState, state],
+    [enqueueMutation],
   );
 
   const createTable = useCallback(
-    async (table: Omit<DiningTable, "id">) => {
-      if (!state) return null;
+    async (input: CreateTableInput) => {
+      try {
+        const table = await enqueueMutation((repository) =>
+          repository.createTable(input),
+        );
 
-      const nextState = createRestaurantTable(state, {
-        ...table,
-        id: crypto.randomUUID(),
-      });
+        setState((currentState) =>
+          currentState
+            ? { ...currentState, tables: [...currentState.tables, table] }
+            : currentState,
+        );
 
-      if (!nextState) return null;
-
-      if (!(await saveState(nextState))) return null;
-      return nextState.tables.at(-1) ?? null;
+        return table;
+      } catch {
+        return null;
+      }
     },
-    [saveState, state],
+    [enqueueMutation],
   );
 
   const updateTable = useCallback(
     async (tableId: string, details: TableDetails) => {
-      if (!state) return false;
+      try {
+        const table = await enqueueMutation((repository) =>
+          repository.patchTable(tableId, details),
+        );
 
-      const nextState = updateRestaurantTable(state, tableId, details);
+        setState((currentState) =>
+          currentState
+            ? {
+                ...currentState,
+                tables: replaceEntity(currentState.tables, table),
+              }
+            : currentState,
+        );
 
-      if (!nextState) return false;
-
-      return saveState(nextState);
+        return true;
+      } catch {
+        return false;
+      }
     },
-    [saveState, state],
+    [enqueueMutation],
   );
 
   const deleteTable = useCallback(
     async (tableId: string) => {
-      if (!state) return false;
+      try {
+        await enqueueMutation((repository) => repository.deleteTable(tableId));
 
-      const nextState = deleteRestaurantTable(state, tableId);
+        setState((currentState) =>
+          currentState
+            ? {
+                ...currentState,
+                tables: currentState.tables.filter(
+                  (table) => table.id !== tableId,
+                ),
+              }
+            : currentState,
+        );
 
-      if (!nextState) return false;
-
-      return saveState(nextState);
+        return true;
+      } catch {
+        return false;
+      }
     },
-    [saveState, state],
+    [enqueueMutation],
   );
 
   const createZone = useCallback(
-    async (zone: Omit<TableZone, "id">) => {
-      if (!state) return null;
+    async (input: CreateZoneInput) => {
+      try {
+        const zone = await enqueueMutation((repository) =>
+          repository.createZone(input),
+        );
 
-      const nextState = createRestaurantZone(state, {
-        ...zone,
-        id: crypto.randomUUID(),
-      });
+        setState((currentState) =>
+          currentState
+            ? { ...currentState, zones: [...currentState.zones, zone] }
+            : currentState,
+        );
 
-      if (!nextState) return null;
-
-      if (!(await saveState(nextState))) return null;
-      return nextState.zones.at(-1) ?? null;
+        return zone;
+      } catch {
+        return null;
+      }
     },
-    [saveState, state],
+    [enqueueMutation],
   );
 
   const updateZone = useCallback(
     async (zoneId: string, details: ZoneDetails) => {
-      if (!state) return false;
+      try {
+        const zone = await enqueueMutation((repository) =>
+          repository.patchZone(zoneId, details),
+        );
 
-      const nextState = updateRestaurantZone(state, zoneId, details);
+        setState((currentState) =>
+          currentState
+            ? {
+                ...currentState,
+                zones: replaceEntity(currentState.zones, zone),
+              }
+            : currentState,
+        );
 
-      if (!nextState) return false;
-
-      return saveState(nextState);
+        return true;
+      } catch {
+        return false;
+      }
     },
-    [saveState, state],
+    [enqueueMutation],
   );
 
   const updateZoneRect = useCallback(
     async (zoneId: string, rect: NonNullable<TableZone["rect"]>) => {
-      if (!state) return false;
+      try {
+        const zone = await enqueueMutation((repository) =>
+          repository.patchZone(zoneId, { rect }),
+        );
 
-      const nextState = updateRestaurantZoneRect(state, zoneId, rect);
+        setState((currentState) =>
+          currentState
+            ? {
+                ...currentState,
+                zones: replaceEntity(currentState.zones, zone),
+              }
+            : currentState,
+        );
 
-      if (!nextState) return false;
-
-      return saveState(nextState);
+        return true;
+      } catch {
+        return false;
+      }
     },
-    [saveState, state],
+    [enqueueMutation],
   );
 
   const deleteZone = useCallback(
     async (zoneId: string) => {
-      if (!state) return false;
+      try {
+        await enqueueMutation((repository) => repository.deleteZone(zoneId));
 
-      const nextState = deleteRestaurantZone(state, zoneId);
+        setState((currentState) =>
+          currentState
+            ? {
+                ...currentState,
+                zones: currentState.zones.filter((zone) => zone.id !== zoneId),
+                tables: currentState.tables.map((table) =>
+                  table.zoneId === zoneId
+                    ? { ...table, zoneId: undefined }
+                    : table,
+                ),
+              }
+            : currentState,
+        );
 
-      if (!nextState) return false;
-
-      await saveState(nextState);
-      return true;
+        return true;
+      } catch {
+        return false;
+      }
     },
-    [saveState, state],
+    [enqueueMutation],
   );
 
   const resetDemo = useCallback(async () => {
     try {
-      const nextState = await repositoryRef.current?.resetDemo();
+      const nextState = await enqueueMutation((repository) =>
+        repository.resetDemo(),
+      );
 
-      if (nextState) setState(nextState);
+      setState(nextState);
     } catch {
       // Preserve the current plan when the active repository is unavailable.
     }
-  }, []);
+  }, [enqueueMutation]);
+
+  if (hasLoadError) {
+    return (
+      <RestaurantLoadError
+        onRetry={() => setLoadAttempt((currentAttempt) => currentAttempt + 1)}
+      />
+    );
+  }
 
   if (!state) return <RestaurantLoadingState />;
 

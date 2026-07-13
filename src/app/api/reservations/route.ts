@@ -1,31 +1,39 @@
-import { parseISO } from "date-fns";
-
 import { createReservationSchema } from "@/features/reservations/model/schemas";
+import { createRestaurantReservation } from "@/features/restaurant-state/model/actions";
 import {
-  createReservation,
-  getReservationsResponse,
-} from "@/features/reservations/server/reservations-store";
-
-export function GET(request: Request) {
-  const date = new URL(request.url).searchParams.get("date");
-
-  return Response.json(
-    getReservationsResponse(date ? parseISO(date) : undefined),
-  );
-}
+  invalidPayloadResponse,
+  mutationErrorResponse,
+  parseJsonBody,
+} from "@/features/restaurant-state/server/http";
+import { mutateRestaurant } from "@/features/restaurant-state/server/restaurant-store";
 
 export async function POST(request: Request) {
-  const body = (await request.json().catch(() => null)) as unknown;
-  const result = createReservationSchema.safeParse(body);
+  const input = await parseJsonBody(request, createReservationSchema);
 
-  if (!result.success) {
-    return Response.json(
-      { error: "Invalid reservation data" },
-      { status: 400 },
+  if (!input) return invalidPayloadResponse();
+
+  const reservationId = crypto.randomUUID();
+  const createdAt = new Date().toISOString();
+  const result = mutateRestaurant((state) => {
+    const created = createRestaurantReservation(
+      state,
+      input,
+      reservationId,
+      createdAt,
     );
+
+    if (!created) return { status: "conflict" };
+
+    return {
+      status: "ok",
+      state: created.state,
+      data: created.reservation,
+    };
+  });
+
+  if (result.status !== "ok") {
+    return mutationErrorResponse(result, "Reservation");
   }
 
-  const reservation = createReservation(result.data);
-
-  return Response.json({ data: reservation }, { status: 201 });
+  return Response.json({ data: result.data }, { status: 201 });
 }

@@ -13,20 +13,16 @@ npm run dev
 
 ## Данные
 
-Активный источник данных - client-side `RestaurantProvider`. Он хранит этажи,
-зоны, столы, брони и активный этаж в `localStorage` по версионированному ключу
-`qolay:restaurant:v1`. Кнопка «Сбросить демо» восстанавливает полный сид.
+Активный источник данных - HTTP API. `RestaurantProvider` загружает начальный
+`RestaurantState` через `GET /api/restaurant`, а изменения отправляет
+ресурсными запросами к `/api/tables`, `/api/zones` и `/api/reservations`.
+Выбор активного этажа остаётся локальным состоянием интерфейса. Кнопка
+«Сбросить демо» вызывает `POST /api/restaurant/reset`.
 
-По умолчанию provider использует `localStorage`. Mock HTTP API уже реализует
-тот же контракт: `GET`/`PUT /api/restaurant` и `POST /api/restaurant/reset`.
-Чтобы включить HTTP adapter, задай переменную окружения:
-
-```bash
-NEXT_PUBLIC_RESTAURANT_REPOSITORY=http
-```
-
-`HttpRestaurantRepository` не зависит от компонентов, поэтому реальный backend
-должен сохранить эти ответы и контракт `RestaurantRepository`.
+Сейчас API использует in-memory mock в `restaurant-store.ts`, поэтому данные
+сбрасываются после перезапуска сервера. При подключении реального backend нужно
+сохранить ответы этих endpoint-ов и контракт `RestaurantRepository`; provider и
+компоненты менять не потребуется.
 
 ## Следующие шаги
 
