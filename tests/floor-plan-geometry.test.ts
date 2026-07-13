@@ -6,17 +6,16 @@ import {
   getBoundedZoneRect,
   getRotatedTableHalfExtents,
   screenToWorld,
-  worldToScreen,
   zoomCameraAtPoint,
 } from "@/features/floor-plan/model/geometry";
 
-test("converts points between world and screen coordinates", () => {
+test("converts screen coordinates to world coordinates", () => {
   const camera = { scale: 0.75, offsetX: 120, offsetY: 80 };
-  const worldPoint = { x: 640, y: 400 };
 
-  expect(screenToWorld(worldToScreen(worldPoint, camera), camera)).toEqual(
-    worldPoint,
-  );
+  expect(screenToWorld({ x: 600, y: 380 }, camera)).toEqual({
+    x: 640,
+    y: 400,
+  });
 });
 
 test("keeps the world point under the cursor while zooming", () => {
@@ -25,7 +24,7 @@ test("keeps the world point under the cursor while zooming", () => {
   const worldPoint = screenToWorld(cursor, camera);
   const zoomedCamera = zoomCameraAtPoint(camera, cursor, 1);
 
-  expect(worldToScreen(worldPoint, zoomedCamera)).toEqual(cursor);
+  expect(screenToWorld(cursor, zoomedCamera)).toEqual(worldPoint);
 });
 
 test("fits the world canvas within the viewport with padding", () => {

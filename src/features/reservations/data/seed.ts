@@ -1,15 +1,6 @@
 import { addDays, setHours, setMinutes, startOfDay } from "date-fns";
 
-import {
-  diningTableSeed,
-  tableFloorSeed,
-} from "@/features/floor-plan/data/seed";
-
-import type {
-  Reservation,
-  ReservationFloorReference,
-  ReservationTableReference,
-} from "../model/types";
+import type { Reservation } from "../model/types";
 
 function createDate(
   referenceDate: Date,
@@ -100,14 +91,3 @@ export function createReservationsSeed(
     },
   ];
 }
-
-export const reservationTableSeed: ReservationTableReference[] =
-  diningTableSeed.map(({ id, number, capacity, floorId }) => ({
-    id,
-    number,
-    capacity,
-    floorId,
-  }));
-
-export const reservationFloorSeed: ReservationFloorReference[] =
-  tableFloorSeed.map(({ id, name }) => ({ id, name }));

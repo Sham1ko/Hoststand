@@ -24,13 +24,6 @@ export interface Reservation {
   createdAt: string;
 }
 
-export interface ReservationsResponse {
-  data: Reservation[];
-  meta: {
-    statusCounts: ReservationStatusCounts;
-  };
-}
-
 export interface ReservationTableReference {
   id: string;
   number: number;

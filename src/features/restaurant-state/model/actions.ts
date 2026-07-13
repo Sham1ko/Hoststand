@@ -337,22 +337,6 @@ export function updateRestaurantZone(
   };
 }
 
-export function updateRestaurantZoneRect(
-  state: RestaurantState,
-  zoneId: string,
-  rect: NonNullable<TableZone["rect"]>,
-) {
-  const zone = state.zones.find((item) => item.id === zoneId);
-
-  if (!zone || !zone.rect) return null;
-
-  return updateRestaurantZone(state, zoneId, {
-    name: zone.name,
-    color: zone.color,
-    rect,
-  });
-}
-
 export function deleteRestaurantZone(state: RestaurantState, zoneId: string) {
   if (!state.zones.some((zone) => zone.id === zoneId)) return null;
 

@@ -46,13 +46,6 @@ export function clampCameraScale(scale: number) {
   return clamp(scale, MIN_CAMERA_SCALE, MAX_CAMERA_SCALE);
 }
 
-export function worldToScreen(point: Point, camera: Camera): Point {
-  return {
-    x: point.x * camera.scale + camera.offsetX,
-    y: point.y * camera.scale + camera.offsetY,
-  };
-}
-
 export function screenToWorld(point: Point, camera: Camera): Point {
   return {
     x: (point.x - camera.offsetX) / camera.scale,

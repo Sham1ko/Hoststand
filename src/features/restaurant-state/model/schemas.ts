@@ -14,13 +14,6 @@ export const tableStatusSchema = z.enum([
 
 export const tableShapeSchema = z.enum(["round", "square", "rect"]);
 
-export const tablePositionSchema = z
-  .object({
-    x: finiteNumberSchema,
-    y: finiteNumberSchema,
-  })
-  .strict();
-
 const tableLayoutSchema = z
   .object({
     x: finiteNumberSchema,
@@ -29,20 +22,6 @@ const tableLayoutSchema = z
     h: finiteNumberSchema.min(40),
     rotation: finiteNumberSchema,
     shape: tableShapeSchema,
-  })
-  .strict();
-
-export const tableDetailsSchema = z
-  .object({
-    number: z.number().int().positive(),
-    capacity: z.number().int().positive(),
-    status: tableStatusSchema,
-    layout: tableLayoutSchema.pick({
-      w: true,
-      h: true,
-      rotation: true,
-      shape: true,
-    }),
   })
   .strict();
 
@@ -102,14 +81,6 @@ const zoneFields = {
 };
 
 export const createZoneSchema = z.object(zoneFields).strict();
-
-export const zoneDetailsSchema = z
-  .object({
-    name: zoneFields.name,
-    color: zoneFields.color,
-    rect: zoneRectSchema,
-  })
-  .strict();
 
 export const zonePatchSchema = z
   .object({
