@@ -13,8 +13,8 @@ import {
   invalidPayloadResponse,
   mutationErrorResponse,
   parseJsonBody,
-} from "@/features/restaurant/server/http";
-import { mutateRestaurant } from "@/features/restaurant/server/restaurant-store";
+} from "@/server/restaurant/http";
+import { mutateRestaurant } from "@/server/restaurant/store";
 
 type RouteContext = {
   params: Promise<{ id: string }>;

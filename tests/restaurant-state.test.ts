@@ -1,5 +1,5 @@
 import { createHttpRestaurantRepository } from "@/features/restaurant/api/restaurant-repository";
-import { createRestaurantSeed } from "@/features/restaurant/data/seed";
+import { createRestaurantSeed } from "@/server/restaurant/seed/restaurant-seed";
 import {
   applyRestaurantReservationAction,
   createRestaurantReservation,

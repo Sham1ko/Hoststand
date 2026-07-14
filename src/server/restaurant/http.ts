@@ -1,6 +1,6 @@
 import type * as z from "zod";
 
-import type { RestaurantMutationResult } from "./restaurant-store";
+import type { RestaurantMutationResult } from "./store";
 
 export async function parseJsonBody<T>(
   request: Request,

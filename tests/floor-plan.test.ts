@@ -1,7 +1,7 @@
 import {
   diningTableSeed,
   tableFloorSeed,
-} from "@/features/floor-plan/data/seed";
+} from "@/server/restaurant/seed/floor-plan-seed";
 
 test("provides three floors and 24 uniquely numbered tables", () => {
   expect(tableFloorSeed).toHaveLength(3);

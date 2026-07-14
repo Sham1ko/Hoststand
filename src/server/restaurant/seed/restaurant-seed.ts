@@ -1,12 +1,9 @@
 import type { DiningTable } from "@/entities/table/model/types";
 import type { TableZone } from "@/entities/zone/model/types";
-import {
-  diningTableSeed,
-  tableFloorSeed,
-} from "@/features/floor-plan/data/seed";
-import { createReservationsSeed } from "@/features/reservations/data/seed";
+import type { RestaurantState } from "@/features/restaurant/model/types";
 
-import type { RestaurantState } from "../model/types";
+import { diningTableSeed, tableFloorSeed } from "./floor-plan-seed";
+import { createReservationsSeed } from "./reservations-seed";
 
 const tableZoneSeed: readonly TableZone[] = [
   {

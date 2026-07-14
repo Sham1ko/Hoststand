@@ -61,3 +61,4 @@ export const diningTableSeed: readonly DiningTable[] = [
   createTable(23, "summer", 6, "MANUAL_BLOCKED", 800, 680, 250, 130, "rect", 8),
   createTable(24, "summer", 4, "INACTIVE", 1270, 680, 150, 150, "square"),
 ];
+

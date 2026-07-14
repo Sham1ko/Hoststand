@@ -4,8 +4,8 @@ import {
   invalidPayloadResponse,
   mutationErrorResponse,
   parseJsonBody,
-} from "@/features/restaurant/server/http";
-import { mutateRestaurant } from "@/features/restaurant/server/restaurant-store";
+} from "@/server/restaurant/http";
+import { mutateRestaurant } from "@/server/restaurant/store";
 
 export async function POST(request: Request) {
   const input = await parseJsonBody(request, createTableSchema);
