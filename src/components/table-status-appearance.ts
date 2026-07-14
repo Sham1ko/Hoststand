@@ -1,5 +1,14 @@
 import type { TableStatus } from "@/entities/table/model/types";
 
+export const tableStatusOrder: readonly TableStatus[] = [
+  "FREE",
+  "OCCUPIED",
+  "RESERVED",
+  "BANQUET",
+  "MANUAL_BLOCKED",
+  "INACTIVE",
+];
+
 export const tableStatusAppearance: Record<
   TableStatus,
   { fill: string; stroke: string; text: string; label: string }

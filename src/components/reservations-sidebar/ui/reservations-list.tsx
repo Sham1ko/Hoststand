@@ -19,8 +19,8 @@ type ReservationsListProps = {
   reservations: readonly Reservation[];
   tables: readonly ReservationTableReference[];
   floors: readonly ReservationFloorReference[];
-  selectedTableId: string | null;
-  onTableSelect: (tableId: string) => void;
+  showTableContext?: boolean;
+  onTableSelect?: (tableId: string) => void;
   onAction: (reservationId: string, action: ReservationAction) => void;
 };
 
@@ -28,7 +28,7 @@ export function ReservationsList({
   reservations,
   tables,
   floors,
-  selectedTableId,
+  showTableContext = true,
   onTableSelect,
   onAction,
 }: ReservationsListProps) {
@@ -76,8 +76,8 @@ export function ReservationsList({
             guestsCount={reservation.guestsCount}
             phone={formatGuestPhone(reservation.guestPhone)}
             note={reservation.comment}
-            isSelected={reservation.tableId === selectedTableId}
-            onTableSelect={() => onTableSelect(reservation.tableId)}
+            showTableContext={showTableContext}
+            onTableSelect={() => onTableSelect?.(reservation.tableId)}
             onAction={onAction}
           />
         );

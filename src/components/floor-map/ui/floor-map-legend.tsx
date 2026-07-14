@@ -1,16 +1,8 @@
-import type { TableStatus } from "@/entities/table/model/types";
+import {
+  tableStatusAppearance,
+  tableStatusOrder,
+} from "@/components/table-status-appearance";
 import type { TableZone } from "@/entities/zone/model/types";
-
-import { tableStatusAppearance } from "./table-status-appearance";
-
-const tableStatuses: readonly TableStatus[] = [
-  "FREE",
-  "OCCUPIED",
-  "RESERVED",
-  "BANQUET",
-  "MANUAL_BLOCKED",
-  "INACTIVE",
-];
 
 type FloorMapLegendProps = {
   zones: readonly TableZone[];
@@ -57,7 +49,7 @@ export function FloorMapLegend({ zones, isEditing }: FloorMapLegendProps) {
         }
       >
         <div className="flex flex-nowrap gap-x-3 overflow-x-auto">
-          {tableStatuses.map((status) => {
+          {tableStatusOrder.map((status) => {
             const appearance = tableStatusAppearance[status];
 
             return (

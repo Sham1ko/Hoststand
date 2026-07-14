@@ -1,24 +1,8 @@
 import type { DiningTable } from "@/entities/table/model/types";
+import { formatTableCapacity } from "@/entities/table/model/format-table-capacity";
+import { tableStatusAppearance } from "@/components/table-status-appearance";
 import { Users } from "lucide-react";
 import type { PointerEvent } from "react";
-
-import { tableStatusAppearance } from "./table-status-appearance";
-
-function formatCapacity(capacity: number) {
-  const lastTwoDigits = capacity % 100;
-  const lastDigit = capacity % 10;
-
-  if (lastDigit === 1 && lastTwoDigits !== 11) return `${capacity} место`;
-  if (
-    lastDigit >= 2 &&
-    lastDigit <= 4 &&
-    (lastTwoDigits < 12 || lastTwoDigits > 14)
-  ) {
-    return `${capacity} места`;
-  }
-
-  return `${capacity} мест`;
-}
 
 type TableNodeProps = {
   table: DiningTable;
@@ -47,7 +31,7 @@ export function TableNode({
   return (
     <g
       data-table-node
-      aria-label={`Стол №${table.number}, ${formatCapacity(table.capacity)}`}
+      aria-label={`Стол №${table.number}, ${formatTableCapacity(table.capacity)}`}
       transform={`translate(${x} ${y}) rotate(${rotation})`}
       opacity={isInactive ? 0.65 : 1}
       className={isEditing ? "cursor-move" : undefined}

@@ -50,8 +50,8 @@ export type ReservationCardProps = {
   guestsCount: number;
   phone: string;
   note?: string;
-  isSelected: boolean;
-  onTableSelect: () => void;
+  showTableContext?: boolean;
+  onTableSelect?: () => void;
   onAction: (reservationId: string, action: ReservationAction) => void;
 };
 
@@ -67,7 +67,7 @@ export function ReservationCard({
   guestsCount,
   phone,
   note,
-  isSelected,
+  showTableContext = true,
   onTableSelect,
   onAction,
 }: ReservationCardProps) {
@@ -78,13 +78,7 @@ export function ReservationCard({
   const canEdit = canCancel;
 
   return (
-    <article
-      className={`rounded-lg border bg-white p-3 transition-colors ${
-        isSelected
-          ? "border-primary ring-2 ring-primary/15"
-          : "border-slate-200 hover:border-slate-300"
-      }`}
-    >
+    <article className="rounded-lg border border-slate-200 bg-white p-3 transition-colors hover:border-slate-300">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-sm font-semibold text-slate-950">
@@ -106,14 +100,15 @@ export function ReservationCard({
       </div>
 
       <div className="mt-2 flex items-center gap-3 text-xs text-slate-500">
-        <button
-          type="button"
-          aria-pressed={isSelected}
-          className="cursor-pointer rounded-md bg-slate-100 px-2 py-1 font-medium text-slate-700 transition-colors hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-          onClick={onTableSelect}
-        >
-          Стол №{tableNumber} · {floorName}
-        </button>
+        {showTableContext && (
+          <button
+            type="button"
+            className="cursor-pointer rounded-md bg-slate-100 px-2 py-1 font-medium text-slate-700 transition-colors hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+            onClick={onTableSelect}
+          >
+            Стол №{tableNumber} · {floorName}
+          </button>
+        )}
         <span className="flex items-center gap-1">
           <Users aria-hidden="true" className="size-3.5" />
           {formatGuestsCount(guestsCount)}
