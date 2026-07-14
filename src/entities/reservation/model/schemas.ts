@@ -31,11 +31,22 @@ export type CreateReservationFormValues = z.input<
   typeof createReservationSchema
 >;
 
+export const updateReservationSchema = createReservationSchema;
+
+export type UpdateReservationInput = z.infer<
+  typeof updateReservationSchema
+>;
+
 export const reservationActionSchema = z
   .object({
     action: z.enum(["confirm", "complete", "cancel"]),
   })
   .strict();
+
+export const reservationMutationSchema = z.union([
+  reservationActionSchema,
+  updateReservationSchema,
+]);
 
 export const reservationSchema = z
   .object({

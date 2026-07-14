@@ -15,6 +15,7 @@ import type { TableZone } from "@/entities/zone/model/types";
 import {
   reservationSchema,
   type CreateReservationInput,
+  type UpdateReservationInput,
 } from "@/entities/reservation/model/schemas";
 import type {
   Reservation,
@@ -26,6 +27,10 @@ import type { RestaurantState } from "@/entities/restaurant/model/types";
 export interface RestaurantRepository {
   loadRestaurant(): Promise<RestaurantState>;
   createReservation(input: CreateReservationInput): Promise<Reservation>;
+  updateReservation(
+    reservationId: string,
+    input: UpdateReservationInput,
+  ): Promise<Reservation>;
   applyReservationAction(
     reservationId: string,
     action: ReservationAction,
@@ -93,6 +98,15 @@ export function createHttpRestaurantRepository(
         await fetcher(
           "/api/reservations",
           jsonRequest("POST", input),
+        ),
+        reservationSchema,
+      );
+    },
+    async updateReservation(reservationId, input) {
+      return readDataResponse(
+        await fetcher(
+          resourceUrl("reservations", reservationId),
+          jsonRequest("PATCH", input),
         ),
         reservationSchema,
       );

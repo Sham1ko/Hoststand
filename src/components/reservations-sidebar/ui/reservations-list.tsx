@@ -65,6 +65,7 @@ export function ReservationsList({
         return (
           <ReservationCard
             key={reservation.id}
+            reservation={reservation}
             reservationId={reservation.id}
             time={formatReservationTimeRange(reservation)}
             dateLabel={formatReservationDateLabel(reservation)}

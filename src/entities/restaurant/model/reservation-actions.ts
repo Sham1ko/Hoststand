@@ -3,7 +3,10 @@ import {
   completeReservation,
   confirmReservation,
 } from "@/entities/reservation/model/transitions";
-import type { CreateReservationInput } from "@/entities/reservation/model/schemas";
+import type {
+  CreateReservationInput,
+  UpdateReservationInput,
+} from "@/entities/reservation/model/schemas";
 import type { ReservationAction } from "@/entities/reservation/model/types";
 import type { RestaurantState } from "@/entities/restaurant/model/types";
 
@@ -54,5 +57,36 @@ export function applyRestaurantReservationAction(
   return {
     ...state,
     reservations,
+  };
+}
+
+export function updateRestaurantReservation(
+  state: RestaurantState,
+  reservationId: string,
+  input: UpdateReservationInput,
+) {
+  const currentReservation = state.reservations.find(
+    (reservation) => reservation.id === reservationId,
+  );
+
+  if (
+    !currentReservation ||
+    currentReservation.status === "CANCELLED" ||
+    currentReservation.status === "COMPLETED" ||
+    !state.tables.some((table) => table.id === input.tableId)
+  ) {
+    return null;
+  }
+
+  const reservation = { ...currentReservation, ...input };
+
+  return {
+    state: {
+      ...state,
+      reservations: state.reservations.map((item) =>
+        item.id === reservationId ? reservation : item,
+      ),
+    },
+    reservation,
   };
 }

@@ -1,7 +1,6 @@
 import {
   Check,
   MessageSquareText,
-  Pencil,
   Phone,
   Users,
   X,
@@ -10,9 +9,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { formatGuestsCount } from "@/components/reservations-sidebar/lib/formatters";
 import type {
+  Reservation,
   ReservationAction,
   ReservationStatus,
 } from "@/entities/reservation/model/types";
+
+import { EditReservationDialog } from "./edit-reservation-dialog";
 
 const statusStyles: Record<
   ReservationStatus,
@@ -37,6 +39,7 @@ const statusStyles: Record<
 };
 
 export type ReservationCardProps = {
+  reservation: Reservation;
   reservationId: string;
   time: string;
   dateLabel: string;
@@ -53,6 +56,7 @@ export type ReservationCardProps = {
 };
 
 export function ReservationCard({
+  reservation,
   reservationId,
   time,
   dateLabel,
@@ -159,15 +163,7 @@ export function ReservationCard({
               Отменить
             </Button>
           )}
-          <Button
-            type="button"
-            variant="ghost"
-            size="default"
-            className="ml-auto text-slate-400 hover:text-slate-700"
-          >
-            <Pencil aria-hidden="true" data-icon="inline-start" />
-            Изменить
-          </Button>
+          <EditReservationDialog reservation={reservation} />
         </div>
       )}
     </article>

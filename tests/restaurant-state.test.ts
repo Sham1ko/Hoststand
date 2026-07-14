@@ -3,6 +3,7 @@ import { createRestaurantSeed } from "@/entities/restaurant/seed/restaurant-seed
 import {
   applyRestaurantReservationAction,
   createRestaurantReservation,
+  updateRestaurantReservation,
 } from "@/entities/restaurant/model/reservation-actions";
 import {
   createRestaurantTable,
@@ -305,6 +306,36 @@ test("mutates zones and reservations without replacing restaurant state", async 
   expect(reservationResponse.status).toBe(201);
   expect(createdReservation.data.status).toBe("PENDING");
 
+  const editResponse = await UPDATE_RESERVATION(
+    new Request(
+      `http://localhost/api/reservations/${createdReservation.data.id}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tableId: "table-5",
+          guestName: "Обновлённый гость",
+          guestPhone: "+77007654321",
+          guestsCount: 4,
+          reservationDate: "2026-07-13T17:30:00.000Z",
+          durationMinutes: 90,
+          comment: "Обновлённый комментарий",
+        }),
+      },
+    ),
+    routeContext(createdReservation.data.id),
+  );
+  const editedReservation = (await editResponse.json()).data;
+
+  expect(editResponse.status).toBe(200);
+  expect(editedReservation).toMatchObject({
+    id: createdReservation.data.id,
+    status: "PENDING",
+    guestName: "Обновлённый гость",
+    tableId: "table-5",
+  });
+  expect(editedReservation.createdAt).toBe(createdReservation.data.createdAt);
+
   const confirmResponse = await UPDATE_RESERVATION(
     new Request(
       `http://localhost/api/reservations/${createdReservation.data.id}`,
@@ -393,6 +424,27 @@ test("creates and transitions reservations through pure restaurant actions", () 
   expect(created?.reservation.status).toBe("PENDING");
   expect(created?.state.reservations).toHaveLength(7);
   expect(state.reservations).toHaveLength(6);
+
+  const currentReservation = state.reservations.find(
+    (reservation) => reservation.id === "reservation-3",
+  );
+  const updated = updateRestaurantReservation(state, "reservation-3", {
+    tableId: "table-2",
+    guestName: "Изменённый гость",
+    guestPhone: "+77009998877",
+    guestsCount: 3,
+    reservationDate: "2026-07-13T19:30:00.000Z",
+    durationMinutes: 90,
+    comment: "После обновления",
+  });
+
+  expect(updated?.reservation).toMatchObject({
+    id: "reservation-3",
+    status: currentReservation?.status,
+    createdAt: currentReservation?.createdAt,
+    guestName: "Изменённый гость",
+    tableId: "table-2",
+  });
 
   const confirmed = applyRestaurantReservationAction(
     state,

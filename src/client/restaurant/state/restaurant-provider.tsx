@@ -26,7 +26,10 @@ import type {
   TableZone,
   ZoneDetails,
 } from "@/entities/zone/model/types";
-import type { CreateReservationInput } from "@/entities/reservation/model/schemas";
+import type {
+  CreateReservationInput,
+  UpdateReservationInput,
+} from "@/entities/reservation/model/schemas";
 import type { ReservationAction } from "@/entities/reservation/model/types";
 
 import {
@@ -51,6 +54,10 @@ type RestaurantContextValue = {
   focusedReservationTableId: string | null;
   setFocusedReservationTableId: (tableId: string | null) => void;
   createReservation: (input: CreateReservationInput) => Promise<boolean>;
+  updateReservation: (
+    reservationId: string,
+    input: UpdateReservationInput,
+  ) => Promise<boolean>;
   applyReservationAction: (
     reservationId: string,
     action: ReservationAction,
@@ -225,6 +232,33 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
       try {
         const reservation = await enqueueMutation((repository) =>
           repository.applyReservationAction(reservationId, action),
+        );
+
+        setState((currentState) =>
+          currentState
+            ? {
+                ...currentState,
+                reservations: replaceEntity(
+                  currentState.reservations,
+                  reservation,
+                ),
+              }
+            : currentState,
+        );
+
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [enqueueMutation],
+  );
+
+  const updateReservation = useCallback(
+    async (reservationId: string, input: UpdateReservationInput) => {
+      try {
+        const reservation = await enqueueMutation((repository) =>
+          repository.updateReservation(reservationId, input),
         );
 
         setState((currentState) =>
@@ -423,6 +457,7 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
         focusedReservationTableId,
         setFocusedReservationTableId,
         createReservation,
+        updateReservation,
         applyReservationAction,
         createTable,
         updateTable,

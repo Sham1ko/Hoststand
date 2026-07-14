@@ -1,5 +1,8 @@
-import { applyRestaurantReservationAction } from "@/entities/restaurant/model/reservation-actions";
-import { reservationActionSchema } from "@/entities/reservation/model/schemas";
+import {
+  applyRestaurantReservationAction,
+  updateRestaurantReservation,
+} from "@/entities/restaurant/model/reservation-actions";
+import { reservationMutationSchema } from "@/entities/reservation/model/schemas";
 import {
   invalidPayloadResponse,
   mutationErrorResponse,
@@ -12,7 +15,7 @@ type RouteContext = {
 };
 
 export async function PATCH(request: Request, context: RouteContext) {
-  const input = await parseJsonBody(request, reservationActionSchema);
+  const input = await parseJsonBody(request, reservationMutationSchema);
 
   if (!input) return invalidPayloadResponse();
 
@@ -22,15 +25,28 @@ export async function PATCH(request: Request, context: RouteContext) {
       return { status: "not_found" };
     }
 
-    const nextState = applyRestaurantReservationAction(state, id, input.action);
+    const update =
+      "action" in input
+        ? (() => {
+            const nextState = applyRestaurantReservationAction(
+              state,
+              id,
+              input.action,
+            );
 
-    if (!nextState) return { status: "conflict" };
+            if (!nextState) return null;
 
-    const reservation = nextState.reservations.find((item) => item.id === id);
+            const reservation = nextState.reservations.find(
+              (item) => item.id === id,
+            );
 
-    if (!reservation) return { status: "conflict" };
+            return reservation ? { state: nextState, reservation } : null;
+          })()
+        : updateRestaurantReservation(state, id, input);
 
-    return { status: "ok", state: nextState, data: reservation };
+    if (!update) return { status: "conflict" };
+
+    return { status: "ok", state: update.state, data: update.reservation };
   });
 
   if (result.status !== "ok") {

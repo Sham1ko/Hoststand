@@ -1,6 +1,7 @@
 import {
   applyRestaurantReservationAction,
   createRestaurantReservation,
+  updateRestaurantReservation,
 } from "@/entities/restaurant/model/reservation-actions";
 import {
   createRestaurantTable,
@@ -123,6 +124,21 @@ export function createLocalStorageRestaurantRepository(): RestaurantRepository {
       writeState(created.state);
 
       return created.reservation;
+    },
+    async updateReservation(reservationId, input) {
+      const updated = updateRestaurantReservation(
+        readState(),
+        reservationId,
+        input,
+      );
+
+      if (!updated) {
+        throw new Error("Reservation conflicts with the restaurant state");
+      }
+
+      writeState(updated.state);
+
+      return updated.reservation;
     },
     async applyReservationAction(reservationId, action) {
       const nextState = applyRestaurantReservationAction(
