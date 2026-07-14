@@ -7,7 +7,7 @@ import type {
 import type {
   Camera,
   Size,
-} from "@/features/floor-plan/model/geometry";
+} from "@/lib/floor-plan/geometry";
 import type { DiningTable } from "@/entities/table/model/types";
 import type { TableZone } from "@/entities/zone/model/types";
 import { getDisplayedTableStatus } from "@/features/reservations/model/selectors";
@@ -208,4 +208,3 @@ export function FloorMapCanvas({
     </svg>
   );
 }
-

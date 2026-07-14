@@ -1,5 +1,3 @@
-import type { DiningTable } from "@/entities/table/model/types";
-
 export const FLOOR_PLAN_SIZE = {
   width: 1600,
   height: 1000,
@@ -33,10 +31,11 @@ export type Camera = {
   offsetY: number;
 };
 
-type TableLayoutBounds = Pick<
-  DiningTable["layout"],
-  "w" | "h" | "rotation"
->;
+type TableLayoutBounds = {
+  w: number;
+  h: number;
+  rotation: number;
+};
 
 export function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
@@ -167,3 +166,4 @@ export function getBoundedZoneRect(rect: Rect, shouldSnap: boolean): Rect {
     h,
   };
 }
+

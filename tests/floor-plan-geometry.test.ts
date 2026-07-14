@@ -7,7 +7,7 @@ import {
   getRotatedTableHalfExtents,
   screenToWorld,
   zoomCameraAtPoint,
-} from "@/features/floor-plan/model/geometry";
+} from "@/lib/floor-plan/geometry";
 
 test("converts screen coordinates to world coordinates", () => {
   const camera = { scale: 0.75, offsetX: 120, offsetY: 80 };

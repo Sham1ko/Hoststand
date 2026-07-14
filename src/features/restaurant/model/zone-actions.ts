@@ -1,4 +1,4 @@
-import { getBoundedZoneRect } from "@/features/floor-plan/model/geometry";
+import { getBoundedZoneRect } from "@/lib/floor-plan/geometry";
 import type { TableZone } from "@/entities/zone/model/types";
 
 import type { RestaurantState } from "./types";

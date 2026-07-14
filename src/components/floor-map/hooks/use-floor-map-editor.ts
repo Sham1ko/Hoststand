@@ -9,7 +9,7 @@ import {
   screenToWorld,
   type Camera,
   type Point,
-} from "@/features/floor-plan/model/geometry";
+} from "@/lib/floor-plan/geometry";
 import type { DiningTable } from "@/entities/table/model/types";
 import type { TablePosition } from "@/features/restaurant/model/table-actions";
 
@@ -194,5 +194,3 @@ export function useFloorMapEditor({
     cancelTableDrag,
   };
 }
-
-

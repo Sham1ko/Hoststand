@@ -12,7 +12,7 @@ import {
   type Camera,
   type Point,
   type Size,
-} from "@/features/floor-plan/model/geometry";
+} from "@/lib/floor-plan/geometry";
 
 const initialCamera: Camera = {
   scale: 1,
@@ -166,5 +166,3 @@ export function useFloorMapCamera() {
     finishPan,
   };
 }
-
-
