@@ -21,6 +21,7 @@ import {
 } from "./ui/floor-map-editor-controls";
 import { FloorMapEditorPanel } from "./ui/floor-map-editor-panel";
 import { FloorMapZoneEditorPanel } from "./ui/floor-map-zone-editor-panel";
+import { FloorSwitcher } from "./ui/floor-switcher";
 
 export function FloorMap() {
   const {
@@ -160,49 +161,17 @@ export function FloorMap() {
         <div className="flex items-center justify-between gap-4 border-b border-slate-100 px-4 py-3">
           <h2 className="text-sm font-semibold text-slate-900">План зала</h2>
 
-          <div className="flex items-center gap-2">
-            <FloorMapEditorControls
-              isEditing={isEditing}
-              isSaving={isSavingTableChanges}
-              tool={editorTool}
-              onStart={startEditing}
-              onSave={() => void saveAndExitEditor()}
-              onCancel={cancelEditor}
-              onCreateTable={() => void createTableOnActiveFloor()}
-              onCreateZone={() => void createZoneOnActiveFloor()}
-              onToolChange={selectEditorTool}
-            />
-            <div
-              role="tablist"
-              aria-label="Этажи ресторана"
-              className="flex items-center gap-1 rounded-lg bg-slate-100 p-1"
-            >
-              {activeFloors.map((floor) => {
-                const isSelected = floor.id === activeFloorId;
-
-                return (
-                  <button
-                    key={floor.id}
-                    type="button"
-                    role="tab"
-                    aria-selected={isSelected}
-                    className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-                      isSelected
-                        ? "bg-white text-slate-950 shadow-sm"
-                        : "text-slate-500 hover:text-slate-800"
-                    }`}
-                    onClick={() => {
-                      clearSelection();
-                      clearZoneSelection();
-                      void setActiveFloorId(floor.id);
-                    }}
-                  >
-                    {floor.name}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          <FloorMapEditorControls
+            isEditing={isEditing}
+            isSaving={isSavingTableChanges}
+            tool={editorTool}
+            onStart={startEditing}
+            onSave={() => void saveAndExitEditor()}
+            onCancel={cancelEditor}
+            onCreateTable={() => void createTableOnActiveFloor()}
+            onCreateZone={() => void createZoneOnActiveFloor()}
+            onToolChange={selectEditorTool}
+          />
         </div>
 
         <div className="relative min-h-0 flex-1">
@@ -235,6 +204,17 @@ export function FloorMap() {
             onZonePointerMove={handleZonePointerMove}
             onZonePointerUp={finishZoneDrag}
             onZonePointerCancel={cancelZoneDrag}
+          />
+
+          <FloorSwitcher
+            floors={activeFloors}
+            tables={displayedTables}
+            activeFloorId={activeFloorId}
+            onFloorChange={(floorId) => {
+              clearSelection();
+              clearZoneSelection();
+              void setActiveFloorId(floorId);
+            }}
           />
 
           {isTableEditing && selectedTable && (
