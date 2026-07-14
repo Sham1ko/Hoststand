@@ -43,6 +43,8 @@ export type TableDragPreview = TablePosition & {
 type UseFloorMapEditorOptions = {
   camera: Camera;
   rectCache: BoundingRectCache;
+  isEditing: boolean;
+  onEditingChange: (isEditing: boolean) => void;
   onTablePositionChange: (
     tableId: string,
     position: TablePosition,
@@ -84,10 +86,11 @@ function releaseTableCapture(drag: TableDragState) {
 export function useFloorMapEditor({
   camera,
   rectCache,
+  isEditing,
+  onEditingChange,
   onTablePositionChange,
 }: UseFloorMapEditorOptions) {
   const tableDragRef = useRef<TableDragState | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
   const [dragPreview, setDragPreview] = useState<TableDragPreview | null>(null);
   const dragPreviewRef = useRef(dragPreview);
@@ -131,13 +134,13 @@ export function useFloorMapEditor({
 
   const startEditing = () => {
     clearTableDrag();
-    setIsEditing(true);
+    onEditingChange(true);
     setSelectedTableId(null);
   };
 
   const stopEditing = () => {
     clearTableDrag();
-    setIsEditing(false);
+    onEditingChange(false);
     setSelectedTableId(null);
   };
 
@@ -256,7 +259,6 @@ export function useFloorMapEditor({
     completeTableDrag(event, "cancel");
 
   return {
-    isEditing,
     selectedTableId,
     dragPreview,
     startEditing,

@@ -44,7 +44,12 @@ import { FloorMapStructureDialog } from "./ui/floor-map-structure-dialog";
 import { FloorMapZoneEditorPanel } from "./ui/floor-map-zone-editor-panel";
 import { FloorSwitcher } from "./ui/floor-switcher";
 
-export function FloorMap() {
+type FloorMapProps = {
+  isEditing: boolean;
+  onEditingChange: (isEditing: boolean) => void;
+};
+
+export function FloorMap({ isEditing, onEditingChange }: FloorMapProps) {
   const {
     state,
     setActiveFloorId,
@@ -112,7 +117,6 @@ export function FloorMap() {
     finishPan,
   } = useFloorMapCamera();
   const {
-    isEditing,
     selectedTableId,
     dragPreview,
     startEditing,
@@ -126,6 +130,8 @@ export function FloorMap() {
   } = useFloorMapEditor({
     camera,
     rectCache,
+    isEditing,
+    onEditingChange,
     onTablePositionChange: stageTablePosition,
   });
   const {
@@ -259,6 +265,11 @@ export function FloorMap() {
     clearZoneSelection();
   };
 
+  const startEditor = () => {
+    setFocusedReservationTableId(null);
+    startEditing();
+  };
+
   const handleTableEditorPointerDown = (
     event: ReactPointerEvent<SVGGElement>,
     table: DiningTable,
@@ -331,7 +342,7 @@ export function FloorMap() {
           </div>
 
           <div className="justify-self-end">
-            {!isEditing && <FloorMapEditButton onStart={startEditing} />}
+            {!isEditing && <FloorMapEditButton onStart={startEditor} />}
           </div>
         </div>
 

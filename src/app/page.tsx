@@ -1,6 +1,5 @@
-import { FloorMap } from "@/components/floor-map/floor-map";
 import { Header } from "@/components/header";
-import { ReservationsSidebar } from "@/components/reservations-sidebar/reservations-sidebar";
+import { RestaurantWorkspace } from "@/components/restaurant-workspace";
 import { RestaurantProvider } from "@/client/restaurant/state/restaurant-provider";
 
 export default function Home() {
@@ -9,11 +8,7 @@ export default function Home() {
       <div className="flex h-screen flex-col overflow-hidden bg-slate-100">
         <Header />
 
-        <main className="flex min-h-0 flex-1">
-          <FloorMap />
-
-          <ReservationsSidebar />
-        </main>
+        <RestaurantWorkspace />
       </div>
     </RestaurantProvider>
   );
