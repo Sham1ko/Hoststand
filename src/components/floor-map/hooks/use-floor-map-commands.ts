@@ -70,3 +70,5 @@ export function useFloorMapCommands({
 
   return { createTableOnActiveFloor, createZoneOnActiveFloor };
 }
+
+

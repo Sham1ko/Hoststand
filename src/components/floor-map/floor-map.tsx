@@ -5,22 +5,22 @@ import { useState } from "react";
 import { useRestaurant } from "@/features/restaurant/ui/restaurant-provider";
 import { getReservedTableIds } from "@/features/reservations/model/selectors";
 
-import { FloorMapCanvas } from "./floor-map-canvas";
-import { FloorMapControls } from "./floor-map-controls";
-import {
-  FloorMapEditorControls,
-  type FloorMapEditorTool,
-} from "./floor-map-editor-controls";
-import { FloorMapEditorPanel } from "./floor-map-editor-panel";
-import { FloorMapZoneEditorPanel } from "./floor-map-zone-editor-panel";
-import { useFloorMapCamera } from "./use-floor-map-camera";
-import { useFloorMapCommands } from "./use-floor-map-commands";
-import { useFloorMapEditor } from "./use-floor-map-editor";
-import { useFloorMapZoneEditor } from "./use-floor-map-zone-editor";
+import { useFloorMapCamera } from "./hooks/use-floor-map-camera";
+import { useFloorMapCommands } from "./hooks/use-floor-map-commands";
+import { useFloorMapEditor } from "./hooks/use-floor-map-editor";
+import { useFloorMapZoneEditor } from "./hooks/use-floor-map-zone-editor";
 import {
   getDraftTables,
   usePendingTableChanges,
-} from "./use-pending-table-changes";
+} from "./model/pending-table-changes";
+import { FloorMapCanvas } from "./ui/floor-map-canvas";
+import { FloorMapControls } from "./ui/floor-map-controls";
+import {
+  FloorMapEditorControls,
+  type FloorMapEditorTool,
+} from "./ui/floor-map-editor-controls";
+import { FloorMapEditorPanel } from "./ui/floor-map-editor-panel";
+import { FloorMapZoneEditorPanel } from "./ui/floor-map-zone-editor-panel";
 
 export function FloorMap() {
   const {

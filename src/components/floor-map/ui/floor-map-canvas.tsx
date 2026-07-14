@@ -12,9 +12,9 @@ import type { DiningTable } from "@/entities/table/model/types";
 import type { TableZone } from "@/entities/zone/model/types";
 import { getDisplayedTableStatus } from "@/features/reservations/model/selectors";
 
+import type { TableDragPreview } from "../hooks/use-floor-map-editor";
+import type { ZoneDragPreview } from "../hooks/use-floor-map-zone-editor";
 import { TableNode } from "./table-node";
-import type { TableDragPreview } from "./use-floor-map-editor";
-import type { ZoneDragPreview } from "./use-floor-map-zone-editor";
 import { ZoneNode } from "./zone-node";
 
 type FloorMapCanvasProps = {
@@ -208,3 +208,4 @@ export function FloorMapCanvas({
     </svg>
   );
 }
+

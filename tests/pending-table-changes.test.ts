@@ -4,7 +4,7 @@ import {
   createDraftTable,
   getDraftTables,
   mergeTablePatches,
-} from "@/components/floor-map/use-pending-table-changes";
+} from "@/components/floor-map/model/pending-table-changes";
 
 const table: DiningTable = {
   id: "table-1",
