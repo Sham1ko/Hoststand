@@ -186,7 +186,7 @@ export function FloorMapStructureDialog({
         <span className="@max-[58rem]/floor-map:sr-only">Этажи и зоны</span>
       </DialogTrigger>
 
-      <DialogContent className="max-h-[calc(100vh-2rem)] gap-0 overflow-hidden p-0 sm:max-w-2xl **:data-[slot=dialog-close]:top-4 **:data-[slot=dialog-close]:right-4">
+      <DialogContent className="max-h-[calc(100vh-2rem)] gap-0 overflow-hidden p-0 sm:max-w-lg **:data-[slot=dialog-close]:top-4 **:data-[slot=dialog-close]:right-4">
         <DialogHeader className="border-b border-slate-100 px-6 py-5">
           <DialogTitle className="text-xl font-semibold tracking-tight text-slate-950">
             Этажи и зоны
@@ -296,21 +296,26 @@ export function FloorMapStructureDialog({
                   key={zone.id}
                   className="grid grid-cols-[2.25rem_minmax(0,1fr)_2rem] items-center gap-2"
                 >
-                  <input
-                    type="color"
-                    aria-label={`Цвет зоны ${zone.name}`}
+                  <label
                     title="Изменить цвет зоны"
-                    value={zone.color}
-                    className="size-9 cursor-pointer overflow-hidden rounded-lg border border-slate-200 bg-white p-0.5"
-                    onChange={(event) => {
-                      const color = event.target.value;
-                      setDraftZones((currentZones) =>
-                        currentZones.map((item) =>
-                          item.id === zone.id ? { ...item, color } : item,
-                        ),
-                      );
-                    }}
-                  />
+                    className="relative block size-9 cursor-pointer rounded-lg border-2 border-white ring-1 ring-slate-200 transition hover:scale-105 hover:ring-slate-300 focus-within:ring-2 focus-within:ring-slate-500"
+                    style={{ backgroundColor: zone.color }}
+                  >
+                    <input
+                      type="color"
+                      aria-label={`Цвет зоны ${zone.name}`}
+                      value={zone.color}
+                      className="absolute inset-0 cursor-pointer opacity-0"
+                      onChange={(event) => {
+                        const color = event.target.value;
+                        setDraftZones((currentZones) =>
+                          currentZones.map((item) =>
+                            item.id === zone.id ? { ...item, color } : item,
+                          ),
+                        );
+                      }}
+                    />
+                  </label>
                   <input
                     aria-label={`Название зоны ${zone.name}`}
                     value={zone.name}
