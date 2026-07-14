@@ -410,7 +410,7 @@ export function FloorMap({ isEditing, onEditingChange }: FloorMapProps) {
             onZoomIn={() => zoomAtViewportCenter(1.2)}
           />
 
-          <FloorMapLegend zones={visibleZones} isEditing={isEditing} />
+          {!isEditing && <FloorMapLegend zones={visibleZones} />}
 
           {isEditing && (
             <FloorMapEditorDock
