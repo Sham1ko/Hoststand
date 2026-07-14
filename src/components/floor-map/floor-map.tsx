@@ -1,6 +1,11 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import {
+  type PointerEventHandler,
+  useCallback,
+  useMemo,
+  useState,
+} from "react";
 
 import { useRestaurant } from "@/client/restaurant/state/restaurant-provider";
 import { rebindTablesToZones } from "@/entities/restaurant/model/zone-binding";
@@ -95,7 +100,7 @@ export function FloorMap() {
     fitCamera,
     zoomAtViewportCenter,
     handleWheel,
-    handlePointerDown,
+    handlePointerDown: handleCameraPointerDown,
     handlePointerMove,
     finishPan,
   } = useFloorMapCamera();
@@ -251,6 +256,16 @@ export function FloorMap() {
     clearZoneSelection();
   };
 
+  const handleCanvasPointerDown: PointerEventHandler<SVGSVGElement> = (
+    event,
+  ) => {
+    if (!(event.target as Element).closest("[data-table-node]")) {
+      setFocusedReservationTableId(null);
+    }
+
+    handleCameraPointerDown(event);
+  };
+
   return (
     <section
       aria-label="Карта столов"
@@ -308,7 +323,7 @@ export function FloorMap() {
             selectedZoneId={selectedZoneId}
             focusedReservationTableId={focusedReservationTableId}
             onTableFocus={setFocusedReservationTableId}
-            onCanvasPointerDown={handlePointerDown}
+            onCanvasPointerDown={handleCanvasPointerDown}
             onCanvasPointerMove={handlePointerMove}
             onCanvasPointerEnd={finishPan}
             onWheel={handleWheel}
