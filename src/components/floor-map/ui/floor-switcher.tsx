@@ -1,4 +1,5 @@
-import { Armchair, Layers3 } from "lucide-react";
+import { useId, useMemo } from "react";
+import { Layers3 } from "lucide-react";
 
 import type { TableFloor } from "@/entities/floor/model/types";
 import type { DiningTable } from "@/entities/table/model/types";
@@ -16,69 +17,88 @@ export function FloorSwitcher({
   activeFloorId,
   onFloorChange,
 }: FloorSwitcherProps) {
-  const tableCountByFloor = tables.reduce<Record<string, number>>(
-    (counts, table) => {
-      counts[table.floorId] = (counts[table.floorId] ?? 0) + 1;
-      return counts;
-    },
-    {},
+  const groupName = useId();
+  const tableCountByFloor = useMemo(
+    () =>
+      tables.reduce<Record<string, number>>((counts, table) => {
+        counts[table.floorId] = (counts[table.floorId] ?? 0) + 1;
+        return counts;
+      }, {}),
+    [tables],
   );
 
+  if (floors.length === 0) return null;
+
   return (
-    <section
-      aria-labelledby="floor-switcher-title"
-      className="absolute top-4 right-4 z-20 w-56 max-w-[calc(100%-2rem)] rounded-2xl border border-white/80 bg-white/90 p-2.5 shadow-[0_18px_45px_-22px_rgba(15,23,42,0.5)] backdrop-blur-xl"
+    <fieldset
+      className="flex min-w-0 max-w-full items-stretch overflow-hidden rounded-xl border border-slate-200/70 bg-slate-100/80 p-0.5 shadow-inner shadow-slate-200/25"
     >
-      <div className="flex items-center gap-2.5 px-2 py-2">
+      <legend className="sr-only">Этаж ресторана</legend>
+
+      <div
+        aria-hidden="true"
+        className="hidden h-8 w-8 shrink-0 items-center justify-center border-r border-slate-200/80 text-slate-600 sm:flex"
+      >
         <Layers3
-          aria-hidden="true"
-          className="size-5 text-slate-500"
+          className="size-4.5"
           strokeWidth={2}
         />
-        <h3
-          id="floor-switcher-title"
-          className="text-sm font-semibold tracking-tight text-slate-950"
-        >
-          Этажи
-        </h3>
       </div>
 
       <div
-        role="tablist"
-        aria-label="Этажи ресторана"
-        className="mt-1 space-y-1 rounded-xl bg-slate-100/80 p-1"
+        className="flex min-w-0 flex-1 items-stretch gap-1 overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {floors.map((floor) => {
           const isSelected = floor.id === activeFloorId;
           const tableCount = tableCountByFloor[floor.id] ?? 0;
 
           return (
-            <button
+            <label
               key={floor.id}
-              type="button"
-              role="tab"
-              aria-selected={isSelected}
-              className={`relative flex min-h-12 w-full items-center justify-between gap-3 rounded-lg px-3.5 text-left transition-[color,background-color,box-shadow,transform] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
-                isSelected
-                  ? "bg-white pl-4.5 text-slate-950 shadow-[0_8px_24px_-16px_rgba(15,23,42,0.55)] before:absolute before:top-2 before:bottom-2 before:left-1 before:w-1 before:rounded-full before:bg-slate-950"
-                  : "text-slate-400 hover:bg-white/55 hover:text-slate-700 active:scale-[0.99]"
-              }`}
-              onClick={() => onFloorChange(floor.id)}
+              className="group relative min-w-[7.5rem] flex-1 shrink-0 cursor-pointer touch-manipulation select-none"
             >
-              <span className="text-sm font-semibold">{floor.name}</span>
+              <input
+                type="radio"
+                name={groupName}
+                value={floor.id}
+                checked={isSelected}
+                aria-label={`${floor.name}, ${formatTableCount(tableCount)}`}
+                className="peer sr-only"
+                onChange={() => onFloorChange(floor.id)}
+              />
               <span
-                aria-label={`${tableCount} столов`}
-                className={`flex shrink-0 items-center gap-1.5 text-sm font-medium ${
-                  isSelected ? "text-slate-700" : "text-slate-400"
+                aria-hidden="true"
+                className={`flex min-h-8 items-center justify-center gap-2 rounded-lg px-3 text-sm font-semibold whitespace-nowrap transition-[color,background-color,box-shadow] duration-200 peer-focus-visible:ring-2 peer-focus-visible:ring-primary/45 peer-focus-visible:ring-offset-1 motion-reduce:transition-none ${
+                  isSelected
+                    ? "bg-white text-slate-950 shadow-[0_5px_16px_-9px_rgba(15,23,42,0.5)]"
+                    : "text-slate-600 hover:bg-white/60 hover:text-slate-900"
                 }`}
               >
-                <Armchair aria-hidden="true" className="size-4" />
-                <span>{tableCount}</span>
+                <span>{floor.name}</span>
+                <span
+                  className={`min-w-7 rounded-full px-2 py-0.5 text-center text-xs font-semibold tabular-nums ${
+                    isSelected
+                      ? "bg-slate-100 text-slate-900"
+                      : "bg-white/70 text-slate-500"
+                  }`}
+                >
+                  {tableCount}
+                </span>
               </span>
-            </button>
+            </label>
           );
         })}
       </div>
-    </section>
+    </fieldset>
   );
+}
+
+function formatTableCount(count: number) {
+  const remainder100 = count % 100;
+  const remainder10 = count % 10;
+
+  if (remainder100 >= 11 && remainder100 <= 14) return `${count} столов`;
+  if (remainder10 === 1) return `${count} стол`;
+  if (remainder10 >= 2 && remainder10 <= 4) return `${count} стола`;
+  return `${count} столов`;
 }

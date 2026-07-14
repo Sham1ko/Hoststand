@@ -256,21 +256,38 @@ export function FloorMap() {
       aria-label="Карта столов"
       className="min-w-0 flex-1 bg-slate-100"
     >
-      <div className="flex h-full flex-col overflow-hidden bg-white">
-        <div className="flex items-center justify-between gap-4 border-b border-slate-100 px-4 py-3">
-          <h2 className="text-sm font-semibold text-slate-900">План зала</h2>
+      <div className="@container/floor-map flex h-full flex-col overflow-hidden bg-white">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 border-b border-slate-100 px-4 py-3 @min-[54rem]/floor-map:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+          <h2 className="text-sm font-semibold tracking-tight text-slate-950">
+            План зала
+          </h2>
 
-          <FloorMapEditorControls
-            isEditing={isEditing}
-            isSaving={isSavingTableChanges || isSavingZoneChanges}
-            tool={editorTool}
-            onStart={startEditing}
-            onSave={() => void saveAndExitEditor()}
-            onCancel={cancelEditor}
-            onCreateTable={() => void createTableOnActiveFloor()}
-            onCreateZone={() => void createZoneOnActiveFloor()}
-            onToolChange={selectEditorTool}
-          />
+          <div className="order-3 col-span-2 min-w-0 justify-self-stretch @min-[54rem]/floor-map:order-none @min-[54rem]/floor-map:col-span-1 @min-[54rem]/floor-map:max-w-xl @min-[54rem]/floor-map:justify-self-center">
+            <FloorSwitcher
+              floors={activeFloors}
+              tables={displayedTables}
+              activeFloorId={activeFloorId}
+              onFloorChange={(floorId) => {
+                clearSelection();
+                clearZoneSelection();
+                void setActiveFloorId(floorId);
+              }}
+            />
+          </div>
+
+          <div className="justify-self-end">
+            <FloorMapEditorControls
+              isEditing={isEditing}
+              isSaving={isSavingTableChanges || isSavingZoneChanges}
+              tool={editorTool}
+              onStart={startEditing}
+              onSave={() => void saveAndExitEditor()}
+              onCancel={cancelEditor}
+              onCreateTable={() => void createTableOnActiveFloor()}
+              onCreateZone={() => void createZoneOnActiveFloor()}
+              onToolChange={selectEditorTool}
+            />
+          </div>
         </div>
 
         <div className="relative min-h-0 flex-1">
@@ -303,17 +320,6 @@ export function FloorMap() {
             onZonePointerMove={handleZonePointerMove}
             onZonePointerUp={finishZoneDrag}
             onZonePointerCancel={cancelZoneDrag}
-          />
-
-          <FloorSwitcher
-            floors={activeFloors}
-            tables={displayedTables}
-            activeFloorId={activeFloorId}
-            onFloorChange={(floorId) => {
-              clearSelection();
-              clearZoneSelection();
-              void setActiveFloorId(floorId);
-            }}
           />
 
           {isTableEditing && selectedTable && (
