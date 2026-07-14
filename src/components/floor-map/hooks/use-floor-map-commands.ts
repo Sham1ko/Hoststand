@@ -1,7 +1,10 @@
 import { useCallback } from "react";
 
 import type { CreateTableInput } from "@/entities/table/model/schemas";
-import type { DiningTable } from "@/entities/table/model/types";
+import type {
+  DiningTable,
+  TableShape,
+} from "@/entities/table/model/types";
 import type { CreateZoneInput } from "@/entities/zone/model/schemas";
 import type { TableZone } from "@/entities/zone/model/types";
 
@@ -30,8 +33,9 @@ export function useFloorMapCommands({
   selectTable,
   selectZone,
 }: UseFloorMapCommandsOptions) {
-  const createTableOnActiveFloor = useCallback(async () => {
+  const createTableOnActiveFloor = useCallback(async (shape: TableShape) => {
     const offset = (visibleTableCount % 4) * 40;
+    const isRectangular = shape === "rect";
     const table = await createTable({
       number: Math.max(0, ...tables.map((item) => item.number)) + 1,
       capacity: 4,
@@ -40,10 +44,10 @@ export function useFloorMapCommands({
       layout: {
         x: 800 + offset,
         y: 500 + offset,
-        w: 150,
-        h: 150,
+        w: isRectangular ? 220 : 150,
+        h: isRectangular ? 130 : 150,
         rotation: 0,
-        shape: "square",
+        shape,
       },
     });
 
@@ -72,5 +76,4 @@ export function useFloorMapCommands({
 
   return { createTableOnActiveFloor, createZoneOnActiveFloor };
 }
-
 

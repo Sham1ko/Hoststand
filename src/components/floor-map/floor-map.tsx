@@ -9,7 +9,10 @@ import {
 
 import { useRestaurant } from "@/client/restaurant/state/restaurant-provider";
 import { rebindTablesToZones } from "@/entities/restaurant/model/zone-binding";
-import type { DiningTable } from "@/entities/table/model/types";
+import type {
+  DiningTable,
+  TableShape,
+} from "@/entities/table/model/types";
 import type { ZonePatchInput } from "@/entities/zone/model/schemas";
 import type { TableZone } from "@/entities/zone/model/types";
 import {
@@ -31,7 +34,10 @@ import {
 } from "./model/pending-zone-changes";
 import { FloorMapCanvas } from "./ui/floor-map-canvas";
 import { FloorMapControls } from "./ui/floor-map-controls";
-import { FloorMapEditorControls } from "./ui/floor-map-editor-controls";
+import {
+  FloorMapEditButton,
+  FloorMapEditorDock,
+} from "./ui/floor-map-editor-controls";
 import { FloorMapEditorPanel } from "./ui/floor-map-editor-panel";
 import { FloorMapZoneEditorPanel } from "./ui/floor-map-zone-editor-panel";
 import { FloorSwitcher } from "./ui/floor-switcher";
@@ -268,9 +274,9 @@ export function FloorMap() {
     handleZonePointerDown(event, zone);
   };
 
-  const createTableInEditor = () => {
+  const createTableInEditor = (shape: TableShape) => {
     clearZoneSelection();
-    void createTableOnActiveFloor();
+    void createTableOnActiveFloor(shape);
   };
 
   const createZoneInEditor = () => {
@@ -299,7 +305,7 @@ export function FloorMap() {
       className="min-w-0 flex-1 bg-slate-100"
     >
       <div className="@container/floor-map flex h-full flex-col overflow-hidden bg-white">
-        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 border-b border-slate-100 px-4 py-3 @min-[54rem]/floor-map:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 border-b border-slate-100 px-4 py-3 @min-[54rem]/floor-map:grid-cols-[auto_minmax(0,1fr)_auto]">
           <h2 className="text-sm font-semibold tracking-tight text-slate-950">
             План зала
           </h2>
@@ -318,15 +324,7 @@ export function FloorMap() {
           </div>
 
           <div className="justify-self-end">
-            <FloorMapEditorControls
-              isEditing={isEditing}
-              isSaving={isSavingTableChanges || isSavingZoneChanges}
-              onStart={startEditing}
-              onSave={() => void saveAndExitEditor()}
-              onCancel={cancelEditor}
-              onCreateTable={createTableInEditor}
-              onCreateZone={createZoneInEditor}
-            />
+            {!isEditing && <FloorMapEditButton onStart={startEditing} />}
           </div>
         </div>
 
@@ -393,6 +391,16 @@ export function FloorMap() {
             onFit={fitCamera}
             onZoomIn={() => zoomAtViewportCenter(1.2)}
           />
+
+          {isEditing && (
+            <FloorMapEditorDock
+              onCreateTable={createTableInEditor}
+              onCreateZone={createZoneInEditor}
+              isSaving={isSavingTableChanges || isSavingZoneChanges}
+              onSave={() => void saveAndExitEditor()}
+              onCancel={cancelEditor}
+            />
+          )}
         </div>
       </div>
     </section>
