@@ -52,6 +52,18 @@ export function screenToWorld(point: Point, camera: Camera): Point {
   };
 }
 
+export function getPannedCamera(
+  camera: Camera,
+  pointerAtStart: Point,
+  pointer: Point,
+): Camera {
+  return {
+    ...camera,
+    offsetX: camera.offsetX + pointer.x - pointerAtStart.x,
+    offsetY: camera.offsetY + pointer.y - pointerAtStart.y,
+  };
+}
+
 export function zoomCameraAtPoint(
   camera: Camera,
   cursor: Point,
@@ -166,4 +178,3 @@ export function getBoundedZoneRect(rect: Rect, shouldSnap: boolean): Rect {
     h,
   };
 }
-

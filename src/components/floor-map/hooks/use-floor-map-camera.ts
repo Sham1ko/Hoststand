@@ -8,6 +8,7 @@ import {
 
 import {
   fitCameraToViewport,
+  getPannedCamera,
   zoomCameraAtPoint,
   type Camera,
   type Point,
@@ -143,11 +144,7 @@ export function useFloorMapCamera() {
 
     if (!pointer) return;
 
-    setCamera({
-      ...pan.camera,
-      offsetX: pan.camera.offsetX + pointer.x - pan.pointer.x,
-      offsetY: pan.camera.offsetY + pointer.y - pan.pointer.y,
-    });
+    setCamera(getPannedCamera(pan.camera, pan.pointer, pointer));
   };
 
   const finishPan = (event: PointerEvent<SVGSVGElement>) => {

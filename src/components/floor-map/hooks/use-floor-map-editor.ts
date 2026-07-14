@@ -15,6 +15,8 @@ import type {
   TablePosition,
 } from "@/entities/table/model/types";
 
+import { resolveTableDrag } from "../model/interaction-transitions";
+
 type TableDragState = {
   tableId: string;
   pointerId: number;
@@ -144,12 +146,15 @@ export function useFloorMapEditor({
     setDragPreview({ tableId: drag.tableId, ...position });
   };
 
-  const finishTableDrag = (event: PointerEvent<SVGGElement>) => {
+  const completeTableDrag = (
+    event: PointerEvent<SVGGElement>,
+    outcome: "commit" | "cancel",
+  ) => {
     const drag = tableDragRef.current;
 
     if (!drag || drag.pointerId !== event.pointerId) return;
 
-    event.preventDefault();
+    if (outcome === "commit") event.preventDefault();
     event.stopPropagation();
 
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
@@ -159,28 +164,18 @@ export function useFloorMapEditor({
     tableDragRef.current = null;
     setDragPreview(null);
 
-    if (!drag.hasMoved) return;
+    const change = resolveTableDrag(drag, outcome);
 
-    onTablePositionChange(
-      drag.tableId,
-      getBoundedTablePosition(drag.position, drag.layout, true),
-    );
-  };
-
-  const cancelTableDrag = (event: PointerEvent<SVGGElement>) => {
-    const drag = tableDragRef.current;
-
-    if (!drag || drag.pointerId !== event.pointerId) return;
-
-    event.stopPropagation();
-
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
+    if (change) {
+      onTablePositionChange(change.tableId, change.position);
     }
-
-    tableDragRef.current = null;
-    setDragPreview(null);
   };
+
+  const finishTableDrag = (event: PointerEvent<SVGGElement>) =>
+    completeTableDrag(event, "commit");
+
+  const cancelTableDrag = (event: PointerEvent<SVGGElement>) =>
+    completeTableDrag(event, "cancel");
 
   return {
     isEditing,

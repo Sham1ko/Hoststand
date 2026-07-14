@@ -12,6 +12,8 @@ import {
 } from "@/lib/floor-plan/geometry";
 import type { TableZone } from "@/entities/zone/model/types";
 
+import { resolveZoneDrag } from "../model/interaction-transitions";
+
 type ZoneDragState = {
   zoneId: string;
   pointerId: number;
@@ -141,12 +143,15 @@ export function useFloorMapZoneEditor({
     setDragPreview({ zoneId: drag.zoneId, ...rect });
   };
 
-  const finishZoneDrag = (event: PointerEvent<SVGGElement>) => {
+  const completeZoneDrag = (
+    event: PointerEvent<SVGGElement>,
+    outcome: "commit" | "cancel",
+  ) => {
     const drag = zoneDragRef.current;
 
     if (!drag || drag.pointerId !== event.pointerId) return;
 
-    event.preventDefault();
+    if (outcome === "commit") event.preventDefault();
     event.stopPropagation();
 
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
@@ -156,25 +161,18 @@ export function useFloorMapZoneEditor({
     zoneDragRef.current = null;
     setDragPreview(null);
 
-    if (!drag.hasMoved) return;
+    const change = resolveZoneDrag(drag, outcome);
 
-    onZoneRectChange(drag.zoneId, getBoundedZoneRect(drag.rect, true));
-  };
-
-  const cancelZoneDrag = (event: PointerEvent<SVGGElement>) => {
-    const drag = zoneDragRef.current;
-
-    if (!drag || drag.pointerId !== event.pointerId) return;
-
-    event.stopPropagation();
-
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
+    if (change) {
+      onZoneRectChange(change.zoneId, change.rect);
     }
-
-    zoneDragRef.current = null;
-    setDragPreview(null);
   };
+
+  const finishZoneDrag = (event: PointerEvent<SVGGElement>) =>
+    completeZoneDrag(event, "commit");
+
+  const cancelZoneDrag = (event: PointerEvent<SVGGElement>) =>
+    completeZoneDrag(event, "cancel");
 
   return {
     selectedZoneId,

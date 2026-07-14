@@ -4,6 +4,7 @@ import {
   fitCameraToViewport,
   getBoundedTablePosition,
   getBoundedZoneRect,
+  getPannedCamera,
   getRotatedTableHalfExtents,
   screenToWorld,
   zoomCameraAtPoint,
@@ -15,6 +16,19 @@ test("converts screen coordinates to world coordinates", () => {
   expect(screenToWorld({ x: 600, y: 380 }, camera)).toEqual({
     x: 640,
     y: 400,
+  });
+});
+
+test("pans from the gesture origin without accumulating move deltas", () => {
+  const camera = { scale: 0.75, offsetX: 120, offsetY: 80 };
+  const pointerAtStart = { x: 300, y: 240 };
+
+  expect(
+    getPannedCamera(camera, pointerAtStart, { x: 355, y: 210 }),
+  ).toEqual({
+    scale: 0.75,
+    offsetX: 175,
+    offsetY: 50,
   });
 });
 
@@ -60,4 +74,25 @@ test("keeps zones on the grid and within the floor plan", () => {
   expect(
     getBoundedZoneRect({ x: -20, y: 940, w: 80, h: 100 }, true),
   ).toEqual({ x: 0, y: 880, w: 120, h: 120 });
+});
+
+test("snaps a moved zone before clamping it to the lower-right bounds", () => {
+  expect(
+    getBoundedZoneRect({ x: 1511, y: 891, w: 100, h: 100 }, true),
+  ).toEqual({ x: 1480, y: 880, w: 120, h: 120 });
+});
+
+test("keeps a zone resize unsnapped until the gesture is committed", () => {
+  const preview = getBoundedZoneRect(
+    { x: 100, y: 100, w: 173, h: 247 },
+    false,
+  );
+
+  expect(preview).toEqual({ x: 100, y: 100, w: 173, h: 247 });
+  expect(getBoundedZoneRect(preview, true)).toEqual({
+    x: 100,
+    y: 100,
+    w: 180,
+    h: 240,
+  });
 });
