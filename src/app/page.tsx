@@ -1,7 +1,7 @@
 import { FloorMap } from "@/components/floor-map/floor-map";
 import { Header } from "@/components/header";
 import { ReservationsSidebar } from "@/components/reservations-sidebar/reservations-sidebar";
-import { RestaurantProvider } from "@/features/restaurant/ui/restaurant-provider";
+import { RestaurantProvider } from "@/client/restaurant/state/restaurant-provider";
 
 export default function Home() {
   return (

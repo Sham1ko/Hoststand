@@ -3,8 +3,10 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
-import type { TableZone } from "@/entities/zone/model/types";
-import type { ZoneDetails } from "@/features/restaurant/model/zone-actions";
+import type {
+  TableZone,
+  ZoneDetails,
+} from "@/entities/zone/model/types";
 
 const fieldClassName =
   "h-8 w-full rounded-md border border-slate-200 bg-white px-2 text-xs text-slate-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15";
@@ -154,5 +156,4 @@ export function FloorMapZoneEditorPanel({
     </form>
   );
 }
-
 

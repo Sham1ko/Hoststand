@@ -3,10 +3,11 @@ import {
   type Point,
 } from "@/lib/floor-plan/geometry";
 import type { RestaurantState } from "@/entities/restaurant/model/types";
-import type { DiningTable } from "@/entities/table/model/types";
+import type {
+  DiningTable,
+  TablePosition,
+} from "@/entities/table/model/types";
 
-
-export type TablePosition = Pick<DiningTable["layout"], "x" | "y">;
 export type TableDetails = Pick<
   DiningTable,
   "number" | "capacity" | "status"

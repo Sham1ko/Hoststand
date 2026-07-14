@@ -24,3 +24,5 @@ export interface DiningTable {
     shape: TableShape;
   };
 }
+
+export type TablePosition = Pick<DiningTable["layout"], "x" | "y">;

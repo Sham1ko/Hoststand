@@ -1,4 +1,4 @@
-import { createRestaurantZone } from "@/features/restaurant/model/zone-actions";
+import { createRestaurantZone } from "@/features/floor-plan-management/model/zone-actions";
 import { createZoneSchema } from "@/entities/zone/model/schemas";
 import {
   invalidPayloadResponse,

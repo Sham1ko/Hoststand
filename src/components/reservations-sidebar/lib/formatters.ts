@@ -33,3 +33,4 @@ export function formatGuestPhone(phone: string) {
 
   return `+7 ${match[1]} ${match[2]} ${match[3]} ${match[4]}`;
 }
+

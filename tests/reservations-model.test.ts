@@ -2,7 +2,7 @@ import {
   formatGuestPhone,
   formatGuestsCount,
   formatReservationTimeRange,
-} from "@/features/reservations/lib/formatters";
+} from "@/components/reservations-sidebar/lib/formatters";
 import {
   filterReservationsByDate,
   filterReservationsByStatus,
@@ -10,12 +10,12 @@ import {
   getReservedTableIds,
   getReservationStatusCounts,
   getReservationTableContext,
-} from "@/features/reservations/model/selectors";
+} from "@/features/reservation-management/model/selectors";
 import {
   cancelReservation,
   completeReservation,
   confirmReservation,
-} from "@/features/reservations/model/transitions";
+} from "@/entities/reservation/model/transitions";
 import type { Reservation } from "@/entities/reservation/model/types";
 
 const reservation: Reservation = {

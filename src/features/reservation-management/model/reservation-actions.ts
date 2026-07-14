@@ -2,11 +2,10 @@ import {
   cancelReservation,
   completeReservation,
   confirmReservation,
-} from "@/features/reservations/model/transitions";
+} from "@/entities/reservation/model/transitions";
 import type { CreateReservationInput } from "@/entities/reservation/model/schemas";
 import type { ReservationAction } from "@/entities/reservation/model/types";
 import type { RestaurantState } from "@/entities/restaurant/model/types";
-
 
 const reservationActionHandlers = {
   confirm: confirmReservation,

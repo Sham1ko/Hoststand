@@ -12,3 +12,7 @@ export interface TableZone {
     h: number;
   };
 }
+
+export type ZoneDetails = Pick<TableZone, "name" | "color"> & {
+  rect: NonNullable<TableZone["rect"]>;
+};

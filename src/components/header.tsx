@@ -4,7 +4,7 @@ import { RotateCcw } from "lucide-react";
 import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
-import { useRestaurant } from "@/features/restaurant/ui/restaurant-provider";
+import { useRestaurant } from "@/client/restaurant/state/restaurant-provider";
 
 export function Header() {
   const { resetDemo } = useRestaurant();

@@ -23,7 +23,6 @@ import type {
 import { restaurantStateSchema } from "@/entities/restaurant/model/schemas";
 import type { RestaurantState } from "@/entities/restaurant/model/types";
 
-
 export interface RestaurantRepository {
   loadRestaurant(): Promise<RestaurantState>;
   createReservation(input: CreateReservationInput): Promise<Reservation>;

@@ -4,8 +4,8 @@ import {
   formatGuestPhone,
   formatReservationDateLabel,
   formatReservationTimeRange,
-} from "@/features/reservations/lib/formatters";
-import { getReservationTableContext } from "@/features/reservations/model/selectors";
+} from "@/components/reservations-sidebar/lib/formatters";
+import { getReservationTableContext } from "@/features/reservation-management/model/selectors";
 import type {
   Reservation,
   ReservationAction,
@@ -84,4 +84,3 @@ export function ReservationsList({
     </div>
   );
 }
-

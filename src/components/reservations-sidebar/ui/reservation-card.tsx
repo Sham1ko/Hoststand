@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { formatGuestsCount } from "@/features/reservations/lib/formatters";
+import { formatGuestsCount } from "@/components/reservations-sidebar/lib/formatters";
 import type {
   ReservationAction,
   ReservationStatus,
@@ -173,4 +173,3 @@ export function ReservationCard({
     </article>
   );
 }
-

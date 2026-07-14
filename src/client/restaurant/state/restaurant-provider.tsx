@@ -20,7 +20,10 @@ import type {
 } from "@/entities/table/model/schemas";
 import type { DiningTable } from "@/entities/table/model/types";
 import type { CreateZoneInput } from "@/entities/zone/model/schemas";
-import type { TableZone } from "@/entities/zone/model/types";
+import type {
+  TableZone,
+  ZoneDetails,
+} from "@/entities/zone/model/types";
 import type { CreateReservationInput } from "@/entities/reservation/model/schemas";
 import type { ReservationAction } from "@/entities/reservation/model/types";
 
@@ -28,7 +31,6 @@ import {
   createHttpRestaurantRepository,
   type RestaurantRepository,
 } from "../api/restaurant-repository";
-import type { ZoneDetails } from "../model/zone-actions";
 
 type RestaurantContextValue = {
   state: RestaurantState;

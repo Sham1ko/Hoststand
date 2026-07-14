@@ -13,6 +13,7 @@
 ```text
 src/
   app/
+  client/
   components/
   entities/
   features/
@@ -21,7 +22,7 @@ src/
 ```
 
 `entities` существует только в одном месте: `src/entities`. Она не вложена в
-`components`, `features` или `server`.
+`client`, `components`, `features` или `server`.
 
 ## Что хранится в каждой папке
 
@@ -38,6 +39,26 @@ app/
 
 `app` собирает приложение из готовых компонентов и сценариев. Большую
 бизнес-логику внутри страниц и route-файлов писать не нужно.
+
+### `client`
+
+Общая клиентская инфраструктура приложения: HTTP-доступ к API и глобальное
+React-состояние.
+
+```text
+client/restaurant/
+  api/
+    restaurant-repository.ts
+  state/
+    restaurant-provider.tsx
+```
+
+- `api` знает, как получить и изменить данные через HTTP.
+- `state` хранит загруженное состояние и предоставляет его компонентам.
+- `client` не содержит бизнес-правила сущностей и не импортирует `server`.
+
+Эта папка нужна для кода, который используется многими компонентами, но не
+является отдельным действием пользователя.
 
 ### `components`
 
@@ -63,7 +84,7 @@ components/floor-map/
 
 `components/ui` — особая папка. В ней находятся базовые кнопки, диалоги,
 календарь и другие переиспользуемые UI-примитивы. Их можно использовать как в
-`components`, так и в UI-частях `features`.
+`components`, `client` и UI-частях `features`.
 
 ### `entities`
 
@@ -101,20 +122,21 @@ HTTP-запросы или серверное хранилище.
 
 - создание, изменение и удаление столов;
 - подтверждение или отмена бронирования;
-- загрузка и обновление состояния ресторана.
+- выбор и фильтрация бронирований.
 
 Текущая структура:
 
 ```text
 features/
-  reservations/
-    lib/
+  floor-plan-management/
     model/
+      table-actions.ts
+      zone-actions.ts
 
-  restaurant/
-    api/
+  reservation-management/
     model/
-    ui/
+      reservation-actions.ts
+      selectors.ts
 ```
 
 Feature не должна становиться местом для любых файлов на похожую тему. Типы и
@@ -156,8 +178,9 @@ server/restaurant/
 
 | Код находится в | Можно импортировать |
 | --- | --- |
-| `app` | `components`, `features`, `entities`, `lib`, `server` |
-| `components` | `components/ui`, `features`, `entities`, `lib` |
+| `app` | `client`, `components`, `features`, `entities`, `lib`, `server` |
+| `client` | `components/ui`, `entities`, `lib` |
+| `components` | `client`, `components/ui`, `features`, `entities`, `lib` |
 | `features` | `components/ui`, `entities`, `lib` |
 | `server` | `entities`, `lib` |
 | `entities` | `lib`, а агрегат `restaurant` — другие entities |
@@ -167,6 +190,7 @@ server/restaurant/
 
 - UI-страницы из `app` не импортируют `server`. Это разрешено API routes и
   другим server-only файлам.
+- `client` не импортирует `features` или `server`.
 - Feature может свободно импортировать файлы внутри самой себя.
 - Feature не должна импортировать другую feature. Общую доменную логику лучше
   опустить в `entities` или независимую функцию в `lib`.
@@ -178,6 +202,8 @@ server/restaurant/
 | Что добавляем | Куда положить |
 | --- | --- |
 | Страница или API route | `app` |
+| HTTP repository для браузера | `client/<module>/api` |
+| Глобальный React provider/state | `client/<module>/state` |
 | Большой React-компонент | `components/<module>` |
 | Визуальная часть компонента | `components/<module>/ui` |
 | Хук конкретного компонента | `components/<module>/hooks` |
@@ -185,11 +211,12 @@ server/restaurant/
 | Тип или Zod-схема сущности | `entities/<entity>/model` |
 | Бизнес-операция пользователя | `features/<feature>` |
 | Независимая функция | `lib/<module>` |
-| Store, server helper или seed | `server/<module>` |
+| Server store, HTTP helper или seed | `server/<module>` |
 
 Если файл подходит сразу в несколько мест, нужно спросить: может ли он работать
 без React, HTTP и глобального состояния? Если да, скорее всего это `entities`
-или `lib`. Если код описывает действие пользователя, это `features`.
+или `lib`. Если код описывает действие пользователя, это `features`. Если код
+соединяет React-состояние с HTTP API, это `client`.
 
 ## Импорты файлов
 
@@ -213,31 +240,28 @@ import { FloorMapCanvas } from "./ui/floor-map-canvas";
 ## Граница клиента и сервера
 
 - `src/server` импортируют только API routes, server-only код и тесты.
-- Клиентские компоненты работают с сервером через HTTP repository.
+- Клиентские компоненты получают состояние через `src/client`.
+- `src/client` работает с API через HTTP repository.
 - Нельзя импортировать store напрямую в React-компонент.
+- `client` и `server` не импортируют друг друга.
 - Схемы ответа и типы состояния находятся в `entities`, поэтому доступны обеим
   сторонам без зависимости клиента от server-кода.
 
-## Текущие исключения
+## Текущие договорённости
 
-Сейчас `features/restaurant/model/reservation-actions.ts` импортирует переходы
-статусов из `features/reservations/model/transitions.ts`. Это зависимость одной
-feature от другой и временное исключение.
+- Features называются по бизнес-сценарию, а не по общей сущности `restaurant`.
+- Чистые переходы статусов бронирования находятся в `entities/reservation`.
+- Форматирование, нужное только sidebar, находится рядом с этим компонентом.
+- Repository и глобальное состояние ресторана находятся в `client/restaurant`.
+- Новую верхнеуровневую папку добавляем только после обновления этого документа.
 
-Правильное направление: перенести чистые переходы статусов в
-`entities/reservation/model/transitions.ts`. После этого обе features смогут
-использовать доменную логику через entity-слой.
+## Как менять архитектуру
 
-`features/restaurant/ui/restaurant-provider.tsx` пока остаётся в feature. Он
-является общей клиентской точкой доступа к состоянию ресторана. Переносить его
-без конкретной проблемы не нужно.
-
-## Порядок дальнейшего рефакторинга
-
-1. Убрать зависимость `features/restaurant` от `features/reservations`.
-2. Проверить, какие reservation formatters относятся только к sidebar UI.
-3. Перемещать остальные файлы только при наличии понятной неправильной границы.
-4. После архитектурного решения сначала обновлять этот документ, затем код.
+1. Сначала описать новую границу и разрешённые зависимости здесь.
+2. Затем переместить минимальный набор файлов без изменения поведения.
+3. Проверить старые импорты и TypeScript.
+4. Не продолжать перенос, если назначение новой папки нельзя объяснить одним
+   простым предложением.
 
 ## Короткая проверка перед добавлением файла
 
@@ -247,5 +271,6 @@ feature от другой и временное исключение.
 2. Не попадает ли тип сущности ошибочно в component или feature.
 3. Не импортирует ли клиентский код `server`.
 4. Не появилась ли зависимость feature от другой feature.
-5. Нужен ли действительно новый слой или достаточно существующей папки.
-6. Можно ли использовать прямой импорт вместо нового `index.ts`.
+5. Не попали ли repository или глобальный state ошибочно в `features`.
+6. Нужен ли действительно новый слой или достаточно существующей папки.
+7. Можно ли использовать прямой импорт вместо нового `index.ts`.

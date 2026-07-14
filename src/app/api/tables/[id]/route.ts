@@ -3,7 +3,7 @@ import {
   type TableDetails,
   updateRestaurantTable,
   updateRestaurantTablePosition,
-} from "@/features/restaurant/model/table-actions";
+} from "@/features/floor-plan-management/model/table-actions";
 import {
   tablePatchSchema,
   type TablePatchInput,

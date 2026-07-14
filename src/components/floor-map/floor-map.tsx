@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 
-import { useRestaurant } from "@/features/restaurant/ui/restaurant-provider";
-import { getReservedTableIds } from "@/features/reservations/model/selectors";
+import { useRestaurant } from "@/client/restaurant/state/restaurant-provider";
+import { getReservedTableIds } from "@/features/reservation-management/model/selectors";
 
 import { useFloorMapCamera } from "./hooks/use-floor-map-camera";
 import { useFloorMapCommands } from "./hooks/use-floor-map-commands";

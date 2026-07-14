@@ -10,8 +10,10 @@ import {
   type Camera,
   type Point,
 } from "@/lib/floor-plan/geometry";
-import type { DiningTable } from "@/entities/table/model/types";
-import type { TablePosition } from "@/features/restaurant/model/table-actions";
+import type {
+  DiningTable,
+  TablePosition,
+} from "@/entities/table/model/types";
 
 type TableDragState = {
   tableId: string;
