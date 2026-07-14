@@ -46,6 +46,7 @@ export function CreateReservationDialog({
         comment: "",
       }}
       tables={state.tables}
+      floors={state.floors}
       submitLabel="Создать бронь"
       submittingLabel="Создание..."
       requestErrorMessage="Не удалось создать бронь"

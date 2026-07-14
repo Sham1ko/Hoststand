@@ -47,6 +47,7 @@ export function EditReservationDialog({
         comment: reservation.comment ?? "",
       }}
       tables={state.tables}
+      floors={state.floors}
       submitLabel="Сохранить"
       submittingLabel="Сохранение..."
       requestErrorMessage="Не удалось сохранить изменения"
