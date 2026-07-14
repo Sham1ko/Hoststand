@@ -1,7 +1,7 @@
 import { getBoundedZoneRect } from "@/lib/floor-plan/geometry";
+import type { RestaurantState } from "@/entities/restaurant/model/types";
 import type { TableZone } from "@/entities/zone/model/types";
 
-import type { RestaurantState } from "./types";
 
 export type ZoneDetails = Pick<TableZone, "name" | "color"> & {
   rect: NonNullable<TableZone["rect"]>;

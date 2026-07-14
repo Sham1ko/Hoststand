@@ -14,3 +14,4 @@ export const restaurantStateSchema = z
     activeFloorId: z.string().min(1),
   })
   .strict();
+

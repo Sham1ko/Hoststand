@@ -1,4 +1,4 @@
-import type { RestaurantState } from "@/features/restaurant/model/types";
+import type { RestaurantState } from "@/entities/restaurant/model/types";
 
 import { createRestaurantSeed } from "./seed/restaurant-seed";
 

@@ -5,8 +5,8 @@ import {
 } from "@/features/reservations/model/transitions";
 import type { CreateReservationInput } from "@/entities/reservation/model/schemas";
 import type { ReservationAction } from "@/entities/reservation/model/types";
+import type { RestaurantState } from "@/entities/restaurant/model/types";
 
-import type { RestaurantState } from "./types";
 
 const reservationActionHandlers = {
   confirm: confirmReservation,

@@ -13,6 +13,7 @@ import { startOfToday } from "date-fns";
 import { RefreshCw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import type { RestaurantState } from "@/entities/restaurant/model/types";
 import type {
   CreateTableInput,
   TablePatchInput,
@@ -28,7 +29,6 @@ import {
   type RestaurantRepository,
 } from "../api/restaurant-repository";
 import type { ZoneDetails } from "../model/zone-actions";
-import type { RestaurantState } from "../model/types";
 
 type RestaurantContextValue = {
   state: RestaurantState;

@@ -10,3 +10,4 @@ export interface RestaurantState {
   reservations: Reservation[];
   activeFloorId: string;
 }
+
