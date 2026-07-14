@@ -1,4 +1,4 @@
-import { createRestaurantTable } from "@/features/floor-plan-management/model/table-actions";
+import { createRestaurantTable } from "@/entities/restaurant/model/table-actions";
 import { createTableSchema } from "@/entities/table/model/schemas";
 import {
   invalidPayloadResponse,

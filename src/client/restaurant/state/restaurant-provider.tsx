@@ -28,12 +28,21 @@ import type { CreateReservationInput } from "@/entities/reservation/model/schema
 import type { ReservationAction } from "@/entities/reservation/model/types";
 
 import {
+  type DataSource,
+  DEFAULT_DATA_SOURCE,
+  persistDataSource,
+  readStoredDataSource,
+} from "../api/data-source";
+import { createLocalStorageRestaurantRepository } from "../api/local-storage-restaurant-repository";
+import {
   createHttpRestaurantRepository,
   type RestaurantRepository,
 } from "../api/restaurant-repository";
 
 type RestaurantContextValue = {
   state: RestaurantState;
+  dataSource: DataSource;
+  setDataSource: (source: DataSource) => void;
   setActiveFloorId: (floorId: string) => Promise<void>;
   reservationDate: Date;
   setReservationDate: (date: Date) => void;
@@ -95,12 +104,23 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
   const [focusedReservationTableId, setFocusedReservationTableId] =
     useState<string | null>(null);
   const [loadAttempt, setLoadAttempt] = useState(0);
+  const [dataSource, setDataSourceState] = useState<DataSource | null>(null);
   const [hasLoadError, setHasLoadError] = useState(false);
   const repositoryRef = useRef<RestaurantRepository | null>(null);
   const mutationQueueRef = useRef<Promise<void>>(Promise.resolve());
 
   useEffect(() => {
-    const repository = createHttpRestaurantRepository();
+    if (dataSource === null) {
+      // Client-only read: resolving the stored setting after mount keeps
+      // server and first client render identical (the loading skeleton).
+      setDataSourceState(readStoredDataSource());
+      return;
+    }
+
+    const repository =
+      dataSource === "mock-api"
+        ? createHttpRestaurantRepository()
+        : createLocalStorageRestaurantRepository();
     let isMounted = true;
 
     repositoryRef.current = repository;
@@ -118,7 +138,7 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
     return () => {
       isMounted = false;
     };
-  }, [loadAttempt]);
+  }, [loadAttempt, dataSource]);
 
   const enqueueMutation = useCallback(
     <Result,>(
@@ -144,19 +164,39 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  const setActiveFloorId = useCallback(async (floorId: string) => {
-    setState((currentState) => {
-      if (
-        !currentState?.floors.some(
-          (floor) => floor.id === floorId && floor.isActive,
-        )
-      ) {
-        return currentState;
-      }
+  const setDataSource = useCallback(
+    (source: DataSource) => {
+      if (source === dataSource) return;
 
-      return { ...currentState, activeFloorId: floorId };
-    });
-  }, []);
+      persistDataSource(source);
+      setState(null);
+      setDataSourceState(source);
+    },
+    [dataSource],
+  );
+
+  const setActiveFloorId = useCallback(
+    async (floorId: string) => {
+      setState((currentState) => {
+        if (
+          !currentState?.floors.some(
+            (floor) => floor.id === floorId && floor.isActive,
+          )
+        ) {
+          return currentState;
+        }
+
+        return { ...currentState, activeFloorId: floorId };
+      });
+
+      // Fire-and-forget persistence: floor switching must stay instant, and
+      // repositories without saveActiveFloor simply skip it.
+      void enqueueMutation(async (repository) => {
+        await repository.saveActiveFloor?.(floorId);
+      }).catch(() => {});
+    },
+    [enqueueMutation],
+  );
 
   const createReservation = useCallback(
     async (input: CreateReservationInput) => {
@@ -400,6 +440,8 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
     <RestaurantContext
       value={{
         state,
+        dataSource: dataSource ?? DEFAULT_DATA_SOURCE,
+        setDataSource,
         setActiveFloorId,
         reservationDate,
         setReservationDate,

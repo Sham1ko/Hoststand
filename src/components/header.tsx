@@ -4,6 +4,7 @@ import { RotateCcw } from "lucide-react";
 import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
+import { SettingsDialog } from "@/components/settings-dialog";
 import { useRestaurant } from "@/client/restaurant/state/restaurant-provider";
 
 export function Header() {
@@ -40,6 +41,8 @@ export function Header() {
           <RotateCcw aria-hidden="true" data-icon="inline-start" />
           Сбросить демо
         </Button>
+
+        <SettingsDialog />
       </div>
     </header>
   );

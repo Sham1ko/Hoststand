@@ -37,6 +37,7 @@ export interface RestaurantRepository {
   patchZone(zoneId: string, patch: ZonePatchInput): Promise<TableZone>;
   deleteZone(zoneId: string): Promise<void>;
   resetDemo(): Promise<RestaurantState>;
+  saveActiveFloor?(floorId: string): Promise<void>;
 }
 
 type Fetcher = typeof fetch;

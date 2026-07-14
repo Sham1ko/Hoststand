@@ -49,12 +49,17 @@ React-состояние.
 client/restaurant/
   api/
     restaurant-repository.ts
+    local-storage-restaurant-repository.ts
+    data-source.ts
   state/
     restaurant-provider.tsx
 ```
 
-- `api` знает, как получить и изменить данные через HTTP.
+- `api` знает, как получить и изменить данные. Интерфейс `RestaurantRepository`
+  имеет две реализации: HTTP (Mock API через route-файлы) и localStorage.
+  `data-source.ts` хранит выбор источника в localStorage.
 - `state` хранит загруженное состояние и предоставляет его компонентам.
+  Провайдер выбирает реализацию repository по сохранённой настройке.
 - `client` не содержит бизнес-правила сущностей и не импортирует `server`.
 
 Эта папка нужна для кода, который используется многими компонентами, но не
@@ -112,7 +117,25 @@ HTTP-запросы или серверное хранилище.
 
 `restaurant` является агрегатом: он объединяет этажи, зоны, столы и
 бронирования. Поэтому `entities/restaurant` может импортировать остальные
-сущности.
+сущности. Кроме типов и схем агрегат содержит чистые операции над своим
+состоянием и demo seed-данные:
+
+```text
+entities/restaurant/
+  model/
+    types.ts
+    schemas.ts
+    table-actions.ts
+    zone-actions.ts
+    reservation-actions.ts
+  seed/
+    restaurant-seed.ts
+```
+
+Операции — это функции вида `RestaurantState -> RestaurantState | null`
+без React и HTTP. Их используют и API routes на сервере, и
+localStorage-репозиторий в браузере, поэтому бизнес-правила существуют в
+одном месте.
 
 ### `features`
 
@@ -120,24 +143,21 @@ HTTP-запросы или серверное хранилище.
 
 Примеры:
 
-- создание, изменение и удаление столов;
-- подтверждение или отмена бронирования;
-- выбор и фильтрация бронирований.
+- выбор и фильтрация бронирований;
+- производные представления поверх сущностей (счётчики, статусы для карты).
 
 Текущая структура:
 
 ```text
 features/
-  floor-plan-management/
-    model/
-      table-actions.ts
-      zone-actions.ts
-
   reservation-management/
     model/
-      reservation-actions.ts
       selectors.ts
 ```
+
+Мутации агрегата (создание столов, переходы статусов брони и т.п.) живут в
+`entities/restaurant`, потому что нужны сразу двум слоям данных — серверному
+store и localStorage-репозиторию.
 
 Feature не должна становиться местом для любых файлов на похожую тему. Типы и
 схемы сущностей идут в `entities`, React-компоненты — в `components`, серверное
@@ -165,11 +185,11 @@ lib/
 server/restaurant/
   store.ts
   http.ts
-  seed/
 ```
 
-Здесь находятся серверное состояние, HTTP-утилиты и demo seed-данные.
-Компоненты и клиентские features не должны импортировать `server`.
+Здесь находятся серверное состояние и HTTP-утилиты. Seed-данные лежат в
+`entities/restaurant/seed` и импортируются оттуда (`server` -> `entities`
+разрешено). Компоненты и клиентские features не должны импортировать `server`.
 
 ## Правила импортов
 
@@ -209,9 +229,11 @@ server/restaurant/
 | Хук конкретного компонента | `components/<module>/hooks` |
 | Локальные черновики и UI-состояние | `components/<module>/model` |
 | Тип или Zod-схема сущности | `entities/<entity>/model` |
-| Бизнес-операция пользователя | `features/<feature>` |
+| Чистая операция над состоянием агрегата | `entities/<aggregate>/model` |
+| Demo seed-данные | `entities/<aggregate>/seed` |
+| Селекторы и производные бизнес-представления | `features/<feature>` |
 | Независимая функция | `lib/<module>` |
-| Server store, HTTP helper или seed | `server/<module>` |
+| Server store или HTTP helper | `server/<module>` |
 
 Если файл подходит сразу в несколько мест, нужно спросить: может ли он работать
 без React, HTTP и глобального состояния? Если да, скорее всего это `entities`
@@ -250,9 +272,17 @@ import { FloorMapCanvas } from "./ui/floor-map-canvas";
 ## Текущие договорённости
 
 - Features называются по бизнес-сценарию, а не по общей сущности `restaurant`.
-- Чистые переходы статусов бронирования находятся в `entities/reservation`.
+- Чистые переходы статусов бронирования находятся в `entities/reservation`,
+  мутации агрегата и seed — в `entities/restaurant`.
 - Форматирование, нужное только sidebar, находится рядом с этим компонентом.
 - Repository и глобальное состояние ресторана находятся в `client/restaurant`.
+- Источник данных («Mock API» или «LocalStorage») — настройка пользователя
+  в диалоге настроек. Выбор хранится под ключом `qolay.data-source.v1`,
+  по умолчанию — `local-storage`.
+- Состояние ресторана в режиме LocalStorage хранится под версионированным
+  ключом `qolay.restaurant.v1`. При несовместимом изменении
+  `restaurantStateSchema` версию ключа нужно поднять: старые данные не пройдут
+  strict-валидацию и будут тихо заменены seed.
 - Новую верхнеуровневую папку добавляем только после обновления этого документа.
 
 ## Как менять архитектуру

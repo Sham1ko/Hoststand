@@ -1,4 +1,4 @@
-import { applyRestaurantReservationAction } from "@/features/reservation-management/model/reservation-actions";
+import { applyRestaurantReservationAction } from "@/entities/restaurant/model/reservation-actions";
 import { reservationActionSchema } from "@/entities/reservation/model/schemas";
 import {
   invalidPayloadResponse,

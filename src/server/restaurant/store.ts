@@ -1,6 +1,6 @@
 import type { RestaurantState } from "@/entities/restaurant/model/types";
 
-import { createRestaurantSeed } from "./seed/restaurant-seed";
+import { createRestaurantSeed } from "@/entities/restaurant/seed/restaurant-seed";
 
 export type RestaurantMutation<T> =
   | { status: "ok"; state: RestaurantState; data: T }
