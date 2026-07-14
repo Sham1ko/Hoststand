@@ -1,7 +1,14 @@
 import { Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useId, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type {
   DiningTable,
   TableShape,
@@ -19,6 +26,30 @@ const tableShapes: { value: TableShape; label: string }[] = [
   { value: "round", label: "Круг" },
   { value: "rect", label: "Прямоугольник" },
 ];
+
+function TableShapeOption({
+  shape,
+  label,
+}: {
+  shape: TableShape;
+  label: string;
+}) {
+  return (
+    <span className="flex items-center gap-2">
+      <span
+        aria-hidden="true"
+        className={`block shrink-0 border-2 border-current text-slate-500 ${
+          shape === "round"
+            ? "size-4 rounded-full"
+            : shape === "square"
+              ? "size-4 rounded-[3px]"
+              : "h-3 w-6 rounded-[3px]"
+        }`}
+      />
+      <span>{label}</span>
+    </span>
+  );
+}
 
 const tableStatuses: { value: TableStatus; label: string }[] = [
   { value: "FREE", label: "Свободен" },
@@ -71,6 +102,7 @@ export function FloorMapEditorPanel({
   onChange,
   onDelete,
 }: FloorMapEditorPanelProps) {
+  const shapeLabelId = useId();
   const [values, setValues] = useState(() => getTableFormValues(table));
 
   const updateNumericField = (field: NumericTableField, rawValue: string) => {
@@ -108,10 +140,15 @@ export function FloorMapEditorPanel({
     onDelete();
   };
 
+  const selectShape = (shape: TableShape) => {
+    setValues((currentValues) => ({ ...currentValues, shape }));
+    onChange({ layout: { shape } });
+  };
+
   return (
     <section
       aria-label={`Свойства стола №${table.number}`}
-      className="absolute top-4 left-4 z-10 w-64 rounded-lg border border-slate-200 bg-white p-3 shadow-lg"
+      className="absolute top-4 left-4 z-10 w-64 max-w-[calc(100%-2rem)] rounded-lg border border-slate-200 bg-white p-3 shadow-lg"
     >
       <div className="mb-3 flex items-center justify-between gap-2">
         <h3 className="text-sm font-semibold text-slate-950">
@@ -161,24 +198,47 @@ export function FloorMapEditorPanel({
             }
           />
         </label>
-        <label className={labelClassName}>
-          Форма
-          <select
-            className={fieldClassName}
+        <div className="col-span-2 flex min-w-0 flex-col gap-1">
+          <span
+            id={shapeLabelId}
+            className="text-xs font-medium text-slate-600"
+          >
+            Форма
+          </span>
+
+          <Select<TableShape>
             value={values.shape}
-            onChange={(event) => {
-              const shape = event.target.value as TableShape;
-              setValues((currentValues) => ({ ...currentValues, shape }));
-              onChange({ layout: { shape } });
+            onValueChange={(shape) => {
+              if (shape) selectShape(shape);
             }}
           >
-            {tableShapes.map((shape) => (
-              <option key={shape.value} value={shape.value}>
-                {shape.label}
-              </option>
-            ))}
-          </select>
-        </label>
+            <SelectTrigger
+              size="default"
+              aria-labelledby={shapeLabelId}
+              className="h-8 w-full bg-white"
+            >
+              <SelectValue>
+                <TableShapeOption
+                  shape={values.shape}
+                  label={
+                    tableShapes.find((shape) => shape.value === values.shape)
+                      ?.label ?? ""
+                  }
+                />
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent align="start">
+              {tableShapes.map((shape) => (
+                <SelectItem key={shape.value} value={shape.value}>
+                  <TableShapeOption
+                    shape={shape.value}
+                    label={shape.label}
+                  />
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         <label className={labelClassName}>
           Поворот
           <input
@@ -246,5 +306,3 @@ export function FloorMapEditorPanel({
     </section>
   );
 }
-
-
