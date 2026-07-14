@@ -1,21 +1,8 @@
-import type {
-  DiningTable,
-  TableStatus,
-} from "@/entities/table/model/types";
+import type { DiningTable } from "@/entities/table/model/types";
 import { Users } from "lucide-react";
 import type { PointerEvent } from "react";
 
-const statusStyles: Record<
-  TableStatus,
-  { fill: string; stroke: string; text: string }
-> = {
-  FREE: { fill: "#ecfdf5", stroke: "#10b981", text: "#047857" },
-  OCCUPIED: { fill: "#fff1f2", stroke: "#fb7185", text: "#be123c" },
-  RESERVED: { fill: "#fffbeb", stroke: "#f59e0b", text: "#b45309" },
-  BANQUET: { fill: "#f5f3ff", stroke: "#8b5cf6", text: "#6d28d9" },
-  MANUAL_BLOCKED: { fill: "#f1f5f9", stroke: "#64748b", text: "#475569" },
-  INACTIVE: { fill: "#f8fafc", stroke: "#94a3b8", text: "#64748b" },
-};
+import { tableStatusAppearance } from "./table-status-appearance";
 
 function formatCapacity(capacity: number) {
   const lastTwoDigits = capacity % 100;
@@ -53,7 +40,7 @@ export function TableNode({
   onPointerCancel,
 }: TableNodeProps) {
   const { x, y, w, h, rotation, shape } = table.layout;
-  const style = statusStyles[table.status];
+  const style = tableStatusAppearance[table.status];
   const isRound = shape === "round";
   const isInactive = table.status === "INACTIVE";
 
@@ -145,4 +132,3 @@ export function TableNode({
     </g>
   );
 }
-

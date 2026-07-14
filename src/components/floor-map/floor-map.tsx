@@ -39,6 +39,7 @@ import {
   FloorMapEditorDock,
 } from "./ui/floor-map-editor-controls";
 import { FloorMapEditorPanel } from "./ui/floor-map-editor-panel";
+import { FloorMapLegend } from "./ui/floor-map-legend";
 import { FloorMapStructureDialog } from "./ui/floor-map-structure-dialog";
 import { FloorMapZoneEditorPanel } from "./ui/floor-map-zone-editor-panel";
 import { FloorSwitcher } from "./ui/floor-switcher";
@@ -397,6 +398,8 @@ export function FloorMap() {
             onFit={fitCamera}
             onZoomIn={() => zoomAtViewportCenter(1.2)}
           />
+
+          <FloorMapLegend zones={visibleZones} isEditing={isEditing} />
 
           {isEditing && (
             <FloorMapEditorDock
