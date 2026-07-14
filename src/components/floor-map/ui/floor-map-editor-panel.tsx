@@ -31,10 +31,14 @@ const fieldClassName =
 
 const labelClassName = "flex flex-col gap-1 text-xs font-medium text-slate-600";
 
-const tableShapes: { value: TableShape; label: string }[] = [
-  { value: "square", label: "Квадрат" },
-  { value: "round", label: "Круг" },
-  { value: "rect", label: "Прямоугольник" },
+const tableShapes: {
+  value: TableShape;
+  label: string;
+  compactLabel: string;
+}[] = [
+  { value: "round", label: "Круг", compactLabel: "Круглый" },
+  { value: "square", label: "Квадрат", compactLabel: "Квадрат" },
+  { value: "rect", label: "Прямоугольник", compactLabel: "Прямоуг." },
 ];
 
 function TableShapeOption({
@@ -48,14 +52,18 @@ function TableShapeOption({
     <span className="flex items-center gap-2">
       <span
         aria-hidden="true"
-        className={`block shrink-0 border-2 border-current text-slate-500 ${
-          shape === "round"
-            ? "size-4 rounded-full"
-            : shape === "square"
-              ? "size-4 rounded-[3px]"
-              : "h-3 w-6 rounded-[3px]"
-        }`}
-      />
+        className="flex w-6 shrink-0 items-center justify-center text-slate-500"
+      >
+        <span
+          className={`block border-2 border-current ${
+            shape === "round"
+              ? "size-4 rounded-full"
+              : shape === "square"
+                ? "size-4 rounded-[3px]"
+                : "h-3 w-6 rounded-[3px]"
+          }`}
+        />
+      </span>
       <span>{label}</span>
     </span>
   );
@@ -169,6 +177,7 @@ export function FloorMapEditorPanel({
   onDelete,
 }: FloorMapEditorPanelProps) {
   const shapeLabelId = useId();
+  const shapeGroupName = useId();
   const statusLabelId = useId();
   const [values, setValues] = useState(() => getTableFormValues(table));
   const selectedStatus = tableStatuses.find(
@@ -313,6 +322,43 @@ export function FloorMapEditorPanel({
               ))}
             </SelectContent>
           </Select>
+
+          <fieldset className="mt-1 min-w-0">
+            <legend className="sr-only">Быстрый выбор формы стола</legend>
+            <div className="grid grid-cols-3 gap-0.5 rounded-lg border border-slate-200 bg-slate-100 p-1">
+              {tableShapes.map((shape) => {
+                const isSelected = values.shape === shape.value;
+
+                return (
+                  <label
+                    key={shape.value}
+                    className="relative min-w-0 cursor-pointer select-none"
+                  >
+                    <input
+                      type="radio"
+                      name={shapeGroupName}
+                      value={shape.value}
+                      checked={isSelected}
+                      className="peer sr-only"
+                      onChange={() => selectShape(shape.value)}
+                    />
+                    <span
+                      className={`flex min-h-8 items-center justify-center gap-1 rounded-md px-1 text-[9px] font-medium tracking-tight whitespace-nowrap transition-[color,background-color,box-shadow] peer-focus-visible:ring-2 peer-focus-visible:ring-primary/40 peer-focus-visible:ring-offset-1 motion-reduce:transition-none ${
+                        isSelected
+                          ? "bg-white text-slate-950 shadow-sm ring-1 ring-slate-200"
+                          : "text-slate-500 hover:bg-white/55 hover:text-slate-700"
+                      }`}
+                    >
+                      <TableShapeOption
+                        shape={shape.value}
+                        label={shape.compactLabel}
+                      />
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </fieldset>
         </div>
         <div className="col-span-2 flex flex-col gap-2">
           <div className="flex items-center justify-between gap-2">
