@@ -36,8 +36,7 @@ export function ZoneNode({
       data-zone-node
       aria-label={zone.name}
       transform={`translate(${rect.x} ${rect.y})`}
-      pointerEvents={isEditing ? "all" : "none"}
-      className={isEditing ? "cursor-move" : undefined}
+      pointerEvents="none"
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
@@ -54,7 +53,11 @@ export function ZoneNode({
         strokeWidth={isSelected ? 3 : 1.5}
         strokeDasharray="7 5"
       />
-      <g className="pointer-events-none">
+      <g
+        data-zone-drag-handle
+        pointerEvents={isEditing ? "all" : "none"}
+        className={isEditing ? "cursor-move" : undefined}
+      >
         <rect
           x={labelX}
           y={-22}
@@ -84,11 +87,11 @@ export function ZoneNode({
           height={36}
           rx={8}
           fill={zone.color}
+          pointerEvents={isEditing ? "all" : "none"}
           className="cursor-se-resize"
         />
       )}
     </g>
   );
 }
-
 

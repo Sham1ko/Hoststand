@@ -148,15 +148,19 @@ export function useFloorMapZoneEditor({
       return;
     }
 
+    const target = event.target as Element;
+    const isResize = Boolean(
+      target.closest("[data-zone-resize-handle]"),
+    );
+    const isMove = Boolean(target.closest("[data-zone-drag-handle]"));
+
+    if (!isMove && !isResize) return;
+
     const rect = rectCache.refresh();
 
     if (!rect) return;
 
     const pointer = getWorldPointerPosition(event, camera, rect);
-
-    const isResize = Boolean(
-      (event.target as Element).closest("[data-zone-resize-handle]"),
-    );
 
     event.preventDefault();
     event.stopPropagation();

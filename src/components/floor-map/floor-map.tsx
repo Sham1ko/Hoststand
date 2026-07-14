@@ -1,15 +1,17 @@
 "use client";
 
 import {
+  type PointerEvent as ReactPointerEvent,
   type PointerEventHandler,
   useCallback,
   useMemo,
-  useState,
 } from "react";
 
 import { useRestaurant } from "@/client/restaurant/state/restaurant-provider";
 import { rebindTablesToZones } from "@/entities/restaurant/model/zone-binding";
+import type { DiningTable } from "@/entities/table/model/types";
 import type { ZonePatchInput } from "@/entities/zone/model/schemas";
+import type { TableZone } from "@/entities/zone/model/types";
 import {
   getLocalDayTimestamp,
   getReservedTableIds,
@@ -29,10 +31,7 @@ import {
 } from "./model/pending-zone-changes";
 import { FloorMapCanvas } from "./ui/floor-map-canvas";
 import { FloorMapControls } from "./ui/floor-map-controls";
-import {
-  FloorMapEditorControls,
-  type FloorMapEditorTool,
-} from "./ui/floor-map-editor-controls";
+import { FloorMapEditorControls } from "./ui/floor-map-editor-controls";
 import { FloorMapEditorPanel } from "./ui/floor-map-editor-panel";
 import { FloorMapZoneEditorPanel } from "./ui/floor-map-zone-editor-panel";
 import { FloorSwitcher } from "./ui/floor-switcher";
@@ -51,7 +50,6 @@ export function FloorMap() {
     focusedReservationTableId,
     setFocusedReservationTableId,
   } = useRestaurant();
-  const [editorTool, setEditorTool] = useState<FloorMapEditorTool>("tables");
   const {
     patches: pendingTablePatches,
     createdTables,
@@ -121,8 +119,6 @@ export function FloorMap() {
     rectCache,
     onTablePositionChange: stageTablePosition,
   });
-  const isTableEditing = isEditing && editorTool === "tables";
-  const isZoneEditing = isEditing && editorTool === "zones";
   const {
     selectedZoneId,
     dragPreview: zoneDragPreview,
@@ -135,7 +131,7 @@ export function FloorMap() {
   } = useFloorMapZoneEditor({
     camera,
     rectCache,
-    isEditing: isZoneEditing,
+    isEditing,
     onZoneRectChange: stageZoneRect,
   });
   const activeFloors = useMemo(
@@ -234,12 +230,6 @@ export function FloorMap() {
       selectZone,
     });
 
-  const selectEditorTool = (tool: FloorMapEditorTool) => {
-    setEditorTool(tool);
-    clearSelection();
-    clearZoneSelection();
-  };
-
   const saveAndExitEditor = async () => {
     // Zones are committed first so that saved tables bind to the final zones.
     if (!(await saveZoneChanges())) return;
@@ -256,14 +246,47 @@ export function FloorMap() {
     clearZoneSelection();
   };
 
+  const handleTableEditorPointerDown = (
+    event: ReactPointerEvent<SVGGElement>,
+    table: DiningTable,
+  ) => {
+    if (event.isPrimary && event.button === 0) {
+      clearZoneSelection();
+    }
+
+    handleTablePointerDown(event, table);
+  };
+
+  const handleZoneEditorPointerDown = (
+    event: ReactPointerEvent<SVGGElement>,
+    zone: TableZone,
+  ) => {
+    if (event.isPrimary && event.button === 0) {
+      clearSelection();
+    }
+
+    handleZonePointerDown(event, zone);
+  };
+
+  const createTableInEditor = () => {
+    clearZoneSelection();
+    void createTableOnActiveFloor();
+  };
+
+  const createZoneInEditor = () => {
+    clearSelection();
+    void createZoneOnActiveFloor();
+  };
+
   const handleCanvasPointerDown: PointerEventHandler<SVGSVGElement> = (
     event,
   ) => {
     if (!(event.target as Element).closest("[data-table-node]")) {
       setFocusedReservationTableId(null);
 
-      if (isTableEditing) {
+      if (isEditing) {
         clearSelection();
+        clearZoneSelection();
       }
     }
 
@@ -298,13 +321,11 @@ export function FloorMap() {
             <FloorMapEditorControls
               isEditing={isEditing}
               isSaving={isSavingTableChanges || isSavingZoneChanges}
-              tool={editorTool}
               onStart={startEditing}
               onSave={() => void saveAndExitEditor()}
               onCancel={cancelEditor}
-              onCreateTable={() => void createTableOnActiveFloor()}
-              onCreateZone={() => void createZoneOnActiveFloor()}
-              onToolChange={selectEditorTool}
+              onCreateTable={createTableInEditor}
+              onCreateZone={createZoneInEditor}
             />
           </div>
         </div>
@@ -321,8 +342,6 @@ export function FloorMap() {
             tableDragPreview={dragPreview}
             zoneDragPreview={zoneDragPreview}
             isEditing={isEditing}
-            isTableEditing={isTableEditing}
-            isZoneEditing={isZoneEditing}
             selectedTableId={selectedTableId}
             selectedZoneId={selectedZoneId}
             focusedReservationTableId={focusedReservationTableId}
@@ -331,17 +350,17 @@ export function FloorMap() {
             onCanvasPointerMove={handlePointerMove}
             onCanvasPointerEnd={finishPan}
             onWheel={handleWheel}
-            onTablePointerDown={handleTablePointerDown}
+            onTablePointerDown={handleTableEditorPointerDown}
             onTablePointerMove={handleTablePointerMove}
             onTablePointerUp={finishTableDrag}
             onTablePointerCancel={cancelTableDrag}
-            onZonePointerDown={handleZonePointerDown}
+            onZonePointerDown={handleZoneEditorPointerDown}
             onZonePointerMove={handleZonePointerMove}
             onZonePointerUp={finishZoneDrag}
             onZonePointerCancel={cancelZoneDrag}
           />
 
-          {isTableEditing && selectedTable && (
+          {isEditing && selectedTable && (
             <FloorMapEditorPanel
               key={selectedTable.id}
               table={selectedTable}
@@ -354,7 +373,7 @@ export function FloorMap() {
             />
           )}
 
-          {isZoneEditing && selectedZone && selectedZone.rect && (
+          {isEditing && selectedZone && selectedZone.rect && (
             <FloorMapZoneEditorPanel
               zone={selectedZone}
               onSave={async (details) => {

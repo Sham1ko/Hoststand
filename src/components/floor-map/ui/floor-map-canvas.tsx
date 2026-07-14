@@ -28,8 +28,6 @@ type FloorMapCanvasProps = {
   tableDragPreview: TableDragPreview | null;
   zoneDragPreview: ZoneDragPreview | null;
   isEditing: boolean;
-  isTableEditing: boolean;
-  isZoneEditing: boolean;
   selectedTableId: string | null;
   selectedZoneId: string | null;
   focusedReservationTableId: string | null;
@@ -65,8 +63,6 @@ export function FloorMapCanvas({
   tableDragPreview,
   zoneDragPreview,
   isEditing,
-  isTableEditing,
-  isZoneEditing,
   selectedTableId,
   selectedZoneId,
   focusedReservationTableId,
@@ -146,8 +142,8 @@ export function FloorMapCanvas({
                   ? zoneDragPreview
                   : zone.rect
               }
-              isEditing={isZoneEditing}
-              isSelected={isZoneEditing && zone.id === selectedZoneId}
+              isEditing={isEditing}
+              isSelected={isEditing && zone.id === selectedZoneId}
               onPointerDown={(event) => onZonePointerDown(event, zone)}
               onPointerMove={onZonePointerMove}
               onPointerUp={onZonePointerUp}
@@ -183,12 +179,11 @@ export function FloorMapCanvas({
                     reservedTableIds,
                   ),
                 }}
-                isEditing={isTableEditing}
+                isEditing={isEditing}
                 isSelected={
-                  (isTableEditing && table.id === selectedTableId) ||
+                  (isEditing && table.id === selectedTableId) ||
                   (!isEditing && table.id === focusedReservationTableId)
                 }
-                isInteractionDisabled={isZoneEditing}
                 onPointerDown={(event) => {
                   if (!isEditing) {
                     onTableFocus(table.id);
