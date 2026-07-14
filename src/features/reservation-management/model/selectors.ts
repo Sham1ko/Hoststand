@@ -30,6 +30,14 @@ export type ReservationTableContext = {
   floorName: string;
 };
 
+export function getLocalDayTimestamp(date: Date) {
+  return new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+  ).getTime();
+}
+
 export function filterReservationsByDate(
   reservations: readonly Reservation[],
   date: Date,
@@ -114,4 +122,3 @@ export function getReservationTableContext(
     floorName: floor.name,
   };
 }
-

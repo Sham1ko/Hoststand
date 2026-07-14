@@ -7,6 +7,7 @@ import {
   filterReservationsByDate,
   filterReservationsByStatus,
   getDisplayedTableStatus,
+  getLocalDayTimestamp,
   getReservedTableIds,
   getReservationStatusCounts,
   getReservationTableContext,
@@ -137,6 +138,31 @@ test("derives reserved table statuses for active reservations on the selected da
       reservedTableIds,
     ),
   ).toBe("OCCUPIED");
+});
+
+test("normalizes reservation dates to a stable local day timestamp", () => {
+  expect(getLocalDayTimestamp(new Date(2026, 6, 12, 23, 45))).toBe(
+    new Date(2026, 6, 12).getTime(),
+  );
+});
+
+test("recalculates reserved table ids when the selected day changes", () => {
+  const reservations: Reservation[] = [
+    reservation,
+    {
+      ...reservation,
+      id: "next-day",
+      tableId: "table-2",
+      reservationDate: "2026-07-13T10:00:00",
+    },
+  ];
+
+  expect(getReservedTableIds(reservations, new Date(2026, 6, 12))).toEqual(
+    new Set(["table-1"]),
+  );
+  expect(getReservedTableIds(reservations, new Date(2026, 6, 13))).toEqual(
+    new Set(["table-2"]),
+  );
 });
 
 test("resolves a reservation table and its floor through tableId", () => {

@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -140,9 +141,9 @@ export function useFloorMapEditor({
     setSelectedTableId(null);
   };
 
-  const selectTable = (tableId: string) => {
+  const selectTable = useCallback((tableId: string) => {
     setSelectedTableId(tableId);
-  };
+  }, []);
 
   const clearSelection = () => {
     clearTableDrag();

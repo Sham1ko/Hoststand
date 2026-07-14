@@ -1,11 +1,14 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { useRestaurant } from "@/client/restaurant/state/restaurant-provider";
 import { rebindTablesToZones } from "@/entities/restaurant/model/zone-binding";
 import type { ZonePatchInput } from "@/entities/zone/model/schemas";
-import { getReservedTableIds } from "@/features/reservation-management/model/selectors";
+import {
+  getLocalDayTimestamp,
+  getReservedTableIds,
+} from "@/features/reservation-management/model/selectors";
 
 import { useFloorMapCamera } from "./hooks/use-floor-map-camera";
 import { useFloorMapCommands } from "./hooks/use-floor-map-commands";
@@ -56,10 +59,10 @@ export function FloorMap() {
     discardAll: discardAllTableChanges,
     saveChanges: saveTableChanges,
   } = usePendingTableChanges(updateTable, deleteTable, createTable);
-  const { floors, tables, activeFloorId } = state;
+  const { floors, tables, zones, reservations, activeFloorId } = state;
   const saveZonePatch = useCallback(
     async (zoneId: string, patch: ZonePatchInput) => {
-      const zone = state.zones.find((item) => item.id === zoneId);
+      const zone = zones.find((item) => item.id === zoneId);
       const rect = patch.rect ?? zone?.rect;
 
       if (!zone || !rect) return false;
@@ -70,7 +73,7 @@ export function FloorMap() {
         rect,
       });
     },
-    [state.zones, updateZone],
+    [updateZone, zones],
   );
   const {
     patches: pendingZonePatches,
@@ -130,41 +133,90 @@ export function FloorMap() {
     isEditing: isZoneEditing,
     onZoneRectChange: stageZoneRect,
   });
-  const activeFloors = floors.filter((floor) => floor.isActive);
-  const selectedFloor = activeFloors.find(
-    (floor) => floor.id === activeFloorId,
+  const activeFloors = useMemo(
+    () => floors.filter((floor) => floor.isActive),
+    [floors],
   );
-  const displayedZones = getDraftZones(
-    state.zones,
-    Object.values(createdZones),
-    pendingZonePatches,
-    deletedZoneIds,
+  const selectedFloor = useMemo(
+    () => activeFloors.find((floor) => floor.id === activeFloorId),
+    [activeFloorId, activeFloors],
   );
-  const draftTables = getDraftTables(
-    tables,
-    Object.values(createdTables),
-    pendingTablePatches,
-    deletedTableIds,
+  const createdZoneValues = useMemo(
+    () => Object.values(createdZones),
+    [createdZones],
+  );
+  const createdTableValues = useMemo(
+    () => Object.values(createdTables),
+    [createdTables],
+  );
+  const displayedZones = useMemo(
+    () =>
+      getDraftZones(
+        zones,
+        createdZoneValues,
+        pendingZonePatches,
+        deletedZoneIds,
+      ),
+    [createdZoneValues, deletedZoneIds, pendingZonePatches, zones],
+  );
+  const draftTables = useMemo(
+    () =>
+      getDraftTables(
+        tables,
+        createdTableValues,
+        pendingTablePatches,
+        deletedTableIds,
+      ),
+    [createdTableValues, deletedTableIds, pendingTablePatches, tables],
   );
   // In the editor the zone dots must follow the draft zones, so bindings are
   // recomputed against the draft before anything is saved.
-  const displayedTables = isEditing
-    ? rebindTablesToZones(displayedZones, draftTables)
-    : draftTables;
-  const visibleTables = displayedTables.filter(
-    (table) => table.floorId === activeFloorId,
+  const displayedTables = useMemo(
+    () =>
+      isEditing
+        ? rebindTablesToZones(displayedZones, draftTables)
+        : draftTables,
+    [displayedZones, draftTables, isEditing],
   );
-  const reservedTableIds = getReservedTableIds(
-    state.reservations,
-    reservationDate,
+  const visibleTables = useMemo(
+    () =>
+      displayedTables.filter((table) => table.floorId === activeFloorId),
+    [activeFloorId, displayedTables],
   );
-  const visibleZones = displayedZones.filter(
-    (zone) => zone.floorId === activeFloorId && zone.isActive && zone.rect,
+  const visibleZones = useMemo(
+    () =>
+      displayedZones.filter(
+        (zone) =>
+          zone.floorId === activeFloorId && zone.isActive && zone.rect,
+      ),
+    [activeFloorId, displayedZones],
   );
-  const selectedTable = displayedTables.find(
-    (table) => table.id === selectedTableId,
+  const selectedTable = useMemo(
+    () => displayedTables.find((table) => table.id === selectedTableId),
+    [displayedTables, selectedTableId],
   );
-  const selectedZone = displayedZones.find((zone) => zone.id === selectedZoneId);
+  const selectedZone = useMemo(
+    () => displayedZones.find((zone) => zone.id === selectedZoneId),
+    [displayedZones, selectedZoneId],
+  );
+  const reservationDayTimestamp = getLocalDayTimestamp(reservationDate);
+  const reservedTableIds = useMemo(
+    () =>
+      getReservedTableIds(
+        reservations,
+        new Date(reservationDayTimestamp),
+      ),
+    [reservationDayTimestamp, reservations],
+  );
+  const selectedTableHasReservations = useMemo(
+    () =>
+      selectedTable
+        ? reservations.some(
+            (reservation) => reservation.tableId === selectedTable.id,
+          )
+        : false,
+    [reservations, selectedTable],
+  );
   const { createTableOnActiveFloor, createZoneOnActiveFloor } =
     useFloorMapCommands({
       activeFloorId,
@@ -268,9 +320,7 @@ export function FloorMap() {
             <FloorMapEditorPanel
               key={selectedTable.id}
               table={selectedTable}
-              hasReservations={state.reservations.some(
-                (reservation) => reservation.tableId === selectedTable.id,
-              )}
+              hasReservations={selectedTableHasReservations}
               onChange={(patch) => stageTablePatch(selectedTable.id, patch)}
               onDelete={() => {
                 stageTableDeletion(selectedTable.id);

@@ -97,3 +97,17 @@ test("adds a new table to the draft without changing stored tables", () => {
   });
   expect(table.number).toBe(1);
 });
+
+test("preserves unchanged table references and replaces patched ones", () => {
+  const unchangedTable = { ...table, id: "table-2", number: 2 };
+  const displayedTables = getDraftTables(
+    [table, unchangedTable],
+    [],
+    { [table.id]: { capacity: 8 } },
+    new Set(),
+  );
+
+  expect(displayedTables[0]).not.toBe(table);
+  expect(displayedTables[0].capacity).toBe(8);
+  expect(displayedTables[1]).toBe(unchangedTable);
+});

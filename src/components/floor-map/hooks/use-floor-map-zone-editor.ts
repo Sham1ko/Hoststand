@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -130,9 +131,9 @@ export function useFloorMapZoneEditor({
     [previewUpdates],
   );
 
-  const selectZone = (zoneId: string) => {
+  const selectZone = useCallback((zoneId: string) => {
     setSelectedZoneId(zoneId);
-  };
+  }, []);
 
   const clearSelection = () => {
     clearZoneDrag();
