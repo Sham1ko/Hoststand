@@ -9,9 +9,9 @@ import {
 } from "@/features/reservations/model/selectors";
 import { useRestaurant } from "@/features/restaurant/ui/restaurant-provider";
 
-import { ReservationsList } from "./reservations-list";
-import { ReservationsSidebarHeader } from "./reservations-sidebar-header";
-import type { ReservationStatusFilterValue } from "./reservations-status-filter";
+import { ReservationsList } from "./ui/reservations-list";
+import { ReservationsSidebarHeader } from "./ui/reservations-sidebar-header";
+import type { ReservationStatusFilterValue } from "./ui/reservations-status-filter";
 
 export function ReservationsSidebar() {
   const [activeStatus, setActiveStatus] =
