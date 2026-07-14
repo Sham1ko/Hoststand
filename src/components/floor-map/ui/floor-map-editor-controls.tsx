@@ -8,6 +8,7 @@ import {
   X,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import type { ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 import type { TableShape } from "@/entities/table/model/types";
@@ -46,6 +47,7 @@ export function FloorMapEditButton({ onStart }: FloorMapEditButtonProps) {
 }
 
 type FloorMapEditorDockProps = {
+  floorStructureControl: ReactNode;
   onCreateTable: (shape: TableShape) => void;
   onCreateZone: () => void;
   isSaving: boolean;
@@ -54,6 +56,7 @@ type FloorMapEditorDockProps = {
 };
 
 export function FloorMapEditorDock({
+  floorStructureControl,
   onCreateTable,
   onCreateZone,
   isSaving,
@@ -66,6 +69,10 @@ export function FloorMapEditorDock({
       aria-label="Редактирование плана зала"
       className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1 rounded-xl border border-slate-200/90 bg-white/95 p-1 shadow-[0_10px_30px_-14px_rgba(15,23,42,0.35)] backdrop-blur-sm"
     >
+      {floorStructureControl}
+
+      <div aria-hidden="true" className="mx-1 h-5 w-px bg-slate-200" />
+
       <div className="flex items-center gap-0.5" aria-label="Добавить на план">
         <span className="px-1.5 text-[10px] font-semibold tracking-wide text-slate-400 uppercase @max-[58rem]/floor-map:hidden">
           Добавить:

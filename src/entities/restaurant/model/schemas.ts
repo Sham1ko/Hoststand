@@ -15,3 +15,12 @@ export const restaurantStateSchema = z
   })
   .strict();
 
+export const floorStructureInputSchema = z
+  .object({
+    floors: z.array(tableFloorSchema).min(1),
+    zones: z.array(tableZoneSchema),
+    activeFloorId: z.string().min(1),
+  })
+  .strict();
+
+export type FloorStructureInput = z.infer<typeof floorStructureInputSchema>;

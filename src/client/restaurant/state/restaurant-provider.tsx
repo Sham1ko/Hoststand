@@ -13,6 +13,7 @@ import { startOfToday } from "date-fns";
 import { RefreshCw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import type { FloorStructureInput } from "@/entities/restaurant/model/schemas";
 import { deleteRestaurantZone } from "@/entities/restaurant/model/zone-actions";
 import { rebindTablesToZones } from "@/entities/restaurant/model/zone-binding";
 import type { RestaurantState } from "@/entities/restaurant/model/types";
@@ -68,6 +69,7 @@ type RestaurantContextValue = {
   createZone: (zone: CreateZoneInput) => Promise<TableZone | null>;
   updateZone: (zoneId: string, details: ZoneDetails) => Promise<boolean>;
   deleteZone: (zoneId: string) => Promise<boolean>;
+  saveFloorStructure: (input: FloorStructureInput) => Promise<boolean>;
   resetDemo: () => Promise<void>;
 };
 
@@ -423,6 +425,22 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
     [enqueueMutation],
   );
 
+  const saveFloorStructure = useCallback(
+    async (input: FloorStructureInput) => {
+      try {
+        const nextState = await enqueueMutation((repository) =>
+          repository.saveFloorStructure(input),
+        );
+
+        setState(nextState);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [enqueueMutation],
+  );
+
   const resetDemo = useCallback(async () => {
     try {
       const nextState = await enqueueMutation((repository) =>
@@ -465,6 +483,7 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
         createZone,
         updateZone,
         deleteZone,
+        saveFloorStructure,
         resetDemo,
       }}
     >

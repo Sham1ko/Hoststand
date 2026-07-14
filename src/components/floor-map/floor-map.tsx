@@ -39,6 +39,7 @@ import {
   FloorMapEditorDock,
 } from "./ui/floor-map-editor-controls";
 import { FloorMapEditorPanel } from "./ui/floor-map-editor-panel";
+import { FloorMapStructureDialog } from "./ui/floor-map-structure-dialog";
 import { FloorMapZoneEditorPanel } from "./ui/floor-map-zone-editor-panel";
 import { FloorSwitcher } from "./ui/floor-switcher";
 
@@ -52,6 +53,7 @@ export function FloorMap() {
     createZone,
     updateZone,
     deleteZone,
+    saveFloorStructure,
     reservationDate,
     focusedReservationTableId,
     setFocusedReservationTableId,
@@ -155,6 +157,10 @@ export function FloorMap() {
   const createdTableValues = useMemo(
     () => Object.values(createdTables),
     [createdTables],
+  );
+  const floorStructureTables = useMemo(
+    () => [...tables, ...createdTableValues],
+    [createdTableValues, tables],
   );
   const displayedZones = useMemo(
     () =>
@@ -394,6 +400,20 @@ export function FloorMap() {
 
           {isEditing && (
             <FloorMapEditorDock
+              floorStructureControl={
+                <FloorMapStructureDialog
+                  floors={floors}
+                  zones={displayedZones}
+                  tables={floorStructureTables}
+                  activeFloorId={activeFloorId}
+                  onSave={saveFloorStructure}
+                  onSaved={() => {
+                    discardAllZoneChanges();
+                    clearSelection();
+                    clearZoneSelection();
+                  }}
+                />
+              }
               onCreateTable={createTableInEditor}
               onCreateZone={createZoneInEditor}
               isSaving={isSavingTableChanges || isSavingZoneChanges}

@@ -3,6 +3,7 @@ import {
   createRestaurantReservation,
   updateRestaurantReservation,
 } from "@/entities/restaurant/model/reservation-actions";
+import { updateRestaurantFloorStructure } from "@/entities/restaurant/model/floor-structure-actions";
 import {
   createRestaurantTable,
   deleteRestaurantTable,
@@ -301,6 +302,17 @@ export function createLocalStorageRestaurantRepository(): RestaurantRepository {
       }
 
       writeState(nextState);
+    },
+    async saveFloorStructure(input) {
+      const nextState = updateRestaurantFloorStructure(readState(), input);
+
+      if (!nextState) {
+        throw new Error("Floor structure conflicts with the restaurant state");
+      }
+
+      writeState(nextState);
+
+      return nextState;
     },
     async resetDemo() {
       const seed = createRestaurantSeed();

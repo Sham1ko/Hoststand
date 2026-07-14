@@ -21,7 +21,10 @@ import type {
   Reservation,
   ReservationAction,
 } from "@/entities/reservation/model/types";
-import { restaurantStateSchema } from "@/entities/restaurant/model/schemas";
+import {
+  type FloorStructureInput,
+  restaurantStateSchema,
+} from "@/entities/restaurant/model/schemas";
 import type { RestaurantState } from "@/entities/restaurant/model/types";
 
 export interface RestaurantRepository {
@@ -41,6 +44,7 @@ export interface RestaurantRepository {
   createZone(input: CreateZoneInput): Promise<TableZone>;
   patchZone(zoneId: string, patch: ZonePatchInput): Promise<TableZone>;
   deleteZone(zoneId: string): Promise<void>;
+  saveFloorStructure(input: FloorStructureInput): Promise<RestaurantState>;
   resetDemo(): Promise<RestaurantState>;
   saveActiveFloor?(floorId: string): Promise<void>;
 }
@@ -158,6 +162,12 @@ export function createHttpRestaurantRepository(
     async deleteZone(zoneId) {
       await requireSuccessfulResponse(
         await fetcher(resourceUrl("zones", zoneId), { method: "DELETE" }),
+      );
+    },
+    async saveFloorStructure(input) {
+      return readDataResponse(
+        await fetcher("/api/restaurant", jsonRequest("PATCH", input)),
+        restaurantStateSchema,
       );
     },
     async resetDemo() {
