@@ -14,6 +14,11 @@ import {
   type Size,
 } from "@/lib/floor-plan/geometry";
 
+import {
+  getStableViewport,
+  shouldFitInitialViewport,
+} from "../model/camera-viewport";
+
 const initialCamera: Camera = {
   scale: 1,
   offsetX: 0,
@@ -29,6 +34,7 @@ type PanState = {
 export function useFloorMapCamera() {
   const svgRef = useRef<SVGSVGElement>(null);
   const panRef = useRef<PanState | null>(null);
+  const hasFittedViewportRef = useRef(false);
   const [viewport, setViewport] = useState<Size>({ width: 0, height: 0 });
   const [camera, setCamera] = useState(initialCamera);
 
@@ -44,10 +50,7 @@ export function useFloorMapCamera() {
       };
 
       setViewport((currentViewport) =>
-        currentViewport.width === nextViewport.width &&
-        currentViewport.height === nextViewport.height
-          ? currentViewport
-          : nextViewport,
+        getStableViewport(currentViewport, nextViewport),
       );
     });
 
@@ -59,8 +62,11 @@ export function useFloorMapCamera() {
   }, []);
 
   useEffect(() => {
-    if (!viewport.width || !viewport.height) return;
+    if (!shouldFitInitialViewport(hasFittedViewportRef.current, viewport)) {
+      return;
+    }
 
+    hasFittedViewportRef.current = true;
     setCamera(fitCameraToViewport(viewport));
   }, [viewport]);
 
