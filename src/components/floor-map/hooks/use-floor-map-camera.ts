@@ -19,6 +19,12 @@ import {
   getStableViewport,
   shouldFitInitialViewport,
 } from "../model/camera-viewport";
+import {
+  createBoundingRectCache,
+  getLocalPointerPosition,
+  type BoundingRectCache,
+  type FloorMapRect,
+} from "../model/bounding-rect-cache";
 import { useRafCoalescer } from "./use-raf-coalescer";
 
 const initialCamera: Camera = {
@@ -32,6 +38,7 @@ type PanState = {
   pointer: Point;
   camera: Camera;
   captureTarget: SVGSVGElement;
+  svgRect: FloorMapRect;
 };
 
 function isSameCamera(first: Camera, second: Camera) {
@@ -50,6 +57,24 @@ function releasePanCapture(pan: PanState) {
 
 export function useFloorMapCamera() {
   const svgRef = useRef<SVGSVGElement>(null);
+  const rectCacheRef = useRef<BoundingRectCache | null>(null);
+
+  if (!rectCacheRef.current) {
+    rectCacheRef.current = createBoundingRectCache(() => {
+      const rect = svgRef.current?.getBoundingClientRect();
+
+      return rect
+        ? {
+            left: rect.left,
+            top: rect.top,
+            width: rect.width,
+            height: rect.height,
+          }
+        : null;
+    });
+  }
+
+  const rectCache = rectCacheRef.current;
   const panRef = useRef<PanState | null>(null);
   const hasFittedViewportRef = useRef(false);
   const [viewport, setViewport] = useState<Size>({ width: 0, height: 0 });
@@ -61,6 +86,9 @@ export function useFloorMapCamera() {
     cameraRef.current = nextCamera;
     setCamera(nextCamera);
   });
+  const rectRefreshes = useRafCoalescer<undefined>(() => {
+    rectCache.refresh();
+  });
 
   cameraRef.current = camera;
 
@@ -69,7 +97,11 @@ export function useFloorMapCamera() {
 
     if (!svg) return;
 
+    rectCache.refresh();
+
     const resizeObserver = new ResizeObserver(([entry]) => {
+      rectCache.refresh();
+
       const nextViewport = {
         width: entry.contentRect.width,
         height: entry.contentRect.height,
@@ -80,12 +112,32 @@ export function useFloorMapCamera() {
       );
     });
 
+    const scheduleRectRefresh = () => {
+      rectRefreshes.schedule(undefined);
+    };
+    const visualViewport = window.visualViewport;
+
     resizeObserver.observe(svg);
+    window.addEventListener("resize", scheduleRectRefresh);
+    window.addEventListener("orientationchange", scheduleRectRefresh);
+    window.addEventListener("scroll", scheduleRectRefresh, {
+      capture: true,
+      passive: true,
+    });
+    visualViewport?.addEventListener("resize", scheduleRectRefresh);
+    visualViewport?.addEventListener("scroll", scheduleRectRefresh);
 
     return () => {
+      rectRefreshes.cancel();
       resizeObserver.disconnect();
+      window.removeEventListener("resize", scheduleRectRefresh);
+      window.removeEventListener("orientationchange", scheduleRectRefresh);
+      window.removeEventListener("scroll", scheduleRectRefresh, true);
+      visualViewport?.removeEventListener("resize", scheduleRectRefresh);
+      visualViewport?.removeEventListener("scroll", scheduleRectRefresh);
+      rectCache.clear();
     };
-  }, []);
+  }, [rectCache, rectRefreshes]);
 
   useEffect(() => {
     if (!shouldFitInitialViewport(hasFittedViewportRef.current, viewport)) {
@@ -113,16 +165,7 @@ export function useFloorMapCamera() {
   const getPointerPosition = (event: {
     clientX: number;
     clientY: number;
-  }) => {
-    const rect = svgRef.current?.getBoundingClientRect();
-
-    if (!rect) return null;
-
-    return {
-      x: event.clientX - rect.left,
-      y: event.clientY - rect.top,
-    };
-  };
+  }, rect: FloorMapRect) => getLocalPointerPosition(event, rect);
 
   const fitCamera = () => {
     if (!viewport.width || !viewport.height) return;
@@ -159,9 +202,11 @@ export function useFloorMapCamera() {
   };
 
   const handleWheel = (event: WheelEvent<SVGSVGElement>) => {
-    const cursor = getPointerPosition(event);
+    const rect = rectCache.refresh();
 
-    if (!cursor) return;
+    if (!rect) return;
+
+    const cursor = getPointerPosition(event, rect);
 
     event.preventDefault();
 
@@ -185,9 +230,11 @@ export function useFloorMapCamera() {
     if (!event.isPrimary || event.button !== 0) return;
     if ((event.target as Element).closest("[data-table-node]")) return;
 
-    const pointer = getPointerPosition(event);
+    const rect = rectCache.refresh();
 
-    if (!pointer) return;
+    if (!rect) return;
+
+    const pointer = getPointerPosition(event, rect);
 
     event.preventDefault();
     panUpdates.cancel();
@@ -197,6 +244,7 @@ export function useFloorMapCamera() {
       pointer,
       camera: cameraRef.current,
       captureTarget: event.currentTarget,
+      svgRect: rect,
     };
   };
 
@@ -205,9 +253,7 @@ export function useFloorMapCamera() {
 
     if (!pan || pan.pointerId !== event.pointerId) return;
 
-    const pointer = getPointerPosition(event);
-
-    if (!pointer) return;
+    const pointer = getPointerPosition(event, pan.svgRect);
 
     const nextCamera = getPannedCamera(pan.camera, pan.pointer, pointer);
 
@@ -238,6 +284,7 @@ export function useFloorMapCamera() {
 
   return {
     svgRef,
+    rectCache,
     viewport,
     camera,
     fitCamera,

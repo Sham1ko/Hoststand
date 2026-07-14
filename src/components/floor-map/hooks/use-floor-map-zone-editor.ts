@@ -13,6 +13,11 @@ import {
 } from "@/lib/floor-plan/geometry";
 import type { TableZone } from "@/entities/zone/model/types";
 
+import {
+  getLocalPointerPosition,
+  type BoundingRectCache,
+  type FloorMapRect,
+} from "../model/bounding-rect-cache";
 import { resolveZoneDrag } from "../model/interaction-transitions";
 import { useRafCoalescer } from "./use-raf-coalescer";
 
@@ -24,6 +29,7 @@ type ZoneDragState = {
   pointerOffset: Point;
   hasMoved: boolean;
   captureTarget: SVGGElement;
+  svgRect: FloorMapRect;
 };
 
 export type ZoneDragPreview = NonNullable<TableZone["rect"]> & {
@@ -32,6 +38,7 @@ export type ZoneDragPreview = NonNullable<TableZone["rect"]> & {
 
 type UseFloorMapZoneEditorOptions = {
   camera: Camera;
+  rectCache: BoundingRectCache;
   isEditing: boolean;
   onZoneRectChange: (
     zoneId: string,
@@ -42,18 +49,10 @@ type UseFloorMapZoneEditorOptions = {
 function getWorldPointerPosition(
   event: PointerEvent<SVGGElement>,
   camera: Camera,
+  rect: FloorMapRect,
 ) {
-  const svg = event.currentTarget.ownerSVGElement;
-
-  if (!svg) return null;
-
-  const rect = svg.getBoundingClientRect();
-
   return screenToWorld(
-    {
-      x: event.clientX - rect.left,
-      y: event.clientY - rect.top,
-    },
+    getLocalPointerPosition(event, rect),
     camera,
   );
 }
@@ -85,6 +84,7 @@ function releaseZoneCapture(drag: ZoneDragState) {
 
 export function useFloorMapZoneEditor({
   camera,
+  rectCache,
   isEditing,
   onZoneRectChange,
 }: UseFloorMapZoneEditorOptions) {
@@ -147,9 +147,11 @@ export function useFloorMapZoneEditor({
       return;
     }
 
-    const pointer = getWorldPointerPosition(event, camera);
+    const rect = rectCache.refresh();
 
-    if (!pointer) return;
+    if (!rect) return;
+
+    const pointer = getWorldPointerPosition(event, camera, rect);
 
     const isResize = Boolean(
       (event.target as Element).closest("[data-zone-resize-handle]"),
@@ -170,6 +172,7 @@ export function useFloorMapZoneEditor({
       },
       hasMoved: false,
       captureTarget: event.currentTarget,
+      svgRect: rect,
     };
   };
 
@@ -178,9 +181,7 @@ export function useFloorMapZoneEditor({
 
     if (!drag || drag.pointerId !== event.pointerId) return;
 
-    const pointer = getWorldPointerPosition(event, camera);
-
-    if (!pointer) return;
+    const pointer = getWorldPointerPosition(event, camera, drag.svgRect);
 
     event.preventDefault();
     event.stopPropagation();

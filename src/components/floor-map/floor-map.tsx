@@ -86,6 +86,7 @@ export function FloorMap() {
   } = usePendingZoneChanges(saveZonePatch, deleteZone, createZone);
   const {
     svgRef,
+    rectCache,
     viewport,
     camera,
     fitCamera,
@@ -109,6 +110,7 @@ export function FloorMap() {
     cancelTableDrag,
   } = useFloorMapEditor({
     camera,
+    rectCache,
     onTablePositionChange: stageTablePosition,
   });
   const isTableEditing = isEditing && editorTool === "tables";
@@ -124,6 +126,7 @@ export function FloorMap() {
     cancelZoneDrag,
   } = useFloorMapZoneEditor({
     camera,
+    rectCache,
     isEditing: isZoneEditing,
     onZoneRectChange: stageZoneRect,
   });

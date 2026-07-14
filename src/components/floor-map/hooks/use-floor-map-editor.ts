@@ -16,6 +16,11 @@ import type {
   TablePosition,
 } from "@/entities/table/model/types";
 
+import {
+  getLocalPointerPosition,
+  type BoundingRectCache,
+  type FloorMapRect,
+} from "../model/bounding-rect-cache";
 import { resolveTableDrag } from "../model/interaction-transitions";
 import { useRafCoalescer } from "./use-raf-coalescer";
 
@@ -27,6 +32,7 @@ type TableDragState = {
   position: Point;
   hasMoved: boolean;
   captureTarget: SVGGElement;
+  svgRect: FloorMapRect;
 };
 
 export type TableDragPreview = TablePosition & {
@@ -35,6 +41,7 @@ export type TableDragPreview = TablePosition & {
 
 type UseFloorMapEditorOptions = {
   camera: Camera;
+  rectCache: BoundingRectCache;
   onTablePositionChange: (
     tableId: string,
     position: TablePosition,
@@ -44,18 +51,10 @@ type UseFloorMapEditorOptions = {
 function getWorldPointerPosition(
   event: PointerEvent<SVGGElement>,
   camera: Camera,
+  rect: FloorMapRect,
 ) {
-  const svg = event.currentTarget.ownerSVGElement;
-
-  if (!svg) return null;
-
-  const rect = svg.getBoundingClientRect();
-
   return screenToWorld(
-    {
-      x: event.clientX - rect.left,
-      y: event.clientY - rect.top,
-    },
+    getLocalPointerPosition(event, rect),
     camera,
   );
 }
@@ -83,6 +82,7 @@ function releaseTableCapture(drag: TableDragState) {
 
 export function useFloorMapEditor({
   camera,
+  rectCache,
   onTablePositionChange,
 }: UseFloorMapEditorOptions) {
   const tableDragRef = useRef<TableDragState | null>(null);
@@ -155,9 +155,11 @@ export function useFloorMapEditor({
   ) => {
     if (!isEditing || !event.isPrimary || event.button !== 0) return;
 
-    const pointer = getWorldPointerPosition(event, camera);
+    const rect = rectCache.refresh();
 
-    if (!pointer) return;
+    if (!rect) return;
+
+    const pointer = getWorldPointerPosition(event, camera, rect);
 
     event.preventDefault();
     event.stopPropagation();
@@ -177,6 +179,7 @@ export function useFloorMapEditor({
       },
       hasMoved: false,
       captureTarget: event.currentTarget,
+      svgRect: rect,
     };
   };
 
@@ -185,9 +188,7 @@ export function useFloorMapEditor({
 
     if (!drag || drag.pointerId !== event.pointerId) return;
 
-    const pointer = getWorldPointerPosition(event, camera);
-
-    if (!pointer) return;
+    const pointer = getWorldPointerPosition(event, camera, drag.svgRect);
 
     event.preventDefault();
     event.stopPropagation();
