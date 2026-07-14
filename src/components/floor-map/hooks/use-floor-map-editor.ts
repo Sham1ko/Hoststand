@@ -1,4 +1,5 @@
 import {
+  useEffect,
   useRef,
   useState,
   type PointerEvent,
@@ -16,6 +17,7 @@ import type {
 } from "@/entities/table/model/types";
 
 import { resolveTableDrag } from "../model/interaction-transitions";
+import { useRafCoalescer } from "./use-raf-coalescer";
 
 type TableDragState = {
   tableId: string;
@@ -24,6 +26,7 @@ type TableDragState = {
   pointerOffset: Point;
   position: Point;
   hasMoved: boolean;
+  captureTarget: SVGGElement;
 };
 
 export type TableDragPreview = TablePosition & {
@@ -57,6 +60,27 @@ function getWorldPointerPosition(
   );
 }
 
+function isSamePosition(first: Point, second: Point) {
+  return first.x === second.x && first.y === second.y;
+}
+
+function isSameTablePreview(
+  first: TableDragPreview | null,
+  second: TableDragPreview,
+) {
+  return (
+    first?.tableId === second.tableId &&
+    first.x === second.x &&
+    first.y === second.y
+  );
+}
+
+function releaseTableCapture(drag: TableDragState) {
+  if (drag.captureTarget.hasPointerCapture(drag.pointerId)) {
+    drag.captureTarget.releasePointerCapture(drag.pointerId);
+  }
+}
+
 export function useFloorMapEditor({
   camera,
   onTablePositionChange,
@@ -65,19 +89,55 @@ export function useFloorMapEditor({
   const [isEditing, setIsEditing] = useState(false);
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
   const [dragPreview, setDragPreview] = useState<TableDragPreview | null>(null);
+  const dragPreviewRef = useRef(dragPreview);
+  const previewUpdates = useRafCoalescer<TableDragPreview>((preview) => {
+    const drag = tableDragRef.current;
+
+    if (!drag || drag.tableId !== preview.tableId) return;
+    if (isSameTablePreview(dragPreviewRef.current, preview)) return;
+
+    dragPreviewRef.current = preview;
+    setDragPreview(preview);
+  });
+
+  dragPreviewRef.current = dragPreview;
+
+  const clearTableDrag = () => {
+    previewUpdates.cancel();
+
+    if (tableDragRef.current) {
+      releaseTableCapture(tableDragRef.current);
+      tableDragRef.current = null;
+    }
+
+    if (dragPreviewRef.current) {
+      dragPreviewRef.current = null;
+      setDragPreview(null);
+    }
+  };
+
+  useEffect(
+    () => () => {
+      previewUpdates.cancel();
+
+      if (tableDragRef.current) {
+        releaseTableCapture(tableDragRef.current);
+        tableDragRef.current = null;
+      }
+    },
+    [previewUpdates],
+  );
 
   const startEditing = () => {
+    clearTableDrag();
     setIsEditing(true);
     setSelectedTableId(null);
-    setDragPreview(null);
-    tableDragRef.current = null;
   };
 
   const stopEditing = () => {
+    clearTableDrag();
     setIsEditing(false);
     setSelectedTableId(null);
-    setDragPreview(null);
-    tableDragRef.current = null;
   };
 
   const selectTable = (tableId: string) => {
@@ -85,9 +145,8 @@ export function useFloorMapEditor({
   };
 
   const clearSelection = () => {
+    clearTableDrag();
     setSelectedTableId(null);
-    setDragPreview(null);
-    tableDragRef.current = null;
   };
 
   const handleTablePointerDown = (
@@ -117,6 +176,7 @@ export function useFloorMapEditor({
         y: table.layout.y,
       },
       hasMoved: false,
+      captureTarget: event.currentTarget,
     };
   };
 
@@ -141,9 +201,18 @@ export function useFloorMapEditor({
       false,
     );
 
+    const previousPosition = drag.position;
     drag.position = position;
     drag.hasMoved = true;
-    setDragPreview({ tableId: drag.tableId, ...position });
+
+    if (
+      isSamePosition(previousPosition, position) &&
+      !previewUpdates.hasPending()
+    ) {
+      return;
+    }
+
+    previewUpdates.schedule({ tableId: drag.tableId, ...position });
   };
 
   const completeTableDrag = (
@@ -157,12 +226,19 @@ export function useFloorMapEditor({
     if (outcome === "commit") event.preventDefault();
     event.stopPropagation();
 
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
+    if (outcome === "commit") {
+      previewUpdates.flush();
+    } else {
+      previewUpdates.cancel();
     }
 
+    releaseTableCapture(drag);
     tableDragRef.current = null;
-    setDragPreview(null);
+
+    if (dragPreviewRef.current) {
+      dragPreviewRef.current = null;
+      setDragPreview(null);
+    }
 
     const change = resolveTableDrag(drag, outcome);
 

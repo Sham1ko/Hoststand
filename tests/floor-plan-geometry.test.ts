@@ -32,6 +32,13 @@ test("pans from the gesture origin without accumulating move deltas", () => {
   });
 });
 
+test("keeps the same camera object when pan does not move", () => {
+  const camera = { scale: 0.75, offsetX: 120, offsetY: 80 };
+  const pointer = { x: 300, y: 240 };
+
+  expect(getPannedCamera(camera, pointer, pointer)).toBe(camera);
+});
+
 test("keeps the world point under the cursor while zooming", () => {
   const camera = { scale: 0.5, offsetX: 20, offsetY: 50 };
   const cursor = { x: 200, y: 140 };
@@ -39,6 +46,12 @@ test("keeps the world point under the cursor while zooming", () => {
   const zoomedCamera = zoomCameraAtPoint(camera, cursor, 1);
 
   expect(screenToWorld(cursor, zoomedCamera)).toEqual(worldPoint);
+});
+
+test("keeps the same camera object at the zoom limits", () => {
+  const camera = { scale: 2.5, offsetX: 20, offsetY: 50 };
+
+  expect(zoomCameraAtPoint(camera, { x: 200, y: 140 }, 3)).toBe(camera);
 });
 
 test("fits the world canvas within the viewport with padding", () => {

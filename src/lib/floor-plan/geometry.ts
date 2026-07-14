@@ -57,6 +57,10 @@ export function getPannedCamera(
   pointerAtStart: Point,
   pointer: Point,
 ): Camera {
+  if (pointer.x === pointerAtStart.x && pointer.y === pointerAtStart.y) {
+    return camera;
+  }
+
   return {
     ...camera,
     offsetX: camera.offsetX + pointer.x - pointerAtStart.x,
@@ -70,6 +74,9 @@ export function zoomCameraAtPoint(
   nextScale: number,
 ): Camera {
   const scale = clampCameraScale(nextScale);
+
+  if (scale === camera.scale) return camera;
+
   const worldPoint = screenToWorld(cursor, camera);
 
   return {

@@ -1,4 +1,5 @@
 import {
+  useEffect,
   useRef,
   useState,
   type PointerEvent,
@@ -13,6 +14,7 @@ import {
 import type { TableZone } from "@/entities/zone/model/types";
 
 import { resolveZoneDrag } from "../model/interaction-transitions";
+import { useRafCoalescer } from "./use-raf-coalescer";
 
 type ZoneDragState = {
   zoneId: string;
@@ -21,6 +23,7 @@ type ZoneDragState = {
   rect: NonNullable<TableZone["rect"]>;
   pointerOffset: Point;
   hasMoved: boolean;
+  captureTarget: SVGGElement;
 };
 
 export type ZoneDragPreview = NonNullable<TableZone["rect"]> & {
@@ -55,6 +58,31 @@ function getWorldPointerPosition(
   );
 }
 
+function isSameRect(
+  first: NonNullable<TableZone["rect"]>,
+  second: NonNullable<TableZone["rect"]>,
+) {
+  return (
+    first.x === second.x &&
+    first.y === second.y &&
+    first.w === second.w &&
+    first.h === second.h
+  );
+}
+
+function isSameZonePreview(
+  first: ZoneDragPreview | null,
+  second: ZoneDragPreview,
+) {
+  return first?.zoneId === second.zoneId && isSameRect(first, second);
+}
+
+function releaseZoneCapture(drag: ZoneDragState) {
+  if (drag.captureTarget.hasPointerCapture(drag.pointerId)) {
+    drag.captureTarget.releasePointerCapture(drag.pointerId);
+  }
+}
+
 export function useFloorMapZoneEditor({
   camera,
   isEditing,
@@ -63,15 +91,52 @@ export function useFloorMapZoneEditor({
   const zoneDragRef = useRef<ZoneDragState | null>(null);
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
   const [dragPreview, setDragPreview] = useState<ZoneDragPreview | null>(null);
+  const dragPreviewRef = useRef(dragPreview);
+  const previewUpdates = useRafCoalescer<ZoneDragPreview>((preview) => {
+    const drag = zoneDragRef.current;
+
+    if (!drag || drag.zoneId !== preview.zoneId) return;
+    if (isSameZonePreview(dragPreviewRef.current, preview)) return;
+
+    dragPreviewRef.current = preview;
+    setDragPreview(preview);
+  });
+
+  dragPreviewRef.current = dragPreview;
+
+  const clearZoneDrag = () => {
+    previewUpdates.cancel();
+
+    if (zoneDragRef.current) {
+      releaseZoneCapture(zoneDragRef.current);
+      zoneDragRef.current = null;
+    }
+
+    if (dragPreviewRef.current) {
+      dragPreviewRef.current = null;
+      setDragPreview(null);
+    }
+  };
+
+  useEffect(
+    () => () => {
+      previewUpdates.cancel();
+
+      if (zoneDragRef.current) {
+        releaseZoneCapture(zoneDragRef.current);
+        zoneDragRef.current = null;
+      }
+    },
+    [previewUpdates],
+  );
 
   const selectZone = (zoneId: string) => {
     setSelectedZoneId(zoneId);
   };
 
   const clearSelection = () => {
+    clearZoneDrag();
     setSelectedZoneId(null);
-    setDragPreview(null);
-    zoneDragRef.current = null;
   };
 
   const handleZonePointerDown = (
@@ -104,6 +169,7 @@ export function useFloorMapZoneEditor({
         y: pointer.y - zone.rect.y,
       },
       hasMoved: false,
+      captureTarget: event.currentTarget,
     };
   };
 
@@ -138,9 +204,15 @@ export function useFloorMapZoneEditor({
             false,
           );
 
+    const previousRect = drag.rect;
     drag.rect = rect;
     drag.hasMoved = true;
-    setDragPreview({ zoneId: drag.zoneId, ...rect });
+
+    if (isSameRect(previousRect, rect) && !previewUpdates.hasPending()) {
+      return;
+    }
+
+    previewUpdates.schedule({ zoneId: drag.zoneId, ...rect });
   };
 
   const completeZoneDrag = (
@@ -154,12 +226,19 @@ export function useFloorMapZoneEditor({
     if (outcome === "commit") event.preventDefault();
     event.stopPropagation();
 
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
+    if (outcome === "commit") {
+      previewUpdates.flush();
+    } else {
+      previewUpdates.cancel();
     }
 
+    releaseZoneCapture(drag);
     zoneDragRef.current = null;
-    setDragPreview(null);
+
+    if (dragPreviewRef.current) {
+      dragPreviewRef.current = null;
+      setDragPreview(null);
+    }
 
     const change = resolveZoneDrag(drag, outcome);
 

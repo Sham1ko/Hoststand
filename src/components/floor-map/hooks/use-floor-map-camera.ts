@@ -19,6 +19,7 @@ import {
   getStableViewport,
   shouldFitInitialViewport,
 } from "../model/camera-viewport";
+import { useRafCoalescer } from "./use-raf-coalescer";
 
 const initialCamera: Camera = {
   scale: 1,
@@ -30,7 +31,22 @@ type PanState = {
   pointerId: number;
   pointer: Point;
   camera: Camera;
+  captureTarget: SVGSVGElement;
 };
+
+function isSameCamera(first: Camera, second: Camera) {
+  return (
+    first.scale === second.scale &&
+    first.offsetX === second.offsetX &&
+    first.offsetY === second.offsetY
+  );
+}
+
+function releasePanCapture(pan: PanState) {
+  if (pan.captureTarget.hasPointerCapture(pan.pointerId)) {
+    pan.captureTarget.releasePointerCapture(pan.pointerId);
+  }
+}
 
 export function useFloorMapCamera() {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -38,6 +54,15 @@ export function useFloorMapCamera() {
   const hasFittedViewportRef = useRef(false);
   const [viewport, setViewport] = useState<Size>({ width: 0, height: 0 });
   const [camera, setCamera] = useState(initialCamera);
+  const cameraRef = useRef(camera);
+  const panUpdates = useRafCoalescer<Camera>((nextCamera) => {
+    if (isSameCamera(cameraRef.current, nextCamera)) return;
+
+    cameraRef.current = nextCamera;
+    setCamera(nextCamera);
+  });
+
+  cameraRef.current = camera;
 
   useEffect(() => {
     const svg = svgRef.current;
@@ -68,8 +93,22 @@ export function useFloorMapCamera() {
     }
 
     hasFittedViewportRef.current = true;
-    setCamera(fitCameraToViewport(viewport));
+    const nextCamera = fitCameraToViewport(viewport);
+    cameraRef.current = nextCamera;
+    setCamera(nextCamera);
   }, [viewport]);
+
+  useEffect(
+    () => () => {
+      panUpdates.cancel();
+
+      if (panRef.current) {
+        releasePanCapture(panRef.current);
+        panRef.current = null;
+      }
+    },
+    [panUpdates],
+  );
 
   const getPointerPosition = (event: {
     clientX: number;
@@ -88,7 +127,13 @@ export function useFloorMapCamera() {
   const fitCamera = () => {
     if (!viewport.width || !viewport.height) return;
 
-    setCamera(fitCameraToViewport(viewport));
+    panUpdates.flush();
+    const nextCamera = fitCameraToViewport(viewport);
+
+    if (isSameCamera(cameraRef.current, nextCamera)) return;
+
+    cameraRef.current = nextCamera;
+    setCamera(nextCamera);
   };
 
   const zoomAtViewportCenter = (factor: number) => {
@@ -99,9 +144,18 @@ export function useFloorMapCamera() {
       y: viewport.height / 2,
     };
 
-    setCamera((currentCamera) =>
-      zoomCameraAtPoint(currentCamera, cursor, currentCamera.scale * factor),
+    panUpdates.flush();
+    const currentCamera = cameraRef.current;
+    const nextCamera = zoomCameraAtPoint(
+      currentCamera,
+      cursor,
+      currentCamera.scale * factor,
     );
+
+    if (nextCamera === currentCamera) return;
+
+    cameraRef.current = nextCamera;
+    setCamera(nextCamera);
   };
 
   const handleWheel = (event: WheelEvent<SVGSVGElement>) => {
@@ -113,9 +167,18 @@ export function useFloorMapCamera() {
 
     const factor = event.deltaY < 0 ? 1.1 : 1 / 1.1;
 
-    setCamera((currentCamera) =>
-      zoomCameraAtPoint(currentCamera, cursor, currentCamera.scale * factor),
+    panUpdates.flush();
+    const currentCamera = cameraRef.current;
+    const nextCamera = zoomCameraAtPoint(
+      currentCamera,
+      cursor,
+      currentCamera.scale * factor,
     );
+
+    if (nextCamera === currentCamera) return;
+
+    cameraRef.current = nextCamera;
+    setCamera(nextCamera);
   };
 
   const handlePointerDown = (event: PointerEvent<SVGSVGElement>) => {
@@ -127,11 +190,13 @@ export function useFloorMapCamera() {
     if (!pointer) return;
 
     event.preventDefault();
+    panUpdates.cancel();
     event.currentTarget.setPointerCapture(event.pointerId);
     panRef.current = {
       pointerId: event.pointerId,
       pointer,
-      camera,
+      camera: cameraRef.current,
+      captureTarget: event.currentTarget,
     };
   };
 
@@ -144,16 +209,30 @@ export function useFloorMapCamera() {
 
     if (!pointer) return;
 
-    setCamera(getPannedCamera(pan.camera, pan.pointer, pointer));
+    const nextCamera = getPannedCamera(pan.camera, pan.pointer, pointer);
+
+    if (
+      isSameCamera(cameraRef.current, nextCamera) &&
+      !panUpdates.hasPending()
+    ) {
+      return;
+    }
+
+    panUpdates.schedule(nextCamera);
   };
 
   const finishPan = (event: PointerEvent<SVGSVGElement>) => {
-    if (panRef.current?.pointerId !== event.pointerId) return;
+    const pan = panRef.current;
 
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
+    if (!pan || pan.pointerId !== event.pointerId) return;
+
+    if (event.type === "pointercancel") {
+      panUpdates.cancel();
+    } else {
+      panUpdates.flush();
     }
 
+    releasePanCapture(pan);
     panRef.current = null;
   };
 
