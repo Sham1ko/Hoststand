@@ -261,6 +261,10 @@ export function FloorMap() {
   ) => {
     if (!(event.target as Element).closest("[data-table-node]")) {
       setFocusedReservationTableId(null);
+
+      if (isTableEditing) {
+        clearSelection();
+      }
     }
 
     handleCameraPointerDown(event);
