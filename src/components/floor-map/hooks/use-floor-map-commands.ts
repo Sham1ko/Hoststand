@@ -13,7 +13,9 @@ type UseFloorMapCommandsOptions = {
   createTable: (
     input: CreateTableInput,
   ) => DiningTable | null | Promise<DiningTable | null>;
-  createZone: (input: CreateZoneInput) => Promise<TableZone | null>;
+  createZone: (
+    input: CreateZoneInput,
+  ) => TableZone | null | Promise<TableZone | null>;
   selectTable: (tableId: string) => void;
   selectZone: (zoneId: string) => void;
 };

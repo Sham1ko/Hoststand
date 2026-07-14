@@ -1,7 +1,5 @@
-import {
-  getBoundedTablePosition,
-  type Point,
-} from "@/lib/floor-plan/geometry";
+import { getBoundedTablePosition } from "@/lib/floor-plan/geometry";
+import { getZoneIdAtPosition } from "@/entities/restaurant/model/zone-binding";
 import type { RestaurantState } from "@/entities/restaurant/model/types";
 import type {
   DiningTable,
@@ -14,27 +12,6 @@ export type TableDetails = Pick<
 > & {
   layout: Pick<DiningTable["layout"], "w" | "h" | "rotation" | "shape">;
 };
-
-function getZoneIdAtPosition(
-  state: RestaurantState,
-  floorId: string,
-  position: Point,
-) {
-  return [...state.zones]
-    .sort((left, right) => left.sortOrder - right.sortOrder)
-    .find((zone) => {
-      if (!zone.isActive || zone.floorId !== floorId || !zone.rect) {
-        return false;
-      }
-
-      return (
-        position.x >= zone.rect.x &&
-        position.x <= zone.rect.x + zone.rect.w &&
-        position.y >= zone.rect.y &&
-        position.y <= zone.rect.y + zone.rect.h
-      );
-    })?.id;
-}
 
 function hasValidTableDetails(details: TableDetails) {
   return (
@@ -85,7 +62,7 @@ export function updateRestaurantTablePosition(
   if (!table) return null;
 
   const nextPosition = getBoundedTablePosition(position, table.layout, true);
-  const zoneId = getZoneIdAtPosition(state, table.floorId, nextPosition);
+  const zoneId = getZoneIdAtPosition(state.zones, table.floorId, nextPosition);
 
   if (
     table.layout.x === nextPosition.x &&
@@ -126,7 +103,7 @@ export function createRestaurantTable(
   }
 
   const position = getBoundedTablePosition(table.layout, table.layout, true);
-  const zoneId = getZoneIdAtPosition(state, table.floorId, position);
+  const zoneId = getZoneIdAtPosition(state.zones, table.floorId, position);
 
   return {
     ...state,
@@ -164,7 +141,7 @@ export function updateRestaurantTable(
     ...details.layout,
   };
   const position = getBoundedTablePosition(layout, layout, true);
-  const zoneId = getZoneIdAtPosition(state, table.floorId, position);
+  const zoneId = getZoneIdAtPosition(state.zones, table.floorId, position);
   const nextTable = {
     ...table,
     ...details,

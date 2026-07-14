@@ -127,6 +127,7 @@ entities/restaurant/
     schemas.ts
     table-actions.ts
     zone-actions.ts
+    zone-binding.ts
     reservation-actions.ts
   seed/
     restaurant-seed.ts
@@ -136,6 +137,10 @@ entities/restaurant/
 без React и HTTP. Их используют и API routes на сервере, и
 localStorage-репозиторий в браузере, поэтому бизнес-правила существуют в
 одном месте.
+
+`zone-binding.ts` — правило автопривязки: стол принадлежит зоне, в области
+которой находится его позиция. Экшены стола и зоны пересчитывают привязку
+сами, поэтому она не может разойтись между слоями данных.
 
 ### `features`
 
@@ -276,6 +281,11 @@ import { FloorMapCanvas } from "./ui/floor-map-canvas";
   мутации агрегата и seed — в `entities/restaurant`.
 - Форматирование, нужное только sidebar, находится рядом с этим компонентом.
 - Repository и глобальное состояние ресторана находятся в `client/restaurant`.
+- Черновик редактора плана живёт в `components/floor-map/model`
+  (`pending-table-changes.ts`, `pending-zone-changes.ts`): во время
+  редактирования изменения столов и зон накапливаются локально, «Сохранить
+  план» коммитит их через repository, «Отмена» отбрасывает черновик, не
+  обращаясь к слою данных.
 - Источник данных («Mock API» или «LocalStorage») — настройка пользователя
   в диалоге настроек. Выбор хранится под ключом `qolay.data-source.v1`,
   по умолчанию — `local-storage`.

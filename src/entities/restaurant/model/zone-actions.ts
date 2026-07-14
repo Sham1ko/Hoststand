@@ -1,9 +1,17 @@
 import { getBoundedZoneRect } from "@/lib/floor-plan/geometry";
+import { rebindTablesToZones } from "@/entities/restaurant/model/zone-binding";
 import type { RestaurantState } from "@/entities/restaurant/model/types";
 import type {
   TableZone,
   ZoneDetails,
 } from "@/entities/zone/model/types";
+
+function withReboundTables(state: RestaurantState): RestaurantState {
+  return {
+    ...state,
+    tables: rebindTablesToZones(state.zones, state.tables),
+  };
+}
 
 function hasValidZoneDetails(details: ZoneDetails) {
   return (
@@ -29,7 +37,7 @@ export function createRestaurantZone(
     return null;
   }
 
-  return {
+  return withReboundTables({
     ...state,
     zones: [
       ...state.zones,
@@ -39,7 +47,7 @@ export function createRestaurantZone(
         rect: getBoundedZoneRect(zone.rect, true),
       },
     ],
-  };
+  });
 }
 
 export function updateRestaurantZone(
@@ -69,20 +77,19 @@ export function updateRestaurantZone(
     return null;
   }
 
-  return {
+  return withReboundTables({
     ...state,
     zones: state.zones.map((item) => (item.id === zoneId ? nextZone : item)),
-  };
+  });
 }
 
 export function deleteRestaurantZone(state: RestaurantState, zoneId: string) {
   if (!state.zones.some((zone) => zone.id === zoneId)) return null;
 
-  return {
+  // Rebinding drops references to the removed zone and lets tables attach to
+  // a zone that is still under them.
+  return withReboundTables({
     ...state,
     zones: state.zones.filter((zone) => zone.id !== zoneId),
-    tables: state.tables.map((table) =>
-      table.zoneId === zoneId ? { ...table, zoneId: undefined } : table,
-    ),
-  };
+  });
 }

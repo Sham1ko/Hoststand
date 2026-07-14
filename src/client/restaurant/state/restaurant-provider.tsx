@@ -13,6 +13,8 @@ import { startOfToday } from "date-fns";
 import { RefreshCw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { deleteRestaurantZone } from "@/entities/restaurant/model/zone-actions";
+import { rebindTablesToZones } from "@/entities/restaurant/model/zone-binding";
 import type { RestaurantState } from "@/entities/restaurant/model/types";
 import type {
   CreateTableInput,
@@ -58,10 +60,6 @@ type RestaurantContextValue = {
   deleteTable: (tableId: string) => Promise<boolean>;
   createZone: (zone: CreateZoneInput) => Promise<TableZone | null>;
   updateZone: (zoneId: string, details: ZoneDetails) => Promise<boolean>;
-  updateZoneRect: (
-    zoneId: string,
-    rect: NonNullable<TableZone["rect"]>,
-  ) => Promise<boolean>;
   deleteZone: (zoneId: string) => Promise<boolean>;
   resetDemo: () => Promise<void>;
 };
@@ -325,11 +323,17 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
           repository.createZone(input),
         );
 
-        setState((currentState) =>
-          currentState
-            ? { ...currentState, zones: [...currentState.zones, zone] }
-            : currentState,
-        );
+        setState((currentState) => {
+          if (!currentState) return currentState;
+
+          const zones = [...currentState.zones, zone];
+
+          return {
+            ...currentState,
+            zones,
+            tables: rebindTablesToZones(zones, currentState.tables),
+          };
+        });
 
         return zone;
       } catch {
@@ -346,38 +350,17 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
           repository.patchZone(zoneId, details),
         );
 
-        setState((currentState) =>
-          currentState
-            ? {
-                ...currentState,
-                zones: replaceEntity(currentState.zones, zone),
-              }
-            : currentState,
-        );
+        setState((currentState) => {
+          if (!currentState) return currentState;
 
-        return true;
-      } catch {
-        return false;
-      }
-    },
-    [enqueueMutation],
-  );
+          const zones = replaceEntity(currentState.zones, zone);
 
-  const updateZoneRect = useCallback(
-    async (zoneId: string, rect: NonNullable<TableZone["rect"]>) => {
-      try {
-        const zone = await enqueueMutation((repository) =>
-          repository.patchZone(zoneId, { rect }),
-        );
-
-        setState((currentState) =>
-          currentState
-            ? {
-                ...currentState,
-                zones: replaceEntity(currentState.zones, zone),
-              }
-            : currentState,
-        );
+          return {
+            ...currentState,
+            zones,
+            tables: rebindTablesToZones(zones, currentState.tables),
+          };
+        });
 
         return true;
       } catch {
@@ -394,15 +377,7 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
 
         setState((currentState) =>
           currentState
-            ? {
-                ...currentState,
-                zones: currentState.zones.filter((zone) => zone.id !== zoneId),
-                tables: currentState.tables.map((table) =>
-                  table.zoneId === zoneId
-                    ? { ...table, zoneId: undefined }
-                    : table,
-                ),
-              }
+            ? (deleteRestaurantZone(currentState, zoneId) ?? currentState)
             : currentState,
         );
 
@@ -454,7 +429,6 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
         deleteTable,
         createZone,
         updateZone,
-        updateZoneRect,
         deleteZone,
         resetDemo,
       }}

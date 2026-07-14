@@ -1,5 +1,5 @@
-import type { DiningTable } from "@/entities/table/model/types";
 import type { TableZone } from "@/entities/zone/model/types";
+import { getZoneIdAtPosition } from "@/entities/restaurant/model/zone-binding";
 import type { RestaurantState } from "@/entities/restaurant/model/types";
 
 import { diningTableSeed, tableFloorSeed } from "./floor-plan-seed";
@@ -62,30 +62,13 @@ const tableZoneSeed: readonly TableZone[] = [
   },
 ];
 
-function getTableZoneId(
-  table: DiningTable,
-  zones: readonly TableZone[],
-) {
-  return zones.find((zone) => {
-    if (!zone.isActive || zone.floorId !== table.floorId || !zone.rect) {
-      return false;
-    }
-
-    const { x, y, w, h } = zone.rect;
-
-    return (
-      table.layout.x >= x &&
-      table.layout.x <= x + w &&
-      table.layout.y >= y &&
-      table.layout.y <= y + h
-    );
-  })?.id;
-}
-
 function createTables(zones: readonly TableZone[]) {
   return diningTableSeed.map((table) => ({
     ...table,
-    zoneId: getTableZoneId(table, zones),
+    zoneId: getZoneIdAtPosition(zones, table.floorId, {
+      x: table.layout.x,
+      y: table.layout.y,
+    }),
     layout: { ...table.layout },
   }));
 }

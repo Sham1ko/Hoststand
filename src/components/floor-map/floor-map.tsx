@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 import { useRestaurant } from "@/client/restaurant/state/restaurant-provider";
+import { rebindTablesToZones } from "@/entities/restaurant/model/zone-binding";
+import type { ZonePatchInput } from "@/entities/zone/model/schemas";
 import { getReservedTableIds } from "@/features/reservation-management/model/selectors";
 
 import { useFloorMapCamera } from "./hooks/use-floor-map-camera";
@@ -13,6 +15,10 @@ import {
   getDraftTables,
   usePendingTableChanges,
 } from "./model/pending-table-changes";
+import {
+  getDraftZones,
+  usePendingZoneChanges,
+} from "./model/pending-zone-changes";
 import { FloorMapCanvas } from "./ui/floor-map-canvas";
 import { FloorMapControls } from "./ui/floor-map-controls";
 import {
@@ -32,7 +38,6 @@ export function FloorMap() {
     deleteTable,
     createZone,
     updateZone,
-    updateZoneRect,
     deleteZone,
     reservationDate,
     focusedReservationTableId,
@@ -52,6 +57,33 @@ export function FloorMap() {
     saveChanges: saveTableChanges,
   } = usePendingTableChanges(updateTable, deleteTable, createTable);
   const { floors, tables, activeFloorId } = state;
+  const saveZonePatch = useCallback(
+    async (zoneId: string, patch: ZonePatchInput) => {
+      const zone = state.zones.find((item) => item.id === zoneId);
+      const rect = patch.rect ?? zone?.rect;
+
+      if (!zone || !rect) return false;
+
+      return updateZone(zoneId, {
+        name: patch.name ?? zone.name,
+        color: patch.color ?? zone.color,
+        rect,
+      });
+    },
+    [state.zones, updateZone],
+  );
+  const {
+    patches: pendingZonePatches,
+    createdZones,
+    deletedZoneIds,
+    isSaving: isSavingZoneChanges,
+    stagePatch: stageZonePatch,
+    stageRect: stageZoneRect,
+    stageCreation: stageZoneCreation,
+    stageDeletion: stageZoneDeletion,
+    discardAll: discardAllZoneChanges,
+    saveChanges: saveZoneChanges,
+  } = usePendingZoneChanges(saveZonePatch, deleteZone, createZone);
   const {
     svgRef,
     viewport,
@@ -93,20 +125,29 @@ export function FloorMap() {
   } = useFloorMapZoneEditor({
     camera,
     isEditing: isZoneEditing,
-    onZoneRectChange: (zoneId, rect) => {
-      void updateZoneRect(zoneId, rect);
-    },
+    onZoneRectChange: stageZoneRect,
   });
   const activeFloors = floors.filter((floor) => floor.isActive);
   const selectedFloor = activeFloors.find(
     (floor) => floor.id === activeFloorId,
   );
-  const displayedTables = getDraftTables(
+  const displayedZones = getDraftZones(
+    state.zones,
+    Object.values(createdZones),
+    pendingZonePatches,
+    deletedZoneIds,
+  );
+  const draftTables = getDraftTables(
     tables,
     Object.values(createdTables),
     pendingTablePatches,
     deletedTableIds,
   );
+  // In the editor the zone dots must follow the draft zones, so bindings are
+  // recomputed against the draft before anything is saved.
+  const displayedTables = isEditing
+    ? rebindTablesToZones(displayedZones, draftTables)
+    : draftTables;
   const visibleTables = displayedTables.filter(
     (table) => table.floorId === activeFloorId,
   );
@@ -114,13 +155,13 @@ export function FloorMap() {
     state.reservations,
     reservationDate,
   );
-  const visibleZones = state.zones.filter(
+  const visibleZones = displayedZones.filter(
     (zone) => zone.floorId === activeFloorId && zone.isActive && zone.rect,
   );
   const selectedTable = displayedTables.find(
     (table) => table.id === selectedTableId,
   );
-  const selectedZone = state.zones.find((zone) => zone.id === selectedZoneId);
+  const selectedZone = displayedZones.find((zone) => zone.id === selectedZoneId);
   const { createTableOnActiveFloor, createZoneOnActiveFloor } =
     useFloorMapCommands({
       activeFloorId,
@@ -128,7 +169,7 @@ export function FloorMap() {
       visibleTableCount: visibleTables.length,
       visibleZones,
       createTable: stageTableCreation,
-      createZone,
+      createZone: stageZoneCreation,
       selectTable,
       selectZone,
     });
@@ -140,6 +181,8 @@ export function FloorMap() {
   };
 
   const saveAndExitEditor = async () => {
+    // Zones are committed first so that saved tables bind to the final zones.
+    if (!(await saveZoneChanges())) return;
     if (!(await saveTableChanges())) return;
 
     stopEditing();
@@ -148,6 +191,7 @@ export function FloorMap() {
 
   const cancelEditor = () => {
     discardAllTableChanges();
+    discardAllZoneChanges();
     stopEditing();
     clearZoneSelection();
   };
@@ -163,7 +207,7 @@ export function FloorMap() {
 
           <FloorMapEditorControls
             isEditing={isEditing}
-            isSaving={isSavingTableChanges}
+            isSaving={isSavingTableChanges || isSavingZoneChanges}
             tool={editorTool}
             onStart={startEditing}
             onSave={() => void saveAndExitEditor()}
@@ -235,13 +279,14 @@ export function FloorMap() {
           {isZoneEditing && selectedZone && selectedZone.rect && (
             <FloorMapZoneEditorPanel
               zone={selectedZone}
-              onSave={(details) => updateZone(selectedZone.id, details)}
+              onSave={async (details) => {
+                stageZonePatch(selectedZone.id, details);
+                return true;
+              }}
               onDelete={async () => {
-                const deleted = await deleteZone(selectedZone.id);
-
-                if (deleted) clearZoneSelection();
-
-                return deleted;
+                stageZoneDeletion(selectedZone.id);
+                clearZoneSelection();
+                return true;
               }}
             />
           )}
