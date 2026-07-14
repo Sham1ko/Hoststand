@@ -1,4 +1,13 @@
-import { Trash2 } from "lucide-react";
+import {
+  Ban,
+  CalendarClock,
+  CircleCheck,
+  CircleOff,
+  PartyPopper,
+  Trash2,
+  UsersRound,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { useId, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -52,14 +61,65 @@ function TableShapeOption({
   );
 }
 
-const tableStatuses: { value: TableStatus; label: string }[] = [
-  { value: "FREE", label: "Свободен" },
-  { value: "OCCUPIED", label: "Занят" },
-  { value: "RESERVED", label: "Забронирован" },
-  { value: "BANQUET", label: "Банкет" },
-  { value: "MANUAL_BLOCKED", label: "Заблокирован" },
-  { value: "INACTIVE", label: "Неактивен" },
+type TableStatusChoice = {
+  value: TableStatus;
+  label: string;
+  icon: LucideIcon;
+  iconClassName: string;
+};
+
+const tableStatuses: TableStatusChoice[] = [
+  {
+    value: "FREE",
+    label: "Свободен",
+    icon: CircleCheck,
+    iconClassName: "text-emerald-600",
+  },
+  {
+    value: "OCCUPIED",
+    label: "Занят",
+    icon: UsersRound,
+    iconClassName: "text-rose-500",
+  },
+  {
+    value: "RESERVED",
+    label: "Забронирован",
+    icon: CalendarClock,
+    iconClassName: "text-amber-500",
+  },
+  {
+    value: "BANQUET",
+    label: "Банкет",
+    icon: PartyPopper,
+    iconClassName: "text-violet-500",
+  },
+  {
+    value: "MANUAL_BLOCKED",
+    label: "Заблокирован",
+    icon: Ban,
+    iconClassName: "text-slate-600",
+  },
+  {
+    value: "INACTIVE",
+    label: "Неактивен",
+    icon: CircleOff,
+    iconClassName: "text-slate-400",
+  },
 ];
+
+function TableStatusOption({ option }: { option: TableStatusChoice }) {
+  const Icon = option.icon;
+
+  return (
+    <span className="flex items-center gap-2">
+      <Icon
+        aria-hidden="true"
+        className={`size-3.5 shrink-0 ${option.iconClassName}`}
+      />
+      <span>{option.label}</span>
+    </span>
+  );
+}
 
 type TableFormValues = {
   number: string;
@@ -109,7 +169,11 @@ export function FloorMapEditorPanel({
   onDelete,
 }: FloorMapEditorPanelProps) {
   const shapeLabelId = useId();
+  const statusLabelId = useId();
   const [values, setValues] = useState(() => getTableFormValues(table));
+  const selectedStatus = tableStatuses.find(
+    (status) => status.value === values.status,
+  );
 
   const updateNumericField = (field: NumericTableField, rawValue: string) => {
     setValues((currentValues) => ({
@@ -149,6 +213,11 @@ export function FloorMapEditorPanel({
   const updateRotation = (rotation: number) => {
     setValues((currentValues) => ({ ...currentValues, rotation }));
     onChange({ layout: { rotation } });
+  };
+
+  const selectStatus = (status: TableStatus) => {
+    setValues((currentValues) => ({ ...currentValues, status }));
+    onChange({ status });
   };
 
   return (
@@ -295,24 +364,37 @@ export function FloorMapEditorPanel({
         </label>
       </div>
 
-      <label className={`mt-2 ${labelClassName}`}>
-        Статус
-        <select
-          className={fieldClassName}
+      <div className="mt-2 flex flex-col gap-1">
+        <span
+          id={statusLabelId}
+          className="text-xs font-medium text-slate-600"
+        >
+          Статус
+        </span>
+        <Select<TableStatus>
           value={values.status}
-          onChange={(event) => {
-            const status = event.target.value as TableStatus;
-            setValues((currentValues) => ({ ...currentValues, status }));
-            onChange({ status });
+          onValueChange={(status) => {
+            if (status) selectStatus(status);
           }}
         >
-          {tableStatuses.map((status) => (
-            <option key={status.value} value={status.value}>
-              {status.label}
-            </option>
-          ))}
-        </select>
-      </label>
+          <SelectTrigger
+            size="default"
+            aria-labelledby={statusLabelId}
+            className="h-8 w-full bg-white"
+          >
+            <SelectValue>
+              {selectedStatus && <TableStatusOption option={selectedStatus} />}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent align="start">
+            {tableStatuses.map((status) => (
+              <SelectItem key={status.value} value={status.value}>
+                <TableStatusOption option={status} />
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
       {hasReservations && (
         <p className="mt-2 text-xs text-slate-500">Есть связанные брони</p>
