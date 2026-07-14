@@ -51,7 +51,7 @@ export type ReservationCardProps = {
   phone: string;
   note?: string;
   isSelected: boolean;
-  onSelect: () => void;
+  onTableSelect: () => void;
   onAction: (reservationId: string, action: ReservationAction) => void;
 };
 
@@ -68,7 +68,7 @@ export function ReservationCard({
   phone,
   note,
   isSelected,
-  onSelect,
+  onTableSelect,
   onAction,
 }: ReservationCardProps) {
   const statusStyle = statusStyles[status];
@@ -79,12 +79,11 @@ export function ReservationCard({
 
   return (
     <article
-      className={`cursor-pointer rounded-lg border bg-white p-3 transition-colors ${
+      className={`rounded-lg border bg-white p-3 transition-colors ${
         isSelected
           ? "border-primary ring-2 ring-primary/15"
           : "border-slate-200 hover:border-slate-300"
       }`}
-      onClick={onSelect}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
@@ -107,9 +106,14 @@ export function ReservationCard({
       </div>
 
       <div className="mt-2 flex items-center gap-3 text-xs text-slate-500">
-        <span className="rounded-md bg-slate-100 px-2 py-1 font-medium text-slate-700">
+        <button
+          type="button"
+          aria-pressed={isSelected}
+          className="cursor-pointer rounded-md bg-slate-100 px-2 py-1 font-medium text-slate-700 transition-colors hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+          onClick={onTableSelect}
+        >
           Стол №{tableNumber} · {floorName}
-        </span>
+        </button>
         <span className="flex items-center gap-1">
           <Users aria-hidden="true" className="size-3.5" />
           {formatGuestsCount(guestsCount)}

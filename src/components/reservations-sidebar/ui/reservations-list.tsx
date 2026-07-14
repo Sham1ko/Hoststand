@@ -77,7 +77,7 @@ export function ReservationsList({
             phone={formatGuestPhone(reservation.guestPhone)}
             note={reservation.comment}
             isSelected={reservation.tableId === selectedTableId}
-            onSelect={() => onTableSelect(reservation.tableId)}
+            onTableSelect={() => onTableSelect(reservation.tableId)}
             onAction={onAction}
           />
         );
