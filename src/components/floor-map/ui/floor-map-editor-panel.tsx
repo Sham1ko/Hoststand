@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
 import type {
   DiningTable,
   TableShape,
@@ -64,7 +65,7 @@ type TableFormValues = {
   number: string;
   capacity: string;
   shape: TableShape;
-  rotation: string;
+  rotation: number;
   width: string;
   height: string;
   status: TableStatus;
@@ -75,7 +76,7 @@ function getTableFormValues(table: DiningTable): TableFormValues {
     number: String(table.number),
     capacity: String(table.capacity),
     shape: table.layout.shape,
-    rotation: String(table.layout.rotation),
+    rotation: normalizeRotation(table.layout.rotation),
     width: String(table.layout.w),
     height: String(table.layout.h),
     status: table.status,
@@ -85,9 +86,14 @@ function getTableFormValues(table: DiningTable): TableFormValues {
 type NumericTableField =
   | "number"
   | "capacity"
-  | "rotation"
   | "width"
   | "height";
+
+function normalizeRotation(rotation: number) {
+  const normalizedRotation = ((rotation % 360) + 360) % 360;
+
+  return normalizedRotation === 0 && rotation > 0 ? 360 : normalizedRotation;
+}
 
 type FloorMapEditorPanelProps = {
   table: DiningTable;
@@ -124,11 +130,6 @@ export function FloorMapEditorPanel({
       return;
     }
 
-    if (field === "rotation") {
-      onChange({ layout: { rotation: value } });
-      return;
-    }
-
     if (value < 40) return;
 
     onChange({ layout: { [field === "width" ? "w" : "h"]: value } });
@@ -143,6 +144,11 @@ export function FloorMapEditorPanel({
   const selectShape = (shape: TableShape) => {
     setValues((currentValues) => ({ ...currentValues, shape }));
     onChange({ layout: { shape } });
+  };
+
+  const updateRotation = (rotation: number) => {
+    setValues((currentValues) => ({ ...currentValues, rotation }));
+    onChange({ layout: { rotation } });
   };
 
   return (
@@ -239,17 +245,28 @@ export function FloorMapEditorPanel({
             </SelectContent>
           </Select>
         </div>
-        <label className={labelClassName}>
-          Поворот
-          <input
-            type="number"
-            className={fieldClassName}
-            value={values.rotation}
-            onChange={(event) =>
-              updateNumericField("rotation", event.target.value)
-            }
+        <div className="col-span-2 flex flex-col gap-2">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs font-medium text-slate-600">Поворот</span>
+            <output className="min-w-10 rounded-md bg-slate-100 px-2 py-0.5 text-center text-[11px] font-medium tabular-nums text-slate-600">
+              {values.rotation}°
+            </output>
+          </div>
+          <Slider
+            aria-label="Поворот стола"
+            min={0}
+            max={360}
+            step={1}
+            value={[values.rotation]}
+            className="py-1"
+            onValueChange={(rotation) => {
+              const nextRotation =
+                typeof rotation === "number" ? rotation : rotation[0];
+
+              updateRotation(nextRotation ?? values.rotation);
+            }}
           />
-        </label>
+        </div>
         <label className={labelClassName}>
           Ширина
           <input
