@@ -13,6 +13,10 @@ export type BoundingRectCache = {
   clear: () => void;
 };
 
+export type ElementBoundingRectCache = BoundingRectCache & {
+  setElement: (element: Element | null) => void;
+};
+
 export function createBoundingRectCache(
   measure: () => FloorMapRect | null,
 ): BoundingRectCache {
@@ -38,6 +42,30 @@ export function createBoundingRectCache(
     },
     clear() {
       rect = null;
+    },
+  };
+}
+
+export function createElementBoundingRectCache(): ElementBoundingRectCache {
+  let element: Element | null = null;
+  const cache = createBoundingRectCache(() => {
+    const rect = element?.getBoundingClientRect();
+
+    return rect
+      ? {
+          left: rect.left,
+          top: rect.top,
+          width: rect.width,
+          height: rect.height,
+        }
+      : null;
+  });
+
+  return {
+    ...cache,
+    setElement(nextElement) {
+      element = nextElement;
+      if (!element) cache.clear();
     },
   };
 }

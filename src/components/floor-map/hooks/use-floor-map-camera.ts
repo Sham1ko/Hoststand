@@ -20,9 +20,8 @@ import {
   shouldFitInitialViewport,
 } from "../model/camera-viewport";
 import {
-  createBoundingRectCache,
+  createElementBoundingRectCache,
   getLocalPointerPosition,
-  type BoundingRectCache,
   type FloorMapRect,
 } from "../model/bounding-rect-cache";
 import { useRafCoalescer } from "./use-raf-coalescer";
@@ -57,24 +56,7 @@ function releasePanCapture(pan: PanState) {
 
 export function useFloorMapCamera() {
   const svgRef = useRef<SVGSVGElement>(null);
-  const rectCacheRef = useRef<BoundingRectCache | null>(null);
-
-  if (!rectCacheRef.current) {
-    rectCacheRef.current = createBoundingRectCache(() => {
-      const rect = svgRef.current?.getBoundingClientRect();
-
-      return rect
-        ? {
-            left: rect.left,
-            top: rect.top,
-            width: rect.width,
-            height: rect.height,
-          }
-        : null;
-    });
-  }
-
-  const rectCache = rectCacheRef.current;
+  const [rectCache] = useState(createElementBoundingRectCache);
   const panRef = useRef<PanState | null>(null);
   const hasFittedViewportRef = useRef(false);
   const [viewport, setViewport] = useState<Size>({ width: 0, height: 0 });
@@ -90,13 +72,16 @@ export function useFloorMapCamera() {
     rectCache.refresh();
   });
 
-  cameraRef.current = camera;
+  useEffect(() => {
+    cameraRef.current = camera;
+  }, [camera]);
 
   useEffect(() => {
     const svg = svgRef.current;
 
     if (!svg) return;
 
+    rectCache.setElement(svg);
     rectCache.refresh();
 
     const resizeObserver = new ResizeObserver(([entry]) => {
@@ -135,7 +120,7 @@ export function useFloorMapCamera() {
       window.removeEventListener("scroll", scheduleRectRefresh, true);
       visualViewport?.removeEventListener("resize", scheduleRectRefresh);
       visualViewport?.removeEventListener("scroll", scheduleRectRefresh);
-      rectCache.clear();
+      rectCache.setElement(null);
     };
   }, [rectCache, rectRefreshes]);
 

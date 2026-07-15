@@ -1,5 +1,5 @@
 import { Trash2, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import type { ZonePatchInput } from "@/entities/zone/model/schemas";
@@ -20,15 +20,6 @@ type ZoneFormValues = {
   height: string;
 };
 
-function getZoneFormValues(zone: TableZone): ZoneFormValues {
-  return {
-    name: zone.name,
-    color: zone.color,
-    width: String(zone.rect?.w ?? 0),
-    height: String(zone.rect?.h ?? 0),
-  };
-}
-
 type FloorMapZoneEditorPanelProps = {
   zone: TableZone;
   tables: readonly DiningTable[];
@@ -44,26 +35,28 @@ export function FloorMapZoneEditorPanel({
   onClose,
   onDelete,
 }: FloorMapZoneEditorPanelProps) {
-  const [values, setValues] = useState(() => getZoneFormValues(zone));
-
-  useEffect(() => {
-    setValues(getZoneFormValues(zone));
-  }, [zone]);
+  const [edits, setEdits] = useState<Partial<ZoneFormValues>>({});
+  const values: ZoneFormValues = {
+    name: edits.name ?? zone.name,
+    color: edits.color ?? zone.color,
+    width: edits.width ?? String(zone.rect?.w ?? 0),
+    height: edits.height ?? String(zone.rect?.h ?? 0),
+  };
 
   const updateName = (name: string) => {
-    setValues((currentValues) => ({ ...currentValues, name }));
+    setEdits((currentEdits) => ({ ...currentEdits, name }));
 
     if (name.trim()) onChange({ name });
   };
 
   const updateColor = (color: string) => {
-    setValues((currentValues) => ({ ...currentValues, color }));
+    setEdits((currentEdits) => ({ ...currentEdits, color }));
     onChange({ color });
   };
 
   const updateSize = (field: "width" | "height", rawValue: string) => {
-    setValues((currentValues) => ({
-      ...currentValues,
+    setEdits((currentEdits) => ({
+      ...currentEdits,
       [field]: rawValue,
     }));
 

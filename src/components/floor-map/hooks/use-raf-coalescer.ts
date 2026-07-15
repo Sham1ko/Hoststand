@@ -1,25 +1,32 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 
 import {
   createRafCoalescer,
-  type RafCoalescer,
 } from "../model/raf-coalescer";
 
+function createRafCoalescerController<T>(initialApply: (value: T) => void) {
+  let apply = initialApply;
+  const coalescer = createRafCoalescer<T>({
+    apply: (value) => apply(value),
+    requestFrame: (callback) => requestAnimationFrame(callback),
+    cancelFrame: (frameId) => cancelAnimationFrame(frameId),
+  });
+
+  return {
+    coalescer,
+    setApply(nextApply: (value: T) => void) {
+      apply = nextApply;
+    },
+  };
+}
+
 export function useRafCoalescer<T>(apply: (value: T) => void) {
-  const applyRef = useRef(apply);
-  const coalescerRef = useRef<RafCoalescer<T> | null>(null);
+  const [controller] = useState(() => createRafCoalescerController(apply));
+  const { coalescer } = controller;
 
-  applyRef.current = apply;
-
-  if (!coalescerRef.current) {
-    coalescerRef.current = createRafCoalescer<T>({
-      apply: (value) => applyRef.current(value),
-      requestFrame: (callback) => requestAnimationFrame(callback),
-      cancelFrame: (frameId) => cancelAnimationFrame(frameId),
-    });
-  }
-
-  const coalescer = coalescerRef.current;
+  useEffect(() => {
+    controller.setApply(apply);
+  }, [apply, controller]);
 
   useEffect(() => () => coalescer.cancel(), [coalescer]);
 

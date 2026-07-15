@@ -9,7 +9,7 @@ import type {
 function withReboundTables(state: RestaurantState): RestaurantState {
   return {
     ...state,
-    tables: rebindTablesToZones(state.zones, state.tables),
+    tables: [...rebindTablesToZones(state.zones, state.tables)],
   };
 }
 

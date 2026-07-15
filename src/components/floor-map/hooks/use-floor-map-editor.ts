@@ -104,8 +104,6 @@ export function useFloorMapEditor({
     setDragPreview(preview);
   });
 
-  dragPreviewRef.current = dragPreview;
-
   const clearTableDrag = () => {
     previewUpdates.cancel();
 

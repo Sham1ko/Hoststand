@@ -103,8 +103,6 @@ export function useFloorMapZoneEditor({
     setDragPreview(preview);
   });
 
-  dragPreviewRef.current = dragPreview;
-
   const clearZoneDrag = () => {
     previewUpdates.cancel();
 

@@ -35,7 +35,6 @@ import type { ReservationAction } from "@/entities/reservation/model/types";
 
 import {
   type DataSource,
-  DEFAULT_DATA_SOURCE,
   persistDataSource,
   readStoredDataSource,
   resolveDataSource,
@@ -112,19 +111,14 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
   const [focusedReservationTableId, setFocusedReservationTableId] =
     useState<string | null>(null);
   const [loadAttempt, setLoadAttempt] = useState(0);
-  const [dataSource, setDataSourceState] = useState<DataSource | null>(null);
+  const [dataSource, setDataSourceState] = useState<DataSource>(
+    readStoredDataSource,
+  );
   const [hasLoadError, setHasLoadError] = useState(false);
   const repositoryRef = useRef<RestaurantRepository | null>(null);
   const mutationQueueRef = useRef<Promise<void>>(Promise.resolve());
 
   useEffect(() => {
-    if (dataSource === null) {
-      // Client-only read: resolving the stored setting after mount keeps
-      // server and first client render identical (the loading skeleton).
-      setDataSourceState(readStoredDataSource());
-      return;
-    }
-
     const repository =
       dataSource === "mock-api"
         ? createHttpRestaurantRepository()
@@ -132,7 +126,6 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
     let isMounted = true;
 
     repositoryRef.current = repository;
-    setHasLoadError(false);
 
     void repository
       .loadRestaurant()
@@ -179,6 +172,7 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
       if (nextSource === dataSource) return;
 
       persistDataSource(nextSource);
+      setHasLoadError(false);
       setState(null);
       setDataSourceState(nextSource);
     },
@@ -370,7 +364,7 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
           return {
             ...currentState,
             zones,
-            tables: rebindTablesToZones(zones, currentState.tables),
+            tables: [...rebindTablesToZones(zones, currentState.tables)],
           };
         });
 
@@ -397,7 +391,7 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
           return {
             ...currentState,
             zones,
-            tables: rebindTablesToZones(zones, currentState.tables),
+            tables: [...rebindTablesToZones(zones, currentState.tables)],
           };
         });
 
@@ -459,7 +453,10 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
   if (hasLoadError) {
     return (
       <RestaurantLoadError
-        onRetry={() => setLoadAttempt((currentAttempt) => currentAttempt + 1)}
+        onRetry={() => {
+          setHasLoadError(false);
+          setLoadAttempt((currentAttempt) => currentAttempt + 1);
+        }}
       />
     );
   }
@@ -470,7 +467,7 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
     <RestaurantContext
       value={{
         state,
-        dataSource: dataSource ?? DEFAULT_DATA_SOURCE,
+        dataSource,
         setDataSource,
         setActiveFloorId,
         reservationDate,
