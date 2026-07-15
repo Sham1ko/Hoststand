@@ -220,6 +220,13 @@ export function FloorMap({ isEditing, onEditingChange }: FloorMapProps) {
     () => displayedZones.find((zone) => zone.id === selectedZoneId),
     [displayedZones, selectedZoneId],
   );
+  const selectedZoneTables = useMemo(
+    () =>
+      selectedZone
+        ? displayedTables.filter((table) => table.zoneId === selectedZone.id)
+        : [],
+    [displayedTables, selectedZone],
+  );
   const reservationDayTimestamp = getLocalDayTimestamp(reservationDate);
   const reservedTableIds = useMemo(
     () =>
@@ -378,21 +385,6 @@ export function FloorMap({ isEditing, onEditingChange }: FloorMapProps) {
             onZonePointerCancel={cancelZoneDrag}
           />
 
-          {isEditing && selectedZone && selectedZone.rect && (
-            <FloorMapZoneEditorPanel
-              zone={selectedZone}
-              onSave={async (details) => {
-                stageZonePatch(selectedZone.id, details);
-                return true;
-              }}
-              onDelete={async () => {
-                stageZoneDeletion(selectedZone.id);
-                clearZoneSelection();
-                return true;
-              }}
-            />
-          )}
-
           <FloorMapControls
             onZoomOut={() => zoomAtViewportCenter(1 / 1.2)}
             onFit={fitCamera}
@@ -439,6 +431,18 @@ export function FloorMap({ isEditing, onEditingChange }: FloorMapProps) {
               onDelete={() => {
                 stageTableDeletion(selectedTable.id);
                 clearSelection();
+              }}
+            />
+          ) : selectedZone && selectedZone.rect ? (
+            <FloorMapZoneEditorPanel
+              key={selectedZone.id}
+              zone={selectedZone}
+              tables={selectedZoneTables}
+              onChange={(patch) => stageZonePatch(selectedZone.id, patch)}
+              onClose={clearZoneSelection}
+              onDelete={() => {
+                stageZoneDeletion(selectedZone.id);
+                clearZoneSelection();
               }}
             />
           ) : undefined}
