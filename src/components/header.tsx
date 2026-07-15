@@ -5,6 +5,7 @@ import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
 import { SettingsDialog } from "@/components/settings-dialog";
+import { MOCK_API_ENABLED } from "@/client/restaurant/api/data-source";
 import { useRestaurant } from "@/client/restaurant/state/restaurant-provider";
 
 export function Header() {
@@ -42,7 +43,7 @@ export function Header() {
           Сбросить демо
         </Button>
 
-        <SettingsDialog />
+        {MOCK_API_ENABLED && <SettingsDialog />}
       </div>
     </header>
   );

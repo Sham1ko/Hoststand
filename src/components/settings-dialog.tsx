@@ -2,7 +2,10 @@
 
 import { Settings } from "lucide-react";
 
-import type { DataSource } from "@/client/restaurant/api/data-source";
+import {
+  MOCK_API_ENABLED,
+  type DataSource,
+} from "@/client/restaurant/api/data-source";
 import { useRestaurant } from "@/client/restaurant/state/restaurant-provider";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,6 +36,8 @@ const dataSourceOptions: Array<{
 
 export function SettingsDialog() {
   const { dataSource, setDataSource } = useRestaurant();
+
+  if (!MOCK_API_ENABLED) return null;
 
   return (
     <Dialog>

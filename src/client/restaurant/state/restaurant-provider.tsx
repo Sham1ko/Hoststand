@@ -38,6 +38,7 @@ import {
   DEFAULT_DATA_SOURCE,
   persistDataSource,
   readStoredDataSource,
+  resolveDataSource,
 } from "../api/data-source";
 import { createLocalStorageRestaurantRepository } from "../api/local-storage-restaurant-repository";
 import {
@@ -173,11 +174,13 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
 
   const setDataSource = useCallback(
     (source: DataSource) => {
-      if (source === dataSource) return;
+      const nextSource = resolveDataSource(source);
 
-      persistDataSource(source);
+      if (nextSource === dataSource) return;
+
+      persistDataSource(nextSource);
       setState(null);
-      setDataSourceState(source);
+      setDataSourceState(nextSource);
     },
     [dataSource],
   );
