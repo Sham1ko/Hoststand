@@ -11,15 +11,10 @@ import { useRestaurant } from "@/client/restaurant/state/restaurant-provider";
 
 import { ReservationsList } from "./ui/reservations-list";
 import { FocusedTableSidebar } from "./ui/focused-table-sidebar";
-import { EditorModeSidebar } from "./ui/editor-mode-sidebar";
 import { ReservationsSidebarHeader } from "./ui/reservations-sidebar-header";
 import type { ReservationStatusFilterValue } from "./ui/reservations-status-filter";
 
-type ReservationsSidebarProps = {
-  isEditing: boolean;
-};
-
-export function ReservationsSidebar({ isEditing }: ReservationsSidebarProps) {
+export function ReservationsSidebar() {
   const [activeStatus, setActiveStatus] =
     useState<ReservationStatusFilterValue>("ALL");
   const {
@@ -62,9 +57,7 @@ export function ReservationsSidebar({ isEditing }: ReservationsSidebarProps) {
       aria-label="Управление бронями"
       className="flex min-h-0 w-96 shrink-0 flex-col overflow-hidden border-l border-slate-200 bg-white"
     >
-      {isEditing ? (
-        <EditorModeSidebar />
-      ) : focusedTable && focusedFloor ? (
+      {focusedTable && focusedFloor ? (
         <FocusedTableSidebar
           table={focusedTable}
           floor={focusedFloor}

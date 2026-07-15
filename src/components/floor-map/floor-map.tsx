@@ -39,6 +39,7 @@ import {
   FloorMapEditorDock,
 } from "./ui/floor-map-editor-controls";
 import { FloorMapEditorPanel } from "./ui/floor-map-editor-panel";
+import { FloorMapEditorSidebar } from "./ui/floor-map-editor-sidebar";
 import { FloorMapLegend } from "./ui/floor-map-legend";
 import { FloorMapStructureDialog } from "./ui/floor-map-structure-dialog";
 import { FloorMapZoneEditorPanel } from "./ui/floor-map-zone-editor-panel";
@@ -318,10 +319,11 @@ export function FloorMap({ isEditing, onEditingChange }: FloorMapProps) {
   };
 
   return (
-    <section
-      aria-label="Карта столов"
-      className="min-w-0 flex-1 bg-slate-100"
-    >
+    <>
+      <section
+        aria-label="Карта столов"
+        className="min-w-0 flex-1 bg-slate-100"
+      >
       <div className="@container/floor-map flex h-full flex-col overflow-hidden bg-white">
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 border-b border-slate-100 px-4 py-3 @min-[54rem]/floor-map:grid-cols-[auto_minmax(0,1fr)_auto]">
           <h2 className="text-sm font-semibold tracking-tight text-slate-950">
@@ -376,19 +378,6 @@ export function FloorMap({ isEditing, onEditingChange }: FloorMapProps) {
             onZonePointerCancel={cancelZoneDrag}
           />
 
-          {isEditing && selectedTable && (
-            <FloorMapEditorPanel
-              key={selectedTable.id}
-              table={selectedTable}
-              hasReservations={selectedTableHasReservations}
-              onChange={(patch) => stageTablePatch(selectedTable.id, patch)}
-              onDelete={() => {
-                stageTableDeletion(selectedTable.id);
-                clearSelection();
-              }}
-            />
-          )}
-
           {isEditing && selectedZone && selectedZone.rect && (
             <FloorMapZoneEditorPanel
               zone={selectedZone}
@@ -436,7 +425,25 @@ export function FloorMap({ isEditing, onEditingChange }: FloorMapProps) {
             />
           )}
         </div>
-      </div>
-    </section>
+        </div>
+      </section>
+
+      {isEditing && (
+        <FloorMapEditorSidebar>
+          {selectedTable ? (
+            <FloorMapEditorPanel
+              key={selectedTable.id}
+              table={selectedTable}
+              hasReservations={selectedTableHasReservations}
+              onChange={(patch) => stageTablePatch(selectedTable.id, patch)}
+              onDelete={() => {
+                stageTableDeletion(selectedTable.id);
+                clearSelection();
+              }}
+            />
+          ) : undefined}
+        </FloorMapEditorSidebar>
+      )}
+    </>
   );
 }

@@ -27,9 +27,9 @@ import type {
 import type { TablePatchInput } from "@/entities/table/model/schemas";
 
 const fieldClassName =
-  "h-8 w-full rounded-md border border-slate-200 bg-white px-2 text-xs text-slate-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15";
+  "h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15";
 
-const labelClassName = "flex flex-col gap-1 text-xs font-medium text-slate-600";
+const labelClassName = "flex flex-col gap-1.5 text-xs font-medium text-slate-600";
 
 const tableShapes: {
   value: TableShape;
@@ -232,30 +232,19 @@ export function FloorMapEditorPanel({
   return (
     <section
       aria-label={`Свойства стола №${table.number}`}
-      className="absolute top-4 left-4 z-10 w-64 max-w-[calc(100%-2rem)] rounded-lg border border-slate-200 bg-white p-3 shadow-lg"
+      className="flex min-h-0 flex-1 flex-col"
     >
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold text-slate-950">
+      <div className="border-b border-slate-200 px-5 py-4">
+        <p className="text-[10px] font-semibold tracking-wide text-slate-400 uppercase">
+          Редактор стола
+        </p>
+        <h2 className="mt-1 text-xl font-semibold tracking-tight text-slate-950">
           Стол №{table.number}
-        </h3>
-        <Button
-          type="button"
-          variant="destructive"
-          size="icon-sm"
-          aria-label="Удалить стол"
-          title={
-            hasReservations
-              ? "Нельзя удалить стол со связанными бронями"
-              : "Удалить стол"
-          }
-          disabled={hasReservations}
-          onClick={handleDelete}
-        >
-          <Trash2 aria-hidden="true" />
-        </Button>
+        </h2>
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
+      <div className="thin-scroll min-h-0 flex-1 overflow-y-auto px-5 py-4">
+        <div className="grid grid-cols-2 gap-3">
         <label className={labelClassName}>
           Номер
           <input
@@ -408,46 +397,67 @@ export function FloorMapEditorPanel({
             }
           />
         </label>
-      </div>
+        </div>
 
-      <div className="mt-2 flex flex-col gap-1">
-        <span
-          id={statusLabelId}
-          className="text-xs font-medium text-slate-600"
-        >
-          Статус
-        </span>
-        <Select<TableStatus>
-          value={values.status}
-          onValueChange={(status) => {
-            if (status) selectStatus(status);
-          }}
-        >
-          <SelectTrigger
-            size="default"
-            aria-labelledby={statusLabelId}
-            className="h-8 w-full bg-white"
+        <div className="mt-4 flex flex-col gap-1.5">
+          <span
+            id={statusLabelId}
+            className="text-xs font-medium text-slate-600"
           >
-            <SelectValue>
-              {selectedStatus && <TableStatusOption option={selectedStatus} />}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent align="start">
-            {tableStatuses.map((status) => (
-              <SelectItem key={status.value} value={status.value}>
-                <TableStatusOption option={status} />
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+            Статус
+          </span>
+          <Select<TableStatus>
+            value={values.status}
+            onValueChange={(status) => {
+              if (status) selectStatus(status);
+            }}
+          >
+            <SelectTrigger
+              size="default"
+              aria-labelledby={statusLabelId}
+              className="h-9 w-full bg-white"
+            >
+              <SelectValue>
+                {selectedStatus && (
+                  <TableStatusOption option={selectedStatus} />
+                )}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent align="start">
+              {tableStatuses.map((status) => (
+                <SelectItem key={status.value} value={status.value}>
+                  <TableStatusOption option={status} />
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {hasReservations && (
+          <p className="mt-3 text-xs text-slate-500">
+            У стола есть связанные брони
+          </p>
+        )}
       </div>
 
-      {hasReservations && (
-        <p className="mt-2 text-xs text-slate-500">Есть связанные брони</p>
-      )}
-      <p className="mt-3 text-[11px] text-slate-400">
-        Сохранение — общей кнопкой сверху
-      </p>
+      <div className="border-t border-slate-200 p-4">
+        <Button
+          type="button"
+          variant="outline"
+          size="lg"
+          className="w-full border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+          title={
+            hasReservations
+              ? "Нельзя удалить стол со связанными бронями"
+              : "Удалить стол"
+          }
+          disabled={hasReservations}
+          onClick={handleDelete}
+        >
+          <Trash2 aria-hidden="true" data-icon="inline-start" />
+          Удалить стол
+        </Button>
+      </div>
     </section>
   );
 }

@@ -11,7 +11,7 @@ export function RestaurantWorkspace() {
   return (
     <main className="flex min-h-0 flex-1">
       <FloorMap isEditing={isEditing} onEditingChange={setIsEditing} />
-      <ReservationsSidebar isEditing={isEditing} />
+      {!isEditing && <ReservationsSidebar />}
     </main>
   );
 }
