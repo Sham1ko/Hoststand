@@ -40,12 +40,13 @@ test("creates a complete restaurant seed with valid references", () => {
   const state = createRestaurantSeed();
   const floorIds = new Set(state.floors.map((floor) => floor.id));
   const zoneIds = new Set(state.zones.map((zone) => zone.id));
+  const zonesById = new Map(state.zones.map((zone) => [zone.id, zone]));
   const tableIds = new Set(state.tables.map((table) => table.id));
 
   expect(state.floors).toHaveLength(3);
   expect(state.zones).toHaveLength(6);
   expect(state.tables).toHaveLength(24);
-  expect(state.reservations).toHaveLength(6);
+  expect(state.reservations).toHaveLength(15);
   expect(floorIds.has(state.activeFloorId)).toBe(true);
 
   for (const zone of state.zones) {
@@ -54,8 +55,46 @@ test("creates a complete restaurant seed with valid references", () => {
 
   for (const table of state.tables) {
     expect(floorIds.has(table.floorId)).toBe(true);
-    expect(table.zoneId ? zoneIds.has(table.zoneId) : true).toBe(true);
+    expect(table.zoneId).toBeDefined();
+    expect(zoneIds.has(table.zoneId!)).toBe(true);
+
+    const zone = zonesById.get(table.zoneId!);
+    if (!zone?.rect) throw new Error(`Zone rect not found for ${table.id}`);
+    const zoneRect = zone.rect;
+
+    expect(table.layout.x - table.layout.w / 2).toBeGreaterThanOrEqual(
+      zoneRect.x,
+    );
+    expect(table.layout.x + table.layout.w / 2).toBeLessThanOrEqual(
+      zoneRect.x + zoneRect.w,
+    );
+    expect(table.layout.y - table.layout.h / 2).toBeGreaterThanOrEqual(
+      zoneRect.y,
+    );
+    expect(table.layout.y + table.layout.h / 2).toBeLessThanOrEqual(
+      zoneRect.y + zoneRect.h,
+    );
   }
+
+  for (const [index, table] of state.tables.entries()) {
+    for (const otherTable of state.tables.slice(index + 1)) {
+      if (table.floorId !== otherTable.floorId) continue;
+
+      const overlaps =
+        Math.abs(table.layout.x - otherTable.layout.x) <
+          (table.layout.w + otherTable.layout.w) / 2 &&
+        Math.abs(table.layout.y - otherTable.layout.y) <
+          (table.layout.h + otherTable.layout.h) / 2;
+
+      expect(overlaps).toBe(false);
+    }
+  }
+
+  expect(
+    state.tables.filter((table) =>
+      ["RESERVED", "OCCUPIED", "BANQUET"].includes(table.status),
+    ),
+  ).toHaveLength(0);
 
   for (const reservation of state.reservations) {
     expect(tableIds.has(reservation.tableId)).toBe(true);
@@ -369,7 +408,7 @@ test("mutates zones and reservations without replacing restaurant state", async 
 
   expect(deleteAssignedZoneResponse.status).toBe(204);
   expect(
-    finalState.tables.find((table: { id: string }) => table.id === "table-4")
+    finalState.tables.find((table: { id: string }) => table.id === "table-7")
       ?.zoneId,
   ).toBeUndefined();
 });
@@ -422,8 +461,8 @@ test("creates and transitions reservations through pure restaurant actions", () 
   );
 
   expect(created?.reservation.status).toBe("PENDING");
-  expect(created?.state.reservations).toHaveLength(7);
-  expect(state.reservations).toHaveLength(6);
+  expect(created?.state.reservations).toHaveLength(16);
+  expect(state.reservations).toHaveLength(15);
 
   const currentReservation = state.reservations.find(
     (reservation) => reservation.id === "reservation-3",

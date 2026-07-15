@@ -13,7 +13,7 @@ const tableZoneSeed: readonly TableZone[] = [
     color: "#60a5fa",
     sortOrder: 1,
     isActive: true,
-    rect: { x: 80, y: 80, w: 800, h: 600 },
+    rect: { x: 80, y: 80, w: 880, h: 840 },
   },
   {
     id: "zone-window",
@@ -22,7 +22,7 @@ const tableZoneSeed: readonly TableZone[] = [
     color: "#f59e0b",
     sortOrder: 2,
     isActive: true,
-    rect: { x: 950, y: 80, w: 600, h: 600 },
+    rect: { x: 1000, y: 80, w: 520, h: 840 },
   },
   {
     id: "zone-second-hall",
@@ -31,7 +31,7 @@ const tableZoneSeed: readonly TableZone[] = [
     color: "#8b5cf6",
     sortOrder: 1,
     isActive: true,
-    rect: { x: 120, y: 100, w: 800, h: 800 },
+    rect: { x: 80, y: 100, w: 900, h: 800 },
   },
   {
     id: "zone-private-room",
@@ -40,7 +40,7 @@ const tableZoneSeed: readonly TableZone[] = [
     color: "#ec4899",
     sortOrder: 2,
     isActive: true,
-    rect: { x: 950, y: 100, w: 500, h: 800 },
+    rect: { x: 1020, y: 100, w: 500, h: 800 },
   },
   {
     id: "zone-terrace",
@@ -49,7 +49,7 @@ const tableZoneSeed: readonly TableZone[] = [
     color: "#10b981",
     sortOrder: 1,
     isActive: true,
-    rect: { x: 100, y: 100, w: 1350, h: 300 },
+    rect: { x: 100, y: 100, w: 1400, h: 300 },
   },
   {
     id: "zone-garden",
@@ -58,7 +58,7 @@ const tableZoneSeed: readonly TableZone[] = [
     color: "#14b8a6",
     sortOrder: 2,
     isActive: true,
-    rect: { x: 100, y: 500, w: 1350, h: 350 },
+    rect: { x: 100, y: 560, w: 1400, h: 300 },
   },
 ];
 
