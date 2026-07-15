@@ -5,6 +5,7 @@ import type { TableZone } from "@/entities/zone/model/types";
 type ZoneNodeProps = {
   zone: TableZone;
   rect?: NonNullable<TableZone["rect"]>;
+  cameraScale?: number;
   isEditing?: boolean;
   isSelected?: boolean;
   onPointerDown?: (event: PointerEvent<SVGGElement>) => void;
@@ -16,6 +17,7 @@ type ZoneNodeProps = {
 export function ZoneNode({
   zone,
   rect = zone.rect,
+  cameraScale = 1,
   isEditing = false,
   isSelected = false,
   onPointerDown,
@@ -25,6 +27,7 @@ export function ZoneNode({
 }: ZoneNodeProps) {
   if (!rect) return null;
 
+  const resizeHitSize = 40 / cameraScale;
   const labelWidth = Math.min(
     200,
     Math.max(100, Array.from(zone.name).length * 11 + 42),
@@ -79,17 +82,27 @@ export function ZoneNode({
         </text>
       </g>
       {isSelected && (
-        <circle
+        <g
           data-zone-resize-handle
-          cx={rect.w}
-          cy={rect.h}
-          r={14}
-          fill={zone.color}
-          stroke="white"
-          strokeWidth={6}
+          aria-label="Изменить размер зоны"
+          transform={`translate(${rect.w} ${rect.h})`}
           pointerEvents={isEditing ? "all" : "none"}
           className="cursor-se-resize"
-        />
+        >
+          <rect
+            x={-resizeHitSize / 2}
+            y={-resizeHitSize / 2}
+            width={resizeHitSize}
+            height={resizeHitSize}
+            fill="transparent"
+          />
+          <circle
+            r={14}
+            fill={zone.color}
+            stroke="white"
+            strokeWidth={6}
+          />
+        </g>
       )}
     </g>
   );

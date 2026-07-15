@@ -6,7 +6,16 @@ import type { ZonePatchInput } from "@/entities/zone/model/schemas";
 import type { TableZone } from "@/entities/zone/model/types";
 import type { DiningTable } from "@/entities/table/model/types";
 
-const zoneColors = ["#f97346", "#4ba3df", "#7c55e8", "#f0a52f", "#4fb487"];
+const zoneColors = [
+  "#f97346",
+  "#4ba3df",
+  "#7c55e8",
+  "#f0a52f",
+  "#4fb487",
+  "#e5487f",
+  "#14a6a6",
+  "#d94b4b",
+];
 
 const fieldClassName =
   "h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15";

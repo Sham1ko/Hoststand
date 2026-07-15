@@ -137,6 +137,7 @@ export function FloorMapCanvas({
             <ZoneNode
               key={zone.id}
               zone={zone}
+              cameraScale={camera.scale}
               rect={
                 zoneDragPreview?.zoneId === zone.id
                   ? zoneDragPreview
