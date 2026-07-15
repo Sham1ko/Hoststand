@@ -45,7 +45,7 @@ export function ZoneNode({
       <rect
         width={rect.w}
         height={rect.h}
-        rx={44}
+        rx={14}
         fill={zone.color}
         fillOpacity={0.1}
         stroke={zone.color}
@@ -79,14 +79,14 @@ export function ZoneNode({
         </text>
       </g>
       {isSelected && (
-        <rect
+        <circle
           data-zone-resize-handle
-          x={rect.w - 18}
-          y={rect.h - 18}
-          width={36}
-          height={36}
-          rx={8}
+          cx={rect.w}
+          cy={rect.h}
+          r={14}
           fill={zone.color}
+          stroke="white"
+          strokeWidth={6}
           pointerEvents={isEditing ? "all" : "none"}
           className="cursor-se-resize"
         />
@@ -94,4 +94,3 @@ export function ZoneNode({
     </g>
   );
 }
-
