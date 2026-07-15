@@ -80,6 +80,10 @@ export function FloorMapCanvas({
   onZonePointerUp,
   onZonePointerCancel,
 }: FloorMapCanvasProps) {
+  const zoneColorById = new Map(
+    zones.map((zone) => [zone.id, zone.color] as const),
+  );
+
   return (
     <svg
       ref={svgRef}
@@ -173,6 +177,9 @@ export function FloorMapCanvas({
             return (
               <TableNode
                 key={table.id}
+                zoneColor={
+                  table.zoneId ? zoneColorById.get(table.zoneId) : undefined
+                }
                 table={{
                   ...displayedTable,
                   status: getDisplayedTableStatus(

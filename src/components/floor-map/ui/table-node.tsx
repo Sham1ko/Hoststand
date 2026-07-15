@@ -1,11 +1,12 @@
 import type { DiningTable } from "@/entities/table/model/types";
 import { formatTableCapacity } from "@/entities/table/model/format-table-capacity";
 import { tableStatusAppearance } from "@/components/table-status-appearance";
-import { Users } from "lucide-react";
+import { Lock, Users } from "lucide-react";
 import type { PointerEvent } from "react";
 
 type TableNodeProps = {
   table: DiningTable;
+  zoneColor?: string;
   isEditing?: boolean;
   isSelected?: boolean;
   onPointerDown?: (event: PointerEvent<SVGGElement>) => void;
@@ -16,6 +17,7 @@ type TableNodeProps = {
 
 export function TableNode({
   table,
+  zoneColor,
   isEditing = false,
   isSelected = false,
   onPointerDown,
@@ -27,6 +29,8 @@ export function TableNode({
   const style = tableStatusAppearance[table.status];
   const isRound = shape === "round";
   const isInactive = table.status === "INACTIVE";
+  const isManuallyBlocked = table.status === "MANUAL_BLOCKED";
+  const numberLabelWidth = String(table.number).length * 20;
 
   return (
     <g
@@ -87,14 +91,38 @@ export function TableNode({
       )}
 
       <g transform={`rotate(${-rotation})`} className="select-none">
+        {!isEditing && zoneColor ? (
+          <circle
+            data-table-zone-indicator
+            aria-hidden="true"
+            cx={-numberLabelWidth / 2 - 14}
+            cy={-16}
+            r={8}
+            fill={zoneColor}
+            stroke="white"
+            strokeWidth={4}
+          />
+        ) : null}
         <text
           textAnchor="middle"
           y={-4}
           fill={style.text}
           className="text-[34px] font-semibold"
         >
-          №{table.number}
+          {table.number}
         </text>
+        {!isEditing && isManuallyBlocked ? (
+          <Lock
+            data-manual-blocked-indicator
+            aria-hidden="true"
+            x={numberLabelWidth / 2 + 6}
+            y={-30}
+            width={26}
+            height={26}
+            color={style.text}
+            strokeWidth={2.5}
+          />
+        ) : null}
         <g className="text-slate-400">
           <Users
             x={-28}
