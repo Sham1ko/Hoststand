@@ -1,6 +1,5 @@
 import {
   Check,
-  MessageSquareText,
   Phone,
   Users,
   X,
@@ -15,6 +14,7 @@ import type {
 } from "@/entities/reservation/model/types";
 
 import { EditReservationDialog } from "./edit-reservation-dialog";
+import { ReservationComment } from "./reservation-comment";
 
 const statusStyles: Record<
   ReservationStatus,
@@ -121,10 +121,7 @@ export function ReservationCard({
       </p>
 
       {note && (
-        <p className="mt-2 flex items-center gap-2 rounded-lg bg-slate-50 px-2.5 py-2 text-xs text-slate-500">
-          <MessageSquareText aria-hidden="true" className="size-3.5 shrink-0" />
-          <span className="truncate">{note}</span>
-        </p>
+        <ReservationComment comment={note} />
       )}
 
       {canEdit && (
