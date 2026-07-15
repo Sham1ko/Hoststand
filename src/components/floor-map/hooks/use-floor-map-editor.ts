@@ -22,15 +22,26 @@ import {
   type BoundingRectCache,
   type FloorMapRect,
 } from "../model/bounding-rect-cache";
-import { resolveTableDrag } from "../model/interaction-transitions";
+import {
+  resolveTableDrag,
+  resolveTableRotation,
+} from "../model/interaction-transitions";
+import {
+  getPointerAngle,
+  getTableRotationFromPointer,
+} from "../model/table-rotation";
 import { useRafCoalescer } from "./use-raf-coalescer";
 
 type TableDragState = {
   tableId: string;
   pointerId: number;
+  kind: "move" | "rotate";
   layout: DiningTable["layout"];
   pointerOffset: Point;
+  startPointerAngle: number;
+  startRotation: number;
   position: Point;
+  rotation: number;
   hasMoved: boolean;
   captureTarget: SVGGElement;
   svgRect: FloorMapRect;
@@ -38,6 +49,7 @@ type TableDragState = {
 
 export type TableDragPreview = TablePosition & {
   tableId: string;
+  rotation: number;
 };
 
 type UseFloorMapEditorOptions = {
@@ -49,6 +61,7 @@ type UseFloorMapEditorOptions = {
     tableId: string,
     position: TablePosition,
   ) => void;
+  onTableRotationChange: (tableId: string, rotation: number) => void;
 };
 
 function getWorldPointerPosition(
@@ -73,7 +86,8 @@ function isSameTablePreview(
   return (
     first?.tableId === second.tableId &&
     first.x === second.x &&
-    first.y === second.y
+    first.y === second.y &&
+    first.rotation === second.rotation
   );
 }
 
@@ -89,6 +103,7 @@ export function useFloorMapEditor({
   isEditing,
   onEditingChange,
   onTablePositionChange,
+  onTableRotationChange,
 }: UseFloorMapEditorOptions) {
   const tableDragRef = useRef<TableDragState | null>(null);
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
@@ -157,6 +172,11 @@ export function useFloorMapEditor({
   ) => {
     if (!isEditing || !event.isPrimary || event.button !== 0) return;
 
+    const target = event.target as Element;
+    const isRotate = Boolean(
+      target.closest("[data-table-rotate-handle]"),
+    );
+
     const rect = rectCache.refresh();
 
     if (!rect) return;
@@ -170,15 +190,19 @@ export function useFloorMapEditor({
     tableDragRef.current = {
       tableId: table.id,
       pointerId: event.pointerId,
+      kind: isRotate ? "rotate" : "move",
       layout: table.layout,
       pointerOffset: {
         x: pointer.x - table.layout.x,
         y: pointer.y - table.layout.y,
       },
+      startPointerAngle: getPointerAngle(table.layout, pointer),
+      startRotation: table.layout.rotation,
       position: {
         x: table.layout.x,
         y: table.layout.y,
       },
+      rotation: table.layout.rotation,
       hasMoved: false,
       captureTarget: event.currentTarget,
       svgRect: rect,
@@ -195,27 +219,51 @@ export function useFloorMapEditor({
     event.preventDefault();
     event.stopPropagation();
 
-    const position = getBoundedTablePosition(
-      {
-        x: pointer.x - drag.pointerOffset.x,
-        y: pointer.y - drag.pointerOffset.y,
-      },
-      drag.layout,
-      false,
-    );
+    if (drag.kind === "rotate") {
+      const rotation = getTableRotationFromPointer(
+        drag.startRotation,
+        drag.startPointerAngle,
+        drag.position,
+        pointer,
+      );
+      const previousRotation = drag.rotation;
 
-    const previousPosition = drag.position;
-    drag.position = position;
-    drag.hasMoved = true;
+      drag.rotation = rotation;
+      drag.hasMoved = drag.hasMoved || previousRotation !== rotation;
 
-    if (
-      isSamePosition(previousPosition, position) &&
-      !previewUpdates.hasPending()
-    ) {
-      return;
+      if (
+        previousRotation === rotation &&
+        !previewUpdates.hasPending()
+      ) {
+        return;
+      }
+    } else {
+      const position = getBoundedTablePosition(
+        {
+          x: pointer.x - drag.pointerOffset.x,
+          y: pointer.y - drag.pointerOffset.y,
+        },
+        drag.layout,
+        false,
+      );
+      const previousPosition = drag.position;
+
+      drag.position = position;
+      drag.hasMoved = true;
+
+      if (
+        isSamePosition(previousPosition, position) &&
+        !previewUpdates.hasPending()
+      ) {
+        return;
+      }
     }
 
-    previewUpdates.schedule({ tableId: drag.tableId, ...position });
+    previewUpdates.schedule({
+      tableId: drag.tableId,
+      ...drag.position,
+      rotation: drag.rotation,
+    });
   };
 
   const completeTableDrag = (
@@ -243,10 +291,18 @@ export function useFloorMapEditor({
       setDragPreview(null);
     }
 
-    const change = resolveTableDrag(drag, outcome);
+    if (drag.kind === "rotate") {
+      const change = resolveTableRotation(drag, outcome);
 
-    if (change) {
-      onTablePositionChange(change.tableId, change.position);
+      if (change) {
+        onTableRotationChange(change.tableId, change.rotation);
+      }
+    } else {
+      const change = resolveTableDrag(drag, outcome);
+
+      if (change) {
+        onTablePositionChange(change.tableId, change.position);
+      }
     }
   };
 

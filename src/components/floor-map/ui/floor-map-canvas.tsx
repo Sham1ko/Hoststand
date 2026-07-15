@@ -170,6 +170,7 @@ export function FloorMapCanvas({
                     ...table.layout,
                     x: previewPosition.x,
                     y: previewPosition.y,
+                    rotation: previewPosition.rotation,
                   },
                 }
               : table;
@@ -177,6 +178,7 @@ export function FloorMapCanvas({
             return (
               <TableNode
                 key={table.id}
+                cameraScale={camera.scale}
                 zoneColor={
                   table.zoneId ? zoneColorById.get(table.zoneId) : undefined
                 }

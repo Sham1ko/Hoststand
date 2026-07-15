@@ -14,6 +14,12 @@ type TableDragSnapshot = {
   hasMoved: boolean;
 };
 
+type TableRotationSnapshot = {
+  tableId: string;
+  rotation: number;
+  hasMoved: boolean;
+};
+
 type ZoneDragSnapshot = {
   zoneId: string;
   rect: NonNullable<TableZone["rect"]>;
@@ -30,6 +36,15 @@ export function resolveTableDrag(
     tableId: drag.tableId,
     position: getBoundedTablePosition(drag.position, drag.layout, true),
   };
+}
+
+export function resolveTableRotation(
+  drag: TableRotationSnapshot,
+  outcome: InteractionOutcome,
+) {
+  if (outcome === "cancel" || !drag.hasMoved) return null;
+
+  return { tableId: drag.tableId, rotation: drag.rotation };
 }
 
 export function resolveZoneDrag(

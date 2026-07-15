@@ -42,6 +42,7 @@ import { FloorMapEditorPanel } from "./ui/floor-map-editor-panel";
 import { FloorMapEditorSidebar } from "./ui/floor-map-editor-sidebar";
 import { FloorMapLegend } from "./ui/floor-map-legend";
 import { FloorMapStructureDialog } from "./ui/floor-map-structure-dialog";
+import { FloorMapTableRotationControls } from "./ui/floor-map-table-rotation-controls";
 import { FloorMapZoneEditorPanel } from "./ui/floor-map-zone-editor-panel";
 import { FloorSwitcher } from "./ui/floor-switcher";
 
@@ -134,6 +135,8 @@ export function FloorMap({ isEditing, onEditingChange }: FloorMapProps) {
     isEditing,
     onEditingChange,
     onTablePositionChange: stageTablePosition,
+    onTableRotationChange: (tableId, rotation) =>
+      stageTablePatch(tableId, { layout: { rotation } }),
   });
   const {
     selectedZoneId,
@@ -384,6 +387,17 @@ export function FloorMap({ isEditing, onEditingChange }: FloorMapProps) {
             onZonePointerUp={finishZoneDrag}
             onZonePointerCancel={cancelZoneDrag}
           />
+
+          {isEditing && selectedTable ? (
+            <FloorMapTableRotationControls
+              table={selectedTable}
+              camera={camera}
+              viewport={viewport}
+              onRotationChange={(rotation) =>
+                stageTablePatch(selectedTable.id, { layout: { rotation } })
+              }
+            />
+          ) : null}
 
           <FloorMapControls
             onZoomOut={() => zoomAtViewportCenter(1 / 1.2)}

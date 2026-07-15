@@ -1,12 +1,13 @@
 import type { DiningTable } from "@/entities/table/model/types";
 import { formatTableCapacity } from "@/entities/table/model/format-table-capacity";
 import { tableStatusAppearance } from "@/components/table-status-appearance";
-import { Lock, Users } from "lucide-react";
+import { Lock, RotateCw, Users } from "lucide-react";
 import type { PointerEvent } from "react";
 
 type TableNodeProps = {
   table: DiningTable;
   zoneColor?: string;
+  cameraScale?: number;
   isEditing?: boolean;
   isSelected?: boolean;
   onPointerDown?: (event: PointerEvent<SVGGElement>) => void;
@@ -18,6 +19,7 @@ type TableNodeProps = {
 export function TableNode({
   table,
   zoneColor,
+  cameraScale = 1,
   isEditing = false,
   isSelected = false,
   onPointerDown,
@@ -31,6 +33,7 @@ export function TableNode({
   const isInactive = table.status === "INACTIVE";
   const isManuallyBlocked = table.status === "MANUAL_BLOCKED";
   const numberLabelWidth = String(table.number).length * 20;
+  const rotationHandleY = -h / 2 - 54;
 
   return (
     <g
@@ -89,6 +92,46 @@ export function TableNode({
           strokeDasharray={isInactive ? "12 10" : undefined}
         />
       )}
+
+      {isEditing && isSelected ? (
+        <>
+          <line
+            aria-hidden="true"
+            x1={0}
+            y1={-h / 2 - 8}
+            x2={0}
+            y2={rotationHandleY}
+            stroke="#64748b"
+            strokeWidth={3}
+            strokeDasharray="5 5"
+          />
+          <g
+            data-table-rotate-handle
+            aria-label="Повернуть стол"
+            transform={`translate(0 ${rotationHandleY}) rotate(${-rotation}) scale(${1 / cameraScale})`}
+            pointerEvents="all"
+            className="cursor-grab active:cursor-grabbing"
+          >
+            <circle r={20} fill="transparent" />
+            <circle
+              r={15}
+              fill="white"
+              stroke="#475569"
+              strokeWidth={2}
+              style={{ filter: "drop-shadow(0 2px 3px rgb(15 23 42 / 0.18))" }}
+            />
+            <RotateCw
+              aria-hidden="true"
+              x={-8}
+              y={-8}
+              width={16}
+              height={16}
+              color="#334155"
+              strokeWidth={2.5}
+            />
+          </g>
+        </>
+      ) : null}
 
       <g transform={`rotate(${-rotation})`} className="select-none">
         {!isEditing && zoneColor ? (

@@ -1,5 +1,6 @@
 import {
   resolveTableDrag,
+  resolveTableRotation,
   resolveZoneDrag,
 } from "@/components/floor-map/model/interaction-transitions";
 
@@ -51,6 +52,23 @@ test("does not commit a moved table after pointercancel", () => {
       },
       "cancel",
     ),
+  ).toBeNull();
+});
+
+test("commits rotation only after a completed drag", () => {
+  const rotation = {
+    tableId: "table-1",
+    rotation: 135,
+    hasMoved: true,
+  };
+
+  expect(resolveTableRotation(rotation, "commit")).toEqual({
+    tableId: "table-1",
+    rotation: 135,
+  });
+  expect(resolveTableRotation(rotation, "cancel")).toBeNull();
+  expect(
+    resolveTableRotation({ ...rotation, hasMoved: false }, "commit"),
   ).toBeNull();
 });
 

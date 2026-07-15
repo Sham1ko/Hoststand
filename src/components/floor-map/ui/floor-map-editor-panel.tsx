@@ -8,7 +8,7 @@ import {
   UsersRound,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +25,8 @@ import type {
   TableStatus,
 } from "@/entities/table/model/types";
 import type { TablePatchInput } from "@/entities/table/model/schemas";
+
+import { normalizeTableRotation } from "../model/table-rotation";
 
 const fieldClassName =
   "h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15";
@@ -144,7 +146,7 @@ function getTableFormValues(table: DiningTable): TableFormValues {
     number: String(table.number),
     capacity: String(table.capacity),
     shape: table.layout.shape,
-    rotation: normalizeRotation(table.layout.rotation),
+    rotation: normalizeTableRotation(table.layout.rotation),
     width: String(table.layout.w),
     height: String(table.layout.h),
     status: table.status,
@@ -156,12 +158,6 @@ type NumericTableField =
   | "capacity"
   | "width"
   | "height";
-
-function normalizeRotation(rotation: number) {
-  const normalizedRotation = ((rotation % 360) + 360) % 360;
-
-  return normalizedRotation === 0 && rotation > 0 ? 360 : normalizedRotation;
-}
 
 type FloorMapEditorPanelProps = {
   table: DiningTable;
@@ -183,6 +179,16 @@ export function FloorMapEditorPanel({
   const selectedStatus = tableStatuses.find(
     (status) => status.value === values.status,
   );
+
+  useEffect(() => {
+    const rotation = normalizeTableRotation(table.layout.rotation);
+
+    setValues((currentValues) =>
+      currentValues.rotation === rotation
+        ? currentValues
+        : { ...currentValues, rotation },
+    );
+  }, [table.layout.rotation]);
 
   const updateNumericField = (field: NumericTableField, rawValue: string) => {
     setValues((currentValues) => ({
