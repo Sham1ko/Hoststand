@@ -12,6 +12,8 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
 [![Jest](https://img.shields.io/badge/Jest-12%20suites-C21325?logo=jest&logoColor=white)](https://jestjs.io)
 
+### [**Live demo → hoststand.vercel.app**](https://hoststand.vercel.app)
+
 </div>
 
 <!-- Add a screenshot or GIF here once captured:
