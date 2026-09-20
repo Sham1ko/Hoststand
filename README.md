@@ -1,92 +1,109 @@
+<div align="center">
+
+<img src="public/logo.svg" width="72" height="72" alt="Hoststand logo" />
+
 # Hoststand
 
-Интерактивный модуль управления залами, столами и бронированиями ресторана на Next.js, React и TypeScript.
+**Restaurant floor plan and reservation manager.** Lay out tables, assign zones, track bookings — all on an interactive SVG map.
 
-## Возможности
+[![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white)](https://nextjs.org)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
+[![Jest](https://img.shields.io/badge/Jest-12%20suites-C21325?logo=jest&logoColor=white)](https://jestjs.io)
 
-- карта ресторана с тремя этажами, зонами и столами разных форм;
-- просмотр статусов столов и связанных с ними броней;
-- создание, редактирование и смена статуса бронирований;
-- фильтрация броней по дате и статусу;
-- переход к нужному этажу и столу из карточки брони;
-- редактор столов и зон с перемещением, изменением размеров и привязкой к зонам;
-- вращение стола слайдером, экранными кнопками, точным вводом или ручкой на карте;
-- масштабирование карты относительно курсора, pan и автоматическое вписывание в экран;
-- перевод комментариев брони через OpenRouter;
-- подтверждение перед восстановлением исходных демо-данных.
+</div>
 
-## Запуск
+<!-- Add a screenshot or GIF here once captured:
+![Hoststand](docs/screenshot.png)
+-->
 
-Требуется актуальная LTS-версия Node.js.
+## Features
+
+- **Interactive floor map** — 3 floors, 6 zones, 24 tables in SVG. Pan, cursor-anchored zoom, fit-to-screen.
+- **Table editor** — move, resize and rotate tables, with snapping to zones.
+- **Reservations** — create, edit, change status, filter by date and status, jump from a booking to its table.
+- **AI translation** — guest comments between Russian, English, Kazakh and Chinese via OpenRouter.
+- **Swappable data layer** — `localStorage` by default, optional in-memory Mock API, one interface behind both.
+- **Demo reset** — restore the seed dataset behind a confirmation.
+
+## Tech stack
+
+| Area | Choice |
+| --- | --- |
+| Framework | Next.js 16 (App Router, Turbopack) |
+| UI | React 19, Tailwind CSS 4, shadcn/ui on Base UI |
+| Icons | [lucide-react](https://lucide.dev) |
+| Forms & validation | react-hook-form, zod |
+| Dates | date-fns, react-day-picker |
+| AI | Vercel AI SDK + OpenRouter |
+| Testing | Jest (12 suites, pure logic) |
+| Language | TypeScript 5 (strict) |
+
+## Quick start
+
+Requires **Node.js ≥ 20.9** and pnpm.
 
 ```bash
 pnpm install
+cp .env.sample .env.local
 pnpm dev
 ```
 
-После запуска откройте [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000). `npm` works too.
 
-Также можно использовать `npm install` и `npm run dev`.
+## Environment
 
-## Настройка окружения
+| Variable | Required | Default | Purpose |
+| --- | --- | --- | --- |
+| `NEXT_PUBLIC_ENABLE_MOCK_API` | no | `false` | Shows the data-source switch in Settings. Leave off to stay on `localStorage`. |
+| `OPENROUTER_API_KEY` | no | — | Server-only key for comment translation. Every other feature works without it; translation just reports that it is not configured. |
 
-Создайте `.env.local` на основе `.env.sample`.
+> [!WARNING]
+> Never expose the OpenRouter key with a `NEXT_PUBLIC_` prefix. It is read only inside the `/api/translate` route handler.
 
-```env
-NEXT_PUBLIC_ENABLE_MOCK_API=false
-OPENROUTER_API_KEY=
+## Scripts
+
+| Command | Does |
+| --- | --- |
+| `pnpm dev` | Dev server with Turbopack |
+| `pnpm build` | Production build |
+| `pnpm start` | Serve the production build |
+| `pnpm test` | Run the Jest suites |
+| `pnpm lint` | ESLint |
+| `npx tsc --noEmit` | Type check |
+
+## Map controls
+
+Drag empty space to pan, wheel to zoom at the cursor, click a table to select it.
+**Edit** opens plan mode: drag a table to move it, use the handle above it to rotate freely, or the panel below for ±15° steps and exact angles. **Save** commits staged changes, **Cancel** drops them.
+
+## Project structure
+
+```
+src/
+├─ app/         # App Router pages and /api routes (mock API, translation)
+├─ client/      # repository implementations — localStorage and HTTP
+├─ components/  # floor map, reservations sidebar, shadcn/ui primitives
+├─ entities/    # domain models, zod schemas, seed data
+├─ features/    # comment translation, reservation management
+├─ lib/         # floor-plan geometry and camera math
+└─ server/      # in-memory store backing the mock API
+tests/          # Jest suites: geometry, camera, state transitions
 ```
 
-- `NEXT_PUBLIC_ENABLE_MOCK_API=true` включает выбор тестового HTTP API в настройках. По умолчанию приложение использует `localStorage`.
-- `OPENROUTER_API_KEY` — серверный ключ OpenRouter для перевода комментариев. Без ключа остальные функции приложения продолжают работать, но перевод возвращает сообщение о недоступной настройке.
+## Architecture notes
 
-Ключ OpenRouter нельзя объявлять с префиксом `NEXT_PUBLIC_` или передавать в клиентский код.
+- The UI depends on a single `RestaurantRepository` interface, so swapping storage never touches components.
+- State lives in `localStorage` under the versioned key `hoststand.restaurant.v1`. Missing or corrupt data falls back to the seed: 3 floors, 6 zones, 24 tables, 15 reservations. Bump the key version when `restaurantStateSchema` changes incompatibly.
+- The map is plain SVG — no canvas library. Camera math, geometry, zone snapping and status transitions are pure functions, which is exactly what the test suites cover.
 
-## Управление картой
+See [docs/architecture.md](docs/architecture.md) for the full breakdown.
 
-- перетаскивание пустой области — перемещение камеры;
-- колесо мыши — масштабирование относительно курсора;
-- кнопки `−`, вписать и `+` — управление масштабом;
-- клик по столу — выбор стола;
-- «Редактировать» — вход в редактор плана;
-- перетаскивание выбранного стола — изменение позиции;
-- ручка над столом — свободное вращение;
-- панель под выбранным столом — поворот на `−15°`, `+15°` или ввод точного угла;
-- инспектор справа — изменение номера, вместимости, формы, размера, поворота и статуса;
-- «Сохранить» применяет подготовленные изменения, «Отмена» отбрасывает несохранённые изменения столов и зон.
+## Known limitations
 
-## Данные и архитектура
-
-UI работает через интерфейс `RestaurantRepository` и не зависит напрямую от способа хранения данных.
-
-Основной источник данных — версионированное состояние в `localStorage` с ключом `hoststand.restaurant.v1`. При отсутствии или повреждении сохранённых данных приложение восстанавливает seed: три этажа, шесть зон, 24 стола и 15 броней.
-
-Для разработки можно включить in-memory Mock API. Он предоставляет ресурсные маршруты для столов, зон и броней, но его состояние сбрасывается после перезапуска сервера. Активный источник выбирается в настройках и сохраняется отдельно.
-
-Карта реализована на SVG без специализированных canvas-библиотек. Расчёты камеры, геометрии, привязки зон и переходов состояний вынесены из компонентов в отдельные функции и модели.
-
-## AI-перевод комментариев
-
-Если у брони есть комментарий, в её карточке появляется кнопка «Перевести». Доступны русский, английский, казахский и китайский языки.
-
-Запрос отправляется только на серверный маршрут `/api/translate`. Результат временно кэшируется в состоянии карточки, а исходный комментарий не изменяется. Для работы функции нужен `OPENROUTER_API_KEY`.
-
-## Проверки
-
-```bash
-pnpm test
-node node_modules/.pnpm/typescript@5.9.3/node_modules/typescript/bin/tsc --noEmit
-```
-
-Версия TypeScript в пути может измениться после обновления зависимостей. В таком случае используйте доступный бинарный файл `tsc` из установленных зависимостей.
-
-## Известные ограничения
-
-- стулья вокруг столов пока не рассчитываются и не отображаются;
-- pinch-zoom двумя пальцами не реализован;
-- редактор использует draft для столов и зон, но сохранение нескольких сущностей пока не является одной атомарной repository-транзакцией;
-- пересечения броней одного стола по времени пока не блокируются;
-- зоны создаются с готовой областью, без отдельного режима рисования протягиванием;
-- AI-перевод зависит от доступности OpenRouter и настроенного серверного ключа.
-
-Эти ограничения не мешают основным сценариям просмотра плана, редактирования столов и зон и управления бронированиями.
+- Chairs around tables are not computed or drawn.
+- No two-finger pinch zoom.
+- Saving several entities is not yet one atomic repository transaction.
+- Overlapping reservations on the same table are not blocked.
+- Zones are created at a fixed size — there is no drag-to-draw mode.
