@@ -16,9 +16,7 @@
 
 </div>
 
-<!-- Add a screenshot or GIF here once captured:
-![Hoststand](docs/screenshot.png)
--->
+<img src="docs/screenshots/overview.png" alt="Hoststand — floor plan and reservations" width="100%" />
 
 ## Features
 
@@ -28,6 +26,36 @@
 - **AI translation** — guest comments between Russian, English, Kazakh and Chinese via OpenRouter.
 - **Swappable data layer** — `localStorage` by default, optional in-memory Mock API, one interface behind both.
 - **Demo reset** — restore the seed dataset behind a confirmation.
+
+## Screenshots
+
+<table>
+<tr>
+<td width="50%">
+<img src="docs/screenshots/table-focus.png" alt="Table details" /><br />
+<sub><b>Table in focus</b> — status, capacity, zone and every booking for the selected day.</sub>
+</td>
+<td width="50%">
+<img src="docs/screenshots/plan-editor.png" alt="Plan editor" /><br />
+<sub><b>Plan editor</b> — drag, resize and rotate tables, switch shapes, edit floors and zones.</sub>
+</td>
+</tr>
+</table>
+
+<table>
+<tr>
+<td width="62%">
+<img src="docs/screenshots/reservation-dialog.png" alt="New reservation" /><br />
+<sub><b>New reservation</b> — table, guest, party size, time and duration, validated with zod.</sub>
+</td>
+<td width="38%">
+<img src="docs/screenshots/translation.png" alt="Comment translation" /><br />
+<sub><b>Comment translation</b> — guest notes in Russian, English, Kazakh or Chinese.</sub>
+</td>
+</tr>
+</table>
+
+> The interface ships in Russian; screenshots use the bundled demo dataset.
 
 ## Tech stack
 
