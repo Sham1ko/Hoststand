@@ -8,12 +8,11 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Qolay Admin",
+  title: "Hoststand",
   description: "Управление столами и бронированиями ресторана",
   icons: {
-    icon: "/qolay.png",
-    shortcut: "/qolay.png",
-    apple: "/qolay.png",
+    icon: "/logo.svg",
+    shortcut: "/logo.svg",
   },
 };
 

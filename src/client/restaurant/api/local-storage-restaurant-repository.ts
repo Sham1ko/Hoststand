@@ -24,7 +24,7 @@ import type { DiningTable } from "@/entities/table/model/types";
 
 import type { RestaurantRepository } from "./restaurant-repository";
 
-export const RESTAURANT_STORAGE_KEY = "qolay.restaurant.v1";
+export const RESTAURANT_STORAGE_KEY = "hoststand.restaurant.v1";
 
 function getStorage() {
   if (typeof window === "undefined") {

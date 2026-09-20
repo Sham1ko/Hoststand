@@ -1,6 +1,6 @@
 export type DataSource = "local-storage" | "mock-api";
 
-export const DATA_SOURCE_STORAGE_KEY = "qolay.data-source.v1";
+export const DATA_SOURCE_STORAGE_KEY = "hoststand.data-source.v1";
 export const DEFAULT_DATA_SOURCE: DataSource = "local-storage";
 export const MOCK_API_ENABLED =
   process.env.NEXT_PUBLIC_ENABLE_MOCK_API === "true";

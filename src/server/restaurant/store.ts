@@ -11,12 +11,12 @@ export type RestaurantMutationResult<T> =
   | { status: "not_found" | "conflict" };
 
 const globalStore = globalThis as typeof globalThis & {
-  qolayRestaurant?: RestaurantState;
+  hoststandRestaurant?: RestaurantState;
 };
 
 export function getRestaurant() {
-  globalStore.qolayRestaurant ??= createRestaurantSeed();
-  return globalStore.qolayRestaurant;
+  globalStore.hoststandRestaurant ??= createRestaurantSeed();
+  return globalStore.hoststandRestaurant;
 }
 
 export function mutateRestaurant<T>(
@@ -26,12 +26,12 @@ export function mutateRestaurant<T>(
 
   if (result.status !== "ok") return result;
 
-  globalStore.qolayRestaurant = result.state;
+  globalStore.hoststandRestaurant = result.state;
 
   return { status: "ok", data: result.data };
 }
 
 export function resetRestaurant() {
-  globalStore.qolayRestaurant = createRestaurantSeed();
-  return globalStore.qolayRestaurant;
+  globalStore.hoststandRestaurant = createRestaurantSeed();
+  return globalStore.hoststandRestaurant;
 }
